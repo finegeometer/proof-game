@@ -1,0 +1,225 @@
+[ { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0]]
+    , ["∧", [0,1], [1,3]]
+    ]
+  , "hypotheses": [0,1]
+  , "conclusion": 2
+  , "_comment" : "Trivial level, to start off easy."
+  }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0]]
+    , ["c", []   , [4,0]]
+    , ["∧", [0,1], [1,3]]
+    , ["∧", [1,2], [3,3]]
+    , ["∧", [3,4], [2,6]]
+    ]
+  , "hypotheses": [0,1,2]
+  , "conclusion": 5
+  , "_comment" : "Tree of conjunctions."
+  }
+, { "nodes":
+    [ ["a", []   , [2,0]]
+    , ["∧", [0,0], [0,4]]
+    , ["∧", [1,0], [2,4.5]]
+    , ["∧", [2,0], [4,5]]
+    ]
+  , "hypotheses": [0]
+  , "conclusion": 3
+  }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0]]
+    , ["c", []   , [4,0]]
+    , ["∧", [0,1], [1,3]]
+    , ["∧", [1,2], [3,3]]
+    , ["∧", [3,4], [2,6]]
+    ]
+  , "hypotheses": [5]
+  , "conclusion": 1
+  , "_comment" : "Conjunction elimination."
+  }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0]]
+    , ["∧", [0,1], [0,3]]
+    , ["∧", [1,0], [2,3]]
+    ]
+  , "hypotheses": [2]
+  , "conclusion": 3
+  , "_comment" : "Conjunction commutativity."
+  }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0]]
+    , ["c", []   , [4,0]]
+    , ["∧", [0], [0,3]]
+    , ["∧", [1,2], [2,3]]
+    , ["∧", [], [4,3]]
+    , ["∧", [3,4,5], [2,6]]
+    ]
+  , "hypotheses": [0,1,2]
+  , "conclusion": 6
+  , "_comment" : "N-ary conjunctions."
+  }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0]]
+    , ["∨", [0,1], [1,3]]
+    ]
+  , "hypotheses": [0]
+  , "conclusion": 2
+  , "_comment" : "Introduce disjunctions."
+  }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0]]
+    , ["c", []   , [4,0]]
+    , ["∧", [0,1], [1,3]]
+    , ["∨", [1,2], [3,3]]
+    ]
+  , "hypotheses": [3]
+  , "conclusion": 4
+  }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0]]
+    , ["∨", [0,1], [0,3]]
+    , ["∨", [1,0], [2,3]]
+    ]
+  , "hypotheses": [2]
+  , "conclusion": 3
+  , "_comment" : "Disjunction elimination, demonstrated via commutativity."
+  }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0]]
+    , ["c", []   , [4,0]]
+    , ["d", []   , [6,0]]
+    , ["∧", [0,1], [0,3]]
+    , ["∧", [2,3], [6,3]]
+    , ["∨", [0,2], [2,3]]
+    , ["∨", [1,3], [4,3]]
+    , ["∨", [4,5], [2,6]]
+    , ["∧", [6,7], [4,6]]
+    ]
+  , "hypotheses": [8]
+  , "conclusion": 9
+  , "_comment" : "A more complicated level, mixing conjunctions and disjunctions."
+  }
+, { "nodes":
+    [ ["∨", []   , [0,0]]
+    , ["a", []   , [2,0]]
+    ]
+  , "hypotheses": [0]
+  , "conclusion": 1
+  , "_comment" : "The empty disjunction: falsity."
+  }
+, { "nodes":
+    [ ["∨", []   , [0.75,0]]
+    , ["a", []   , [3.25,0]]
+    , ["∨", [0]  , [0,3]]
+    , ["∨", [0,1], [2,3]]
+    , ["∨", [1]  , [4,3]]
+    , ["∨", [2,3,4], [2,6]]
+    ]
+  , "hypotheses": [5]
+  , "conclusion": 1
+  , "_comment" : "A tree of n-ary disjunctions."
+  }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0]]
+    , ["⇒", [0,1], [1,3]]
+    ]
+  , "hypotheses": [0,2]
+  , "conclusion": 1
+  , "_comment" : "Introduce implications."
+  }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0.5625]]
+    , ["c", []   , [4,0.75]]
+    , ["d", []   , [6,0.5625]]
+    , ["e", []   , [8,0]]
+    , ["⇒", [0,1], [1,3]]
+    , ["⇒", [1,2], [3,3]]
+    , ["⇒", [2,3], [5,3]]
+    , ["⇒", [3,4], [7,3]]
+    ]
+  , "hypotheses": [0,5,6,7,8]
+  , "conclusion": 4
+  , "_comment" : "Implication chain."
+  }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0]]
+    , ["c", []   , [4,0]]
+    , ["⇒", [0,1], [0,3]]
+    , ["⇒", [1,2], [4,3]]
+    , ["⇒", [0,2], [2,3]]
+    ]
+  , "hypotheses": [3,4]
+  , "conclusion": 5
+  , "_comment" : "Implication introduction."
+  }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0]]
+    , ["c", []   , [4,0]]
+    , ["∧", [0,1], [1,3]]
+    , ["⇒", [3,2], [3.75,5]]
+    , ["⇒", [1,2], [3,3]]
+    , ["⇒", [0,5], [0.25,5]]
+    ]
+  , "hypotheses": [4]
+  , "conclusion": 6
+  , "_comment" : "Currying."
+  }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0]]
+    , ["c", []   , [4,0]]
+    , ["⇒", [0,2], [2,3]]
+    , ["⇒", [1,2], [4,3]]
+    , ["∨", [0,1], [0,3]]
+    , ["⇒", [5,2], [1,5.5]]
+    , ["∧", [3,4], [3,5.5]]
+    ]
+  , "hypotheses": [7]
+  , "conclusion": 6
+  , "_comment" : "Distributivity."
+  }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["⇒", [0,0], [0,2]]
+    ]
+    , "hypotheses": []
+    , "conclusion": 1
+    , "_comment" : "Identity."
+    }
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["⇒", [0,0], [0,2]]
+    , ["∧", [1]  , [0,4]]
+    ]
+  , "hypotheses": []
+  , "conclusion": 2
+  , "_comment" : "Force the user to discover how to click a wire."
+}
+, { "nodes":
+    [ ["a", []   , [0,0]]
+    , ["b", []   , [2,0]]
+    , ["c", []   , [4,0]]
+    , ["⇒", [0,2], [2,3]]
+    , ["⇒", [1,2], [4,3]]
+    , ["∨", [0,1], [0,3]]
+    , ["⇒", [5,2], [1,5.5]]
+    , ["∧", [3,4], [3,5.5]]
+    ]
+  , "hypotheses": [6]
+  , "conclusion": 7
+  , "_comment" : "Other distributivity."
+  }
+]
