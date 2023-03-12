@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+  <style>
+    body {
+      background: #344;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      font-size: 72px;
+    }
+
+    .button {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hoverable {
+      cursor: pointer;
+    }
+
+    .background {
+      position: fixed;
+      border-radius: 4vmin;
+      background: #cdd;
+      border: 2px solid #011;
+    }
+
+    .background.hoverable:hover {
+      background: #bcc;
+    }
+
+    .background.disabled {
+      background: #788;
+    }
+
+    .resetButton {
+      position: fixed;
+      border-radius: 4vmin;
+      background: #c66;
+      border: 2px solid #800;
+    }
+
+    .resetButton:hover {
+      background: #b55;
+    }
+
+    .node {
+      fill: #9ab;
+      stroke: #789;
+      stroke-width: 0.04;
+    }
+
+    .node.hoverable:hover {
+      fill: #89a;
+    }
+
+    .wire {
+      fill: transparent;
+      stroke: #666;
+      stroke-width: 0.08;
+    }
+
+    .wire.hoverable:hover {
+      stroke: #555;
+    }
+
+    .wire.border {
+      fill: transparent;
+      stroke: #000;
+      stroke-width: 0.12;
+    }
+
+    .wire.known {
+      stroke: #3a3;
+    }
+
+    .wire.known.hoverable:hover {
+      stroke: #292;
+    }
+
+    .wire.border.known {
+      stroke: #080;
+    }
+
+    .wire.goal {
+      stroke: #da3;
+    }
+
+    .wire.goal.hoverable:hover {
+      stroke: #c92;
+    }
+
+    .wire.border.goal {
+      stroke: #b70;
+    }
+
+    .nextLevel {
+      position: fixed;
+      top: 40%;
+      left: 40%;
+      width: 20%;
+      height: 20%;
+      background: #3a3;
+      border: 2px solid #060;
+      cursor: pointer;
+    }
+
+    .nextLevel:hover {
+      background: #292
+    }
+  </style>
+</head>
+
+<body>
+  <script type="module">
+    import init from './pkg/proof_game.js';
+    async function run() {
+      (await init()).run();
+    }
+    run();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "proof-game",
+  "collaborators": [
+    "finegeometer <finegeometer@gmail.com>"
+  ],
+  "description": "Can mathematical proof be turned into a puzzle game?",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/finegeometer/proof-game"
+  },
+  "files": [
+    "proof_game_bg.wasm",
+    "proof_game.js",
+    "proof_game.d.ts"
+  ],
+  "module": "proof_game.js",
+  "types": "proof_game.d.ts",
+  "sideEffects": "false"
+}
