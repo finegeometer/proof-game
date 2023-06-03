@@ -1,19 +1,18 @@
-use super::core::ExprId;
-use std::{cell::RefCell, collections::HashMap};
+use std::{cell::RefCell, collections::HashMap, hash::Hash};
 
 #[derive(Clone)]
-pub struct UnionFind {
-    tree: RefCell<HashMap<ExprId, Node>>,
-    cycles: HashMap<ExprId, ExprId>,
+pub struct UnionFind<T> {
+    tree: RefCell<HashMap<T, Node<T>>>,
+    cycles: HashMap<T, T>,
 }
 
 #[derive(Clone, Copy)]
-enum Node {
-    Root { rank: u8, smallest: ExprId },
-    Child { parent: ExprId },
+enum Node<T> {
+    Root { rank: u8 },
+    Child { parent: T },
 }
 
-impl UnionFind {
+impl<T: Copy + Eq + Hash> UnionFind<T> {
     pub fn new() -> Self {
         Self {
             tree: RefCell::new(HashMap::new()),
@@ -21,34 +20,35 @@ impl UnionFind {
         }
     }
 
-    fn find(&self, node: ExprId) -> (ExprId, u8, ExprId) {
+    fn find(&self, node: T) -> (T, u8) {
         let x = self.tree.borrow().get(&node).copied();
         match x {
-            Some(Node::Root { rank, smallest }) => (node, rank, smallest),
+            Some(Node::Root { rank }) => (node, rank),
             Some(Node::Child { parent }) => {
-                let (root, rank, smallest) = self.find(parent);
+                let (root, rank) = self.find(parent);
                 self.tree
                     .borrow_mut()
                     .insert(node, Node::Child { parent: root });
-                (root, rank, smallest)
+                (root, rank)
             }
             None => {
-                self.tree.borrow_mut().insert(
-                    node,
-                    Node::Root {
-                        rank: 0,
-                        smallest: node,
-                    },
-                );
-                (node, 0, node)
+                self.tree.borrow_mut().insert(node, Node::Root { rank: 0 });
+                (node, 0)
             }
         }
     }
 
-    pub fn merge(&mut self, n1: ExprId, n2: ExprId) {
-        let (r1, rank1, smallest1) = self.find(n1);
-        let (r2, rank2, smallest2) = self.find(n2);
-        let smallest = smallest1.min(smallest2);
+    pub fn canonical(&self, node: T) -> T {
+        self.find(node).0
+    }
+
+    pub fn eq(&self, n1: T, n2: T) -> bool {
+        self.canonical(n1) == self.canonical(n2)
+    }
+
+    pub fn merge(&mut self, n1: T, n2: T) {
+        let (r1, rank1) = self.find(n1);
+        let (r2, rank2) = self.find(n2);
 
         if r1 == r2 {
             return;
@@ -64,32 +64,20 @@ impl UnionFind {
         let mut tree = self.tree.borrow_mut();
         if rank1 < rank2 {
             tree.insert(r1, Node::Child { parent: r2 });
-            tree.insert(
-                r2,
-                Node::Root {
-                    rank: rank2,
-                    smallest,
-                },
-            );
+            tree.insert(r2, Node::Root { rank: rank2 });
         } else {
             tree.insert(r2, Node::Child { parent: r1 });
             tree.insert(
                 r1,
                 Node::Root {
                     rank: if rank1 == rank2 { rank1 + 1 } else { rank1 },
-                    smallest,
                 },
             );
         }
     }
 
-    /// Find the smallest `ExprId` in the same equivalence class as the input.
-    pub fn smallest(&self, e: ExprId) -> ExprId {
-        self.find(e).2
-    }
-
     /// Iterator over all the nodes in the same equivalence class as `e`.
-    pub fn iter_class(&self, e: ExprId) -> impl Iterator<Item = ExprId> + '_ {
+    pub fn iter_class(&self, e: T) -> impl Iterator<Item = T> + '_ {
         let mut node = e;
         std::iter::once(node).chain(std::iter::from_fn(move || {
             node = *self.cycles.get(&node).unwrap_or(&node);

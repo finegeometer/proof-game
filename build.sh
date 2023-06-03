@@ -2,5 +2,5 @@
 
 set -ex
 
-wasm-pack build --target web
+WASM_BINDGEN_WEAKREF=1 wasm-pack build --target web
 python3 -m http.server

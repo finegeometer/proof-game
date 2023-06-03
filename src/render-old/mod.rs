@@ -1,5 +1,3 @@
-mod bezier;
-
 #[cfg(target_family = "wasm")]
 mod wasm;
 #[cfg(target_family = "wasm")]
