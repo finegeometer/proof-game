@@ -7,15 +7,17 @@ pub struct CaseTree {
     current: Option<Case>,
     later: Vec<Case>,
     pub svg_corners: ([f64; 2], [f64; 2]),
+    pub text_box: Option<String>,
 }
 
 impl CaseTree {
-    pub fn new(case: Case) -> Self {
+    pub fn new(case: Case, text_box: Option<String>) -> Self {
         Self {
             earlier: Vec::new(),
             current: Some(case),
             later: Vec::new(),
-            svg_corners: ([-1.; 2], [19.; 2]), // NOTE: If I update this, I need to update the viewBox.
+            svg_corners: ([-10., -1.], [10., 19.]),
+            text_box,
         }
     }
 

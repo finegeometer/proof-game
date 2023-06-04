@@ -10,10 +10,11 @@ pub struct LevelData<'a> {
     nodes: Vec<(&'a str, Vec<usize>, [f64; 2])>,
     hypotheses: Vec<usize>,
     conclusion: usize,
+    text_box: Option<&'a str>,
 }
 
 impl<'a> LevelData<'a> {
-    pub fn load(&self) -> Result<Case, ()> {
+    pub fn load(&self) -> Result<CaseTree, ()> {
         let mut case = Case::new();
         let mut wires = Vec::with_capacity(self.nodes.len());
         for (op, inputs, position) in &self.nodes {
@@ -52,6 +53,6 @@ impl<'a> LevelData<'a> {
             )
         }
         case.set_goal(wires.get(self.conclusion).copied().ok_or(())?);
-        Ok(case)
+        Ok(CaseTree::new(case, self.text_box.map(|s| s.to_owned())))
     }
 }

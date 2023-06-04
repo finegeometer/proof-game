@@ -106,6 +106,7 @@ impl super::Wire {
         outputs: &[(super::Node, usize)],
         case: &super::Case,
         cx: &mut dodrio::RenderContext<'a>,
+        unlocks: crate::UnlockState,
     ) -> [dodrio::Node<'a>; 2] {
         use bumpalo::collections::Vec;
         use dodrio::builder::*;
@@ -165,7 +166,8 @@ impl super::Wire {
             ""
         };
 
-        let hoverable = if case.wire_has_interaction(self) {
+        let hoverable = if unlocks >= crate::UnlockState::Lemmas && case.wire_has_interaction(self)
+        {
             " hoverable"
         } else {
             ""
@@ -211,6 +213,7 @@ impl super::Case {
         &self,
         svg_corners: ([f64; 2], [f64; 2]),
         cx: &mut dodrio::RenderContext<'a>,
+        unlocks: crate::UnlockState,
     ) -> dodrio::Node<'a> {
         use dodrio::builder::*;
 
@@ -220,7 +223,7 @@ impl super::Case {
                 attr("class", "background"),
                 attr("preserveAspectRatio", "xMinYMin slice"),
                 attr("font-size", "0.75"),
-                attr("style", "top: 2%; height: 96%; left: 9%; width: 82%;"),
+                attr("style", "top: 2%; height: 86%; left: 9%; width: 82%;"),
                 attr(
                     "viewBox",
                     bumpalo::format!(in cx.bump,
@@ -269,7 +272,7 @@ impl super::Case {
                 {
                     let mut builder = g(cx.bump);
                     for (wire, outputs) in self.wires() {
-                        for svg_node in wire.render(&outputs, self, cx) {
+                        for svg_node in wire.render(&outputs, self, cx, unlocks) {
                             builder = builder.child(svg_node);
                         }
                     }
@@ -288,14 +291,18 @@ impl super::Case {
     }
 }
 
-impl<'a> dodrio::Render<'a> for super::CaseTree {
-    fn render(&self, cx: &mut dodrio::RenderContext<'a>) -> dodrio::Node<'a> {
+impl super::CaseTree {
+    pub fn render<'a>(
+        &self,
+        cx: &mut dodrio::RenderContext<'a>,
+        unlocks: crate::UnlockState,
+    ) -> dodrio::Node<'a> {
         use dodrio::builder::*;
 
         let mut builder = div(cx.bump);
 
         if let Some(case) = self.current_case() {
-            builder = builder.child(case.render(self.svg_corners, cx))
+            builder = builder.child(case.render(self.svg_corners, cx, unlocks))
         }
 
         // Case Selection
@@ -363,16 +370,28 @@ impl<'a> dodrio::Render<'a> for super::CaseTree {
         if self.current_case().is_none() && self.cases_left() == 0 && self.cases_right() == 0 {
             builder = builder.child(
                 div(cx.bump)
-                    .attributes([
-                        attr("class", "nextLevel button"),
-                        // attr("style", "top: 88%; height: 10%; left: 81%; width: 10%;"),
-                    ])
+                    .attributes([attr("class", "nextLevel button")])
                     .on("click", move |root, vdom, _| {
                         let model = root.unwrap_mut::<super::Model>();
                         model.update(super::Msg::NextLevel);
                         vdom.schedule_render();
                     })
                     .children([text("Next Level!")])
+                    .finish(),
+            );
+        }
+
+        if let Some(text_box) = &self.text_box {
+            builder = builder.child(
+                div(cx.bump)
+                    .attributes([
+                        attr("class", "background disabled"),
+                        attr("style", "top: 92%; height: 6%; left: 9%; width: 82%; text-align: center; vertical-align: middle;"),
+                    ])
+                    .children([text(
+                        bumpalo::collections::String::from_str_in(text_box, cx.bump)
+                            .into_bump_str(),
+                    )])
                     .finish(),
             );
         }

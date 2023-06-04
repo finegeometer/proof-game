@@ -60,15 +60,29 @@ enum Msg {
     ResetLevel,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum UnlockState {
+    None,
+    CaseTree,
+    Lemmas,
+}
+
 impl Model {
+    fn unlock_state(&self) -> UnlockState {
+        match self.future_levels.as_slice().len() {
+            0..=1 => UnlockState::Lemmas,
+            2..=11 => UnlockState::CaseTree,
+            _ => UnlockState::None,
+        }
+    }
+
     fn new() -> Self {
         let levels: Vec<load::LevelData> =
             serde_json::from_str(include_str!("./levels.json")).unwrap();
         let mut future_levels = levels.into_iter();
 
         let current_level = future_levels.next().unwrap();
-
-        let case_tree = CaseTree::new(current_level.load().unwrap());
+        let case_tree = current_level.load().unwrap();
 
         Self {
             case_tree,
@@ -113,12 +127,13 @@ impl Model {
                         object: DragObject::Wire(wire),
                         ..
                     }) => {
-                        if self
-                            .case_tree
-                            .current_case()
-                            .as_ref()
-                            .and_then(move |x| x.wire_has_interaction(wire).then_some(()))
-                            .is_some()
+                        if self.unlock_state() >= UnlockState::Lemmas
+                            && self
+                                .case_tree
+                                .current_case()
+                                .as_ref()
+                                .and_then(move |x| x.wire_has_interaction(wire).then_some(()))
+                                .is_some()
                         {
                             self.case_tree.interact_wire(wire)
                         }
@@ -162,14 +177,14 @@ impl Model {
                     && self.case_tree.cases_right() == 0
                 {
                     if let Some(level) = self.future_levels.next() {
-                        self.case_tree = CaseTree::new(load::LevelData::load(&level).unwrap());
+                        self.case_tree = load::LevelData::load(&level).unwrap();
                         self.current_level = level;
                     }
                 }
             }
             Msg::ResetLevel => {
                 self.drag = None;
-                self.case_tree = CaseTree::new(self.current_level.load().unwrap());
+                self.case_tree = self.current_level.load().unwrap();
             }
         }
     }
@@ -214,6 +229,6 @@ impl Model {
 
 impl<'a> dodrio::Render<'a> for Model {
     fn render(&self, cx: &mut dodrio::RenderContext<'a>) -> dodrio::Node<'a> {
-        self.case_tree.render(cx)
+        self.case_tree.render(cx, self.unlock_state())
     }
 }
