@@ -1,3 +1,5 @@
+mod bezier;
+
 use dodrio::{builder::ElementBuilder, bumpalo};
 use wasm_bindgen::JsCast;
 
@@ -101,66 +103,56 @@ impl super::Node {
 impl super::Wire {
     fn render<'a>(
         self,
-        outputs: impl Iterator<Item = (super::Node, usize)>,
+        outputs: &[(super::Node, usize)],
         case: &super::Case,
         cx: &mut dodrio::RenderContext<'a>,
     ) -> [dodrio::Node<'a>; 2] {
+        use bumpalo::collections::Vec;
         use dodrio::builder::*;
 
-        // Compute Bezier
-        let bezier: &'a str = {
+        let d: &'a str = {
             const WIRE_STIFFNESS: f64 = 0.75;
 
-            let ab: Vec<([f64; 2], [f64; 2])> = case
-                .wire_inputs(self)
-                .map(|node| {
-                    let [x, y] = case.position(node);
-                    ([x, y], [x, y + WIRE_STIFFNESS])
-                })
-                .collect();
+            let inputs = Vec::from_iter_in(case.wire_inputs(self), cx.bump);
+            let start = Vec::from_iter_in(inputs.iter().map(|&node| case.position(node)), cx.bump);
+            let start_vector = [0., WIRE_STIFFNESS];
+            let end;
+            let end_vector;
 
-            let mut fg: Vec<([f64; 2], [f64; 2])> = outputs
-                .map(|(node, idx)| {
-                    let [x, y] = case.position(node);
-                    (
+            if outputs.is_empty() {
+                let start_avg = bezier::average(&start);
+                end = bumpalo::vec![in cx.bump; [start_avg[0], start_avg[1] + 3. * WIRE_STIFFNESS]];
+                end_vector = bumpalo::vec![in cx.bump; [0., WIRE_STIFFNESS]];
+            } else {
+                end = Vec::from_iter_in(
+                    outputs.iter().map(|&(node, _)| case.position(node)),
+                    cx.bump,
+                );
+                end_vector = Vec::from_iter_in(
+                    outputs.iter().map(|&(node, idx)| {
                         [
-                            x + WIRE_STIFFNESS
+                            -WIRE_STIFFNESS
                                 * (idx as f64
                                     - (case.node_expression(node).inputs().len() as f64 - 1.) / 2.),
-                            y - WIRE_STIFFNESS,
-                        ],
-                        [x, y],
-                    )
-                })
-                .collect();
-
-            if fg.is_empty() {
-                let x_avg = ab.iter().map(|&([a, _], _)| a).sum::<f64>() / (ab.len() as f64);
-                let y_avg = ab.iter().map(|&([_, a], _)| a).sum::<f64>() / (ab.len() as f64);
-                fg = vec![(
-                    [x_avg, y_avg + 2. * WIRE_STIFFNESS],
-                    [x_avg, y_avg + 3. * WIRE_STIFFNESS],
-                )]
+                            WIRE_STIFFNESS,
+                        ]
+                    }),
+                    cx.bump,
+                );
             }
+            let (mid, mid_vector) = bezier::split(
+                bezier::average(&start),
+                start_vector,
+                bezier::average(&end_vector),
+                bezier::average(&end),
+            );
 
-            let ([c_x, c_y], [d_x, d_y], [e_x, e_y]) =
-                connect_bezier(ab.iter().copied(), fg.iter().copied());
-
-            use std::fmt::Write;
             let mut path = bumpalo::collections::String::new_in(cx.bump);
-            for ([a_x, a_y], [b_x, b_y]) in ab {
-                write!(
-                    path,
-                    "M {a_x} {a_y} C {b_x} {b_y}, {c_x} {c_y}, {d_x} {d_y}"
-                )
-                .unwrap();
+            for start in start {
+                bezier::path(start, start_vector, mid_vector, mid, &mut path);
             }
-            for ([f_x, f_y], [g_x, g_y]) in fg {
-                write!(
-                    path,
-                    "M {d_x} {d_y} C {e_x} {e_y}, {f_x} {f_y}, {g_x} {g_y}"
-                )
-                .unwrap();
+            for (end, end_vector) in end.into_iter().zip(end_vector) {
+                bezier::path(mid, mid_vector, end_vector, end, &mut path);
             }
             path.into_bump_str()
         };
@@ -195,7 +187,7 @@ impl super::Wire {
                         bumpalo::format!(in cx.bump, "wire border{}{}", extra_classes, hoverable)
                             .into_bump_str(),
                     ),
-                    attr("d", bezier),
+                    attr("d", d),
                 ])
                 .on("mousedown", closure)
                 .finish(),
@@ -206,76 +198,12 @@ impl super::Wire {
                         bumpalo::format!(in cx.bump, "wire{}{}", extra_classes, hoverable)
                             .into_bump_str(),
                     ),
-                    attr("d", bezier),
+                    attr("d", d),
                 ])
                 .on("mousedown", closure)
                 .finish(),
         ]
     }
-}
-
-/// Given points `A_i`, `B_i`, `F_j`, and `G_j`,
-/// find points `C`, `D`, and `E` such that
-/// the bezier splines `A_i B_i C D E F_j G_j` have:
-/// 1. Continuous first derivative at `D`
-/// 2. Minimum discontinuity in the second derivative at `D`.
-/// 3. Consistent with the above, minimum discontinuity in the third derivative at `D`.
-fn connect_bezier(
-    ab: impl Iterator<Item = ([f64; 2], [f64; 2])>,
-    fg: impl Iterator<Item = ([f64; 2], [f64; 2])>,
-) -> ([f64; 2], [f64; 2], [f64; 2]) {
-    let a: [f64; 2];
-    let b: [f64; 2];
-    let f: [f64; 2];
-    let g: [f64; 2];
-
-    {
-        let mut a_sum = [0.; 2];
-        let mut b_sum = [0.; 2];
-        let mut ab_count = 0;
-
-        for (ai, bi) in ab {
-            a_sum[0] += ai[0];
-            a_sum[1] += ai[1];
-            b_sum[0] += bi[0];
-            b_sum[1] += bi[1];
-            ab_count += 1;
-        }
-
-        let ab_count = f64::from(ab_count);
-        a = [a_sum[0] / ab_count, a_sum[1] / ab_count];
-        b = [b_sum[0] / ab_count, b_sum[1] / ab_count];
-    }
-
-    {
-        let mut f_sum = [0.; 2];
-        let mut g_sum = [0.; 2];
-        let mut fg_count = 0;
-
-        for (fi, gi) in fg {
-            f_sum[0] += fi[0];
-            f_sum[1] += fi[1];
-            g_sum[0] += gi[0];
-            g_sum[1] += gi[1];
-            fg_count += 1;
-        }
-
-        let fg_count = f64::from(fg_count);
-
-        f = [f_sum[0] / fg_count, f_sum[1] / fg_count];
-        g = [g_sum[0] / fg_count, g_sum[1] / fg_count];
-    }
-
-    // Continuity of first derivative implies `E-D = D-C`.
-    // Minimum discontinuity of second derivative further implies `E-D = D-C = (F-B) / 4`.
-    // Minimum discontinuity of third derivative further implies `D = ((3B-A) + (3F-G)) / 4`.
-
-    let d = [
-        (3. * b[0] - a[0] + 3. * f[0] - g[0]) / 4.,
-        (3. * b[1] - a[1] + 3. * f[1] - g[1]) / 4.,
-    ];
-    let v = [(f[0] - b[0]) / 4., (f[1] - b[1]) / 4.];
-    ([d[0] - v[0], d[1] - v[1]], d, [d[0] + v[0], d[1] + v[1]])
 }
 
 impl super::Case {
@@ -341,7 +269,7 @@ impl super::Case {
                 {
                     let mut builder = g(cx.bump);
                     for (wire, outputs) in self.wires() {
-                        for svg_node in wire.render(outputs.into_iter(), self, cx) {
+                        for svg_node in wire.render(&outputs, self, cx) {
                             builder = builder.child(svg_node);
                         }
                     }
