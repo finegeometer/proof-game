@@ -9,47 +9,18 @@ impl LevelState {
         cx: &mut dodrio::RenderContext<'a>,
         unlocks: crate::UnlockState,
     ) -> dodrio::Node<'a> {
-        let mut builder = div(cx.bump);
-
         let (case, complete) = self.case_tree.current_case();
 
-        builder = builder.child(case.render(self.svg_corners, cx, unlocks, complete));
+        let mut col0 = div(cx.bump).attributes([attr("id", "col0")]);
 
-        if unlocks >= crate::UnlockState::CaseTree {
-            builder = builder.child(self.case_tree.render(cx));
-        }
-
-        // Reset Level
-        builder = builder.child(
-            div(cx.bump)
-                .attributes([
-                    attr("class", "resetButton button"),
-                    attr("style", "top: 88%; height: 10%; left: 81%; width: 10%;"),
-                ])
-                .on("click", handler(move |_| crate::Msg::ResetLevel))
-                .children([text("Reset")])
-                .finish(),
-        );
-
-        // Next Level
-        if self.case_tree.all_complete() {
-            builder = builder.child(
-                div(cx.bump)
-                    .attributes([attr("class", "nextLevel button")])
-                    .on("click", handler(move |_| crate::Msg::NextLevel))
-                    .children([text("Next Level!")])
-                    .finish(),
-            );
-        }
+        // Main Screen
+        col0 = col0.child(case.render(self.svg_corners, cx, unlocks, complete));
 
         // Text Box
         if let Some(text_box) = &self.text_box {
-            builder = builder.child(
+            col0 = col0.child(
                 div(cx.bump)
-                    .attributes([
-                        attr("class", "background disabled"),
-                        attr("style", "top: 92%; height: 6%; left: 9%; width: 82%; text-align: center; vertical-align: middle;"),
-                    ])
+                    .attributes([attr("id", "text-box"), attr("class", "background disabled")])
                     .children([text(
                         bumpalo::collections::String::from_str_in(text_box, cx.bump)
                             .into_bump_str(),
@@ -58,6 +29,43 @@ impl LevelState {
             );
         }
 
-        builder.finish()
+        let mut col1 = div(cx.bump).attributes([attr("id", "col1")]);
+
+        // Case Tree
+        if unlocks >= crate::UnlockState::CaseTree {
+            col1 = col1.child(self.case_tree.render(cx));
+        }
+
+        // Blank Space
+        col1 = col1.child(
+            div(cx.bump)
+                .attributes([attr("style", "flex: 1;")])
+                .finish(),
+        );
+
+        // Next Level
+        if self.case_tree.all_complete() {
+            col1 = col1.child(
+                div(cx.bump)
+                    .attributes([attr("id", "next-level"), attr("class", "button")])
+                    .on("click", handler(move |_| crate::Msg::NextLevel))
+                    .children([text("Next Level!")])
+                    .finish(),
+            );
+        }
+
+        // Reset Level
+        col1 = col1.child(
+            div(cx.bump)
+                .attributes([attr("id", "reset"), attr("class", "button")])
+                .on("click", handler(move |_| crate::Msg::ResetLevel))
+                .children([text("Reset")])
+                .finish(),
+        );
+
+        div(cx.bump)
+            .attributes([attr("id", "top")])
+            .children([col0.finish(), col1.finish()])
+            .finish()
     }
 }

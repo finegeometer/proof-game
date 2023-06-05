@@ -184,7 +184,6 @@ impl super::Case {
                 ),
                 attr("preserveAspectRatio", "xMidYMid meet"),
                 attr("font-size", "0.75"),
-                attr("style", "top: 2%; height: 86%; left: 9%; width: 82%;"),
                 attr(
                     "viewBox",
                     bumpalo::format!(in cx.bump,

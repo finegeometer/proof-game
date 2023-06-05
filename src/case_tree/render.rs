@@ -19,13 +19,15 @@ impl CaseTree {
         let children = &self.nodes[node].children;
         let mut xs: SmallVec<[f64; 2]> = SmallVec::with_capacity(children.len());
 
-        let mut builder = g(cx.bump);
+        let mut subtrees = bumpalo::collections::Vec::new_in(cx.bump);
 
         for &node in children {
             let (subtree, x) = self.subtree(cx, node, x, y - 2., y_min);
             xs.push(x);
-            builder = builder.child(subtree);
+            subtrees.push(subtree);
         }
+
+        let mut builder = g(cx.bump);
 
         if xs.is_empty() {
             let mut clickable = false;
@@ -56,9 +58,14 @@ impl CaseTree {
                 )
             }
 
-            builder = builder.child(circle.finish());
+            let n = subtrees.len();
+            subtrees.push(circle.finish());
+            subtrees.swap(0, n);
 
-            (builder.finish(), std::mem::replace(x, *x + 2.))
+            (
+                g(cx.bump).children(subtrees).finish(),
+                std::mem::replace(x, *x + 2.),
+            )
         } else {
             let x0 = xs.iter().copied().sum::<f64>() / (xs.len() as f64);
 
@@ -68,19 +75,23 @@ impl CaseTree {
             }
             let d = d.into_bump_str();
 
-            builder = builder
-                .child(
-                    path(cx.bump)
-                        .attributes([attr("class", "wire border"), attr("d", d)])
-                        .finish(),
-                )
-                .child(
-                    path(cx.bump)
-                        .attributes([attr("class", "wire"), attr("d", d)])
-                        .finish(),
-                );
+            let n = subtrees.len();
+            subtrees.push(
+                path(cx.bump)
+                    .attributes([attr("class", "wire border"), attr("d", d)])
+                    .finish(),
+            );
+            subtrees.swap(0, n);
 
-            (builder.finish(), x0)
+            let n = subtrees.len();
+            subtrees.push(
+                path(cx.bump)
+                    .attributes([attr("class", "wire"), attr("d", d)])
+                    .finish(),
+            );
+            subtrees.swap(1, n);
+
+            (g(cx.bump).children(subtrees).finish(), x0)
         }
     }
 
@@ -91,6 +102,7 @@ impl CaseTree {
         svg(cx.bump)
             .child(self.subtree(cx, 0, &mut x, 0., &mut y_min).0)
             .attributes([
+                attr("id", "class-tree"),
                 attr(
                     "class",
                     if self.all_complete() {
@@ -101,7 +113,6 @@ impl CaseTree {
                 ),
                 attr("preserveAspectRatio", "xMidYMax meet"),
                 attr("font-size", "0.75"),
-                attr("style", "top: 2%; height: 18%; left: 82%; width: 18%;"),
                 attr(
                     "viewBox",
                     bumpalo::format!(in cx.bump,
