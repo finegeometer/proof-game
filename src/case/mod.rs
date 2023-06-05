@@ -1,3 +1,4 @@
+mod render;
 mod union_find;
 
 use std::{collections::BTreeMap, rc::Rc};

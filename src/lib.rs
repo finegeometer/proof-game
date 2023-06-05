@@ -55,8 +55,7 @@ enum Msg {
     MouseMove(f64, f64),
     MouseUp(f64, f64),
     MouseWheel(f64, f64, f64),
-    NextCase,
-    PrevCase,
+    GotoCase(case_tree::CaseId),
     NextLevel,
     ResetLevel,
 }
@@ -113,14 +112,8 @@ impl Model {
                         object: DragObject::Node(node),
                         ..
                     }) => {
-                        if self
-                            .level_state
-                            .case_tree
-                            .current_case()
-                            .as_ref()
-                            .and_then(move |x| x.node_has_interaction(node).then_some(()))
-                            .is_some()
-                        {
+                        let (case, complete) = self.level_state.case_tree.current_case();
+                        if !complete && case.node_has_interaction(node) {
                             self.level_state.case_tree.interact_node(node)
                         }
                     }
@@ -129,14 +122,10 @@ impl Model {
                         object: DragObject::Wire(wire),
                         ..
                     }) => {
+                        let (case, complete) = self.level_state.case_tree.current_case();
                         if self.unlock_state() >= UnlockState::Lemmas
-                            && self
-                                .level_state
-                                .case_tree
-                                .current_case()
-                                .as_ref()
-                                .and_then(move |x| x.wire_has_interaction(wire).then_some(()))
-                                .is_some()
+                            && !complete
+                            && case.wire_has_interaction(wire)
                         {
                             self.level_state.case_tree.interact_wire(wire)
                         }
@@ -154,11 +143,8 @@ impl Model {
                 }
                 self.drag = None;
             }
-            Msg::NextCase => {
-                self.level_state.case_tree.next_case();
-            }
-            Msg::PrevCase => {
-                self.level_state.case_tree.prev_case();
+            Msg::GotoCase(id) => {
+                self.level_state.case_tree.goto_case(id);
             }
             Msg::MouseWheel(x, y, wheel) => {
                 self.level_state
@@ -176,10 +162,7 @@ impl Model {
                 }
             }
             Msg::NextLevel => {
-                if self.level_state.case_tree.current_case().is_none()
-                    && self.level_state.case_tree.cases_left() == 0
-                    && self.level_state.case_tree.cases_right() == 0
-                {
+                if self.level_state.case_tree.all_complete() {
                     if let Some(level) = self.future_levels.next() {
                         self.level_state = load::LevelData::load(&level).unwrap();
                         self.current_level = level;

@@ -82,6 +82,7 @@
   , "hypotheses": [2]
   , "conclusion": 3
   , "_comment" : "Disjunction elimination, demonstrated via commutativity."
+  , "text_box" : "New feature: Proof by cases."
   }
 , { "nodes":
     [ ["a", []   , [-3,0]]

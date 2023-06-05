@@ -59,113 +59,112 @@ impl Case {
 
 impl CaseTree {
     pub fn interact_node(&mut self, node: Node) {
-        if let Some(initial_case) = self.current_case() {
-            let output = initial_case.node_output(node);
-            match (
-                initial_case.node_expression(node),
-                initial_case.proven(output),
-            ) {
-                (Expression::And(inputs), true) => {
-                    for wire in inputs.clone() {
-                        self.edit_case([|case: &mut Case| {
-                            case.set_proven(
-                                wire,
-                                ValidityReason::new(
-                                    r"
-If a conjunction holds, so do each of the individual propositions.",
-                                ),
-                            )
-                        }]);
-                    }
-                }
-                (Expression::And(_), false) => {
+        let initial_case = self.current_case().0;
+        let output = initial_case.node_output(node);
+        match (
+            initial_case.node_expression(node),
+            initial_case.proven(output),
+        ) {
+            (Expression::And(inputs), true) => {
+                for wire in inputs.clone() {
                     self.edit_case([|case: &mut Case| {
                         case.set_proven(
-                            output,
+                            wire,
                             ValidityReason::new(
                                 r"
+If a conjunction holds, so do each of the individual propositions.",
+                            ),
+                        )
+                    }]);
+                }
+            }
+            (Expression::And(_), false) => {
+                self.edit_case([|case: &mut Case| {
+                    case.set_proven(
+                        output,
+                        ValidityReason::new(
+                            r"
 If a collection of propositions holds, so does their conjunction.
 This was checked in `node_has_interaction`.",
-                            ),
-                        )
-                    }]);
-                }
-                (Expression::Or(inputs), true) => {
-                    let inputs = inputs.clone();
-                    self.edit_case(inputs.iter().map(|&wire| {
-                        move |case: &mut Case| {
-                            case.set_proven(
-                                wire,
-                                ValidityReason::new(
-                                    r"
+                        ),
+                    )
+                }]);
+            }
+            (Expression::Or(inputs), true) => {
+                let inputs = inputs.clone();
+                self.edit_case(inputs.iter().map(|&wire| {
+                    move |case: &mut Case| {
+                        case.set_proven(
+                            wire,
+                            ValidityReason::new(
+                                r"
 If a disjunction holds, we can split into several cases.
 In each case, one of the individual propositions holds.",
-                                ),
-                            );
-                        }
-                    }));
-                }
-                (Expression::Or(_), false) => {
-                    self.edit_case([|case: &mut Case| {
-                        case.set_proven(
-                            output,
-                            ValidityReason::new(
-                                r"
-A disjunction holds if any of the individual propositions hold.
-This was checked in `node_has_interaction`.",
-                            ),
-                        )
-                    }]);
-                }
-                (Expression::Implies([_, conclusion]), true) => {
-                    let conclusion = *conclusion;
-                    self.edit_case([|case: &mut Case| {
-                        case.set_proven(
-                            conclusion,
-                            ValidityReason::new(
-                                r"
-If an implication holds, and its hypothesis holds, then the conclusion holds.
-The hypothesis was checked in `node_has_interaction`.",
-                            ),
-                        )
-                    }]);
-                }
-                (Expression::Implies([hypothesis, conclusion]), false) => {
-                    let hypothesis = *hypothesis;
-                    let conclusion = *conclusion;
-                    self.edit_case([|case: &mut Case| {
-                        case.set_proven(
-                            hypothesis,
-                            ValidityReason::new(
-                                r"
-To prove an implication, one assumes the hypothesis, and tries to prove the conclusion.
-It was checked in `node_has_interaction` that the implication is the goal.",
                             ),
                         );
-                        case.set_goal(conclusion);
-                    }]);
-                }
-                (Expression::Equal([w1, w2]), true) => {
-                    let w1 = *w1;
-                    let w2 = *w2;
-                    self.edit_case([|case: &mut Case| {
-                        case.connect(
-                            w1,
-                            w2,
-                            ValidityReason::new(
-                                r"
+                    }
+                }));
+            }
+            (Expression::Or(_), false) => {
+                self.edit_case([|case: &mut Case| {
+                    case.set_proven(
+                        output,
+                        ValidityReason::new(
+                            r"
+A disjunction holds if any of the individual propositions hold.
+This was checked in `node_has_interaction`.",
+                        ),
+                    )
+                }]);
+            }
+            (Expression::Implies([_, conclusion]), true) => {
+                let conclusion = *conclusion;
+                self.edit_case([|case: &mut Case| {
+                    case.set_proven(
+                        conclusion,
+                        ValidityReason::new(
+                            r"
+If an implication holds, and its hypothesis holds, then the conclusion holds.
+The hypothesis was checked in `node_has_interaction`.",
+                        ),
+                    )
+                }]);
+            }
+            (Expression::Implies([hypothesis, conclusion]), false) => {
+                let hypothesis = *hypothesis;
+                let conclusion = *conclusion;
+                self.edit_case([|case: &mut Case| {
+                    case.set_proven(
+                        hypothesis,
+                        ValidityReason::new(
+                            r"
+To prove an implication, one assumes the hypothesis, and tries to prove the conclusion.
+It was checked in `node_has_interaction` that the implication is the goal.",
+                        ),
+                    );
+                    case.set_goal(conclusion);
+                }]);
+            }
+            (Expression::Equal([w1, w2]), true) => {
+                let w1 = *w1;
+                let w2 = *w2;
+                self.edit_case([|case: &mut Case| {
+                    case.connect(
+                        w1,
+                        w2,
+                        ValidityReason::new(
+                            r"
 If two expressions are equal, we may treat them as equivalent in all respects.
 So we might as well merge the wires.",
-                            ),
-                        )
-                    }]);
-                }
-                (Expression::Equal(_), false) => {
-                    todo!("Check whether nodes are equivalent.")
-                }
-                (Expression::Other(_), true) => {}
-                (Expression::Other(_), false) => {}
+                        ),
+                    )
+                }]);
             }
+            (Expression::Equal(_), false) => {
+                todo!("Check whether nodes are equivalent.")
+            }
+            (Expression::Other(_), true) => {}
+            (Expression::Other(_), false) => {}
         }
     }
 
