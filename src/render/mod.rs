@@ -291,7 +291,7 @@ impl super::Case {
     }
 }
 
-impl super::CaseTree {
+impl super::level_state::LevelState {
     pub fn render<'a>(
         &self,
         cx: &mut dodrio::RenderContext<'a>,
@@ -301,7 +301,7 @@ impl super::CaseTree {
 
         let mut builder = div(cx.bump);
 
-        if let Some(case) = self.current_case() {
+        if let Some(case) = self.case_tree.current_case() {
             builder = builder.child(case.render(self.svg_corners, cx, unlocks))
         }
 
@@ -313,7 +313,7 @@ impl super::CaseTree {
                         attr("style", "top: 2%; height: 96%; left: 2%; width: 5%;"),
                         attr(
                             "class",
-                            if self.cases_left() == 0 {
+                            if self.case_tree.cases_left() == 0 {
                                 "background disabled button"
                             } else {
                                 "background hoverable button"
@@ -334,7 +334,7 @@ impl super::CaseTree {
                         attr("style", "top: 2%; height: 96%; left: 93%; width: 5%;"),
                         attr(
                             "class",
-                            if self.cases_right() == 0 {
+                            if self.case_tree.cases_right() == 0 {
                                 "background disabled button"
                             } else {
                                 "background hoverable button"
@@ -367,7 +367,10 @@ impl super::CaseTree {
         );
 
         // Next Level
-        if self.current_case().is_none() && self.cases_left() == 0 && self.cases_right() == 0 {
+        if self.case_tree.current_case().is_none()
+            && self.case_tree.cases_left() == 0
+            && self.case_tree.cases_right() == 0
+        {
             builder = builder.child(
                 div(cx.bump)
                     .attributes([attr("class", "nextLevel button")])

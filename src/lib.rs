@@ -4,6 +4,7 @@
 mod case;
 mod case_tree;
 mod expression;
+mod level_state;
 mod load;
 mod render;
 
@@ -25,7 +26,7 @@ pub fn run() {
 }
 
 struct Model {
-    case_tree: CaseTree,
+    level_state: level_state::LevelState,
     drag: Option<DragState>,
     current_level: load::LevelData<'static>,
     future_levels: std::vec::IntoIter<load::LevelData<'static>>,
@@ -82,10 +83,10 @@ impl Model {
         let mut future_levels = levels.into_iter();
 
         let current_level = future_levels.next().unwrap();
-        let case_tree = current_level.load().unwrap();
+        let level_state = current_level.load().unwrap();
 
         Self {
-            case_tree,
+            level_state,
             drag: None,
             current_level,
             future_levels,
@@ -113,13 +114,14 @@ impl Model {
                         ..
                     }) => {
                         if self
+                            .level_state
                             .case_tree
                             .current_case()
                             .as_ref()
                             .and_then(move |x| x.node_has_interaction(node).then_some(()))
                             .is_some()
                         {
-                            self.case_tree.interact_node(node)
+                            self.level_state.case_tree.interact_node(node)
                         }
                     }
                     Some(DragState {
@@ -129,13 +131,14 @@ impl Model {
                     }) => {
                         if self.unlock_state() >= UnlockState::Lemmas
                             && self
+                                .level_state
                                 .case_tree
                                 .current_case()
                                 .as_ref()
                                 .and_then(move |x| x.wire_has_interaction(wire).then_some(()))
                                 .is_some()
                         {
-                            self.case_tree.interact_wire(wire)
+                            self.level_state.case_tree.interact_wire(wire)
                         }
                     }
                     Some(DragState {
@@ -152,13 +155,14 @@ impl Model {
                 self.drag = None;
             }
             Msg::NextCase => {
-                self.case_tree.next_case();
+                self.level_state.case_tree.next_case();
             }
             Msg::PrevCase => {
-                self.case_tree.prev_case();
+                self.level_state.case_tree.prev_case();
             }
             Msg::MouseWheel(x, y, wheel) => {
-                self.case_tree.zoom_background(x, y, (wheel * 0.001).exp());
+                self.level_state
+                    .zoom_background(x, y, (wheel * 0.001).exp());
                 if let Some(DragState {
                     coord,
                     confirmed_drag,
@@ -172,19 +176,19 @@ impl Model {
                 }
             }
             Msg::NextLevel => {
-                if self.case_tree.current_case().is_none()
-                    && self.case_tree.cases_left() == 0
-                    && self.case_tree.cases_right() == 0
+                if self.level_state.case_tree.current_case().is_none()
+                    && self.level_state.case_tree.cases_left() == 0
+                    && self.level_state.case_tree.cases_right() == 0
                 {
                     if let Some(level) = self.future_levels.next() {
-                        self.case_tree = load::LevelData::load(&level).unwrap();
+                        self.level_state = load::LevelData::load(&level).unwrap();
                         self.current_level = level;
                     }
                 }
             }
             Msg::ResetLevel => {
                 self.drag = None;
-                self.case_tree = self.current_level.load().unwrap();
+                self.level_state = self.current_level.load().unwrap();
             }
         }
     }
@@ -211,11 +215,11 @@ impl Model {
             if confirmed_drag.is_ok() {
                 match object {
                     DragObject::Node(node) => {
-                        self.case_tree.set_node_position(*node, [x, y]);
+                        self.level_state.case_tree.set_node_position(*node, [x, y]);
                     }
                     DragObject::Wire(_) => {}
                     DragObject::Background => {
-                        self.case_tree.scroll_background(dx, dy);
+                        self.level_state.scroll_background(dx, dy);
 
                         // Update coord in response to changing coordinate system.
                         coord.0 -= dx;
@@ -229,6 +233,6 @@ impl Model {
 
 impl<'a> dodrio::Render<'a> for Model {
     fn render(&self, cx: &mut dodrio::RenderContext<'a>) -> dodrio::Node<'a> {
-        self.case_tree.render(cx, self.unlock_state())
+        self.level_state.render(cx, self.unlock_state())
     }
 }

@@ -6,18 +6,14 @@ pub struct CaseTree {
     earlier: Vec<Case>,
     current: Option<Case>,
     later: Vec<Case>,
-    pub svg_corners: ([f64; 2], [f64; 2]),
-    pub text_box: Option<String>,
 }
 
 impl CaseTree {
-    pub fn new(case: Case, text_box: Option<String>) -> Self {
+    pub fn new(case: Case) -> Self {
         Self {
             earlier: Vec::new(),
             current: Some(case),
             later: Vec::new(),
-            svg_corners: ([-10., -1.], [10., 19.]),
-            text_box,
         }
     }
 
@@ -72,19 +68,5 @@ impl CaseTree {
         if let Some(case) = &mut self.current {
             case.set_position(node, position);
         }
-    }
-
-    pub fn scroll_background(&mut self, dx: f64, dy: f64) {
-        self.svg_corners.0[0] -= dx;
-        self.svg_corners.1[0] -= dx;
-        self.svg_corners.0[1] -= dy;
-        self.svg_corners.1[1] -= dy;
-    }
-
-    pub fn zoom_background(&mut self, x: f64, y: f64, scale_factor: f64) {
-        self.svg_corners.0[0] = (self.svg_corners.0[0] - x) * scale_factor + x;
-        self.svg_corners.1[0] = (self.svg_corners.1[0] - x) * scale_factor + x;
-        self.svg_corners.0[1] = (self.svg_corners.0[1] - y) * scale_factor + y;
-        self.svg_corners.1[1] = (self.svg_corners.1[1] - y) * scale_factor + y;
     }
 }

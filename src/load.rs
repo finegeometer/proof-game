@@ -2,6 +2,8 @@
 
 use serde::Deserialize;
 
+use crate::level_state::LevelState;
+
 use super::*;
 
 #[derive(Deserialize)]
@@ -14,7 +16,7 @@ pub struct LevelData<'a> {
 }
 
 impl<'a> LevelData<'a> {
-    pub fn load(&self) -> Result<CaseTree, ()> {
+    pub fn load(&self) -> Result<LevelState, ()> {
         let mut case = Case::new();
         let mut wires = Vec::with_capacity(self.nodes.len());
         for (op, inputs, position) in &self.nodes {
@@ -53,6 +55,6 @@ impl<'a> LevelData<'a> {
             )
         }
         case.set_goal(wires.get(self.conclusion).copied().ok_or(())?);
-        Ok(CaseTree::new(case, self.text_box.map(|s| s.to_owned())))
+        Ok(LevelState::new(case, self.text_box.map(|s| s.to_owned())))
     }
 }
