@@ -1,4 +1,4 @@
-use crate::render::{bezier, g, text_, to_svg_coords};
+use crate::render::{bezier, g, handler, text_, to_svg_coords};
 use dodrio::builder::*;
 use dodrio::bumpalo;
 use wasm_bindgen::JsCast;
@@ -29,13 +29,14 @@ impl super::Node {
                             },
                         ),
                     ])
-                    .on("mousedown", move |root, vdom, e| {
-                        let model = root.unwrap_mut::<super::Model>();
-                        let (x, y) =
-                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                        model.update(super::Msg::MouseDown(x, y, super::DragObject::Node(self)));
-                        vdom.schedule_render();
-                    })
+                    .on(
+                        "mousedown",
+                        handler(move |e| {
+                            let (x, y) =
+                                to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+                            crate::Msg::MouseDown(x, y, crate::DragObject::Node(self))
+                        }),
+                    )
                     .finish(),
                 text_(cx.bump)
                     .attributes([
@@ -129,13 +130,10 @@ impl super::Wire {
             ""
         };
 
-        let closure =
-            move |root: &mut dyn dodrio::RootRender, vdom: dodrio::VdomWeak, e: web_sys::Event| {
-                let model = root.unwrap_mut::<super::Model>();
-                let (x, y) = to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                model.update(super::Msg::MouseDown(x, y, super::DragObject::Wire(self)));
-                vdom.schedule_render();
-            };
+        let closure = move |e: web_sys::Event| {
+            let (x, y) = to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+            crate::Msg::MouseDown(x, y, crate::DragObject::Wire(self))
+        };
 
         [
             path(cx.bump)
@@ -147,7 +145,7 @@ impl super::Wire {
                     ),
                     attr("d", d),
                 ])
-                .on("mousedown", closure)
+                .on("mousedown", handler(closure))
                 .finish(),
             path(cx.bump)
                 .attributes([
@@ -158,7 +156,7 @@ impl super::Wire {
                     ),
                     attr("d", d),
                 ])
-                .on("mousedown", closure)
+                .on("mousedown", handler(closure))
                 .finish(),
         ]
     }
@@ -199,35 +197,43 @@ impl super::Case {
                 ),
             ])
             .listeners([
-                on(cx.bump, "mousedown", move |root, vdom, e| {
-                    let model = root.unwrap_mut::<super::Model>();
-                    let (x, y) =
-                        to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                    model.update(super::Msg::MouseDown(x, y, super::DragObject::Background));
-                    vdom.schedule_render();
-                }),
-                on(cx.bump, "mouseup", move |root, vdom, e| {
-                    let model = root.unwrap_mut::<super::Model>();
-                    let (x, y) =
-                        to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                    model.update(super::Msg::MouseUp(x, y));
-                    vdom.schedule_render();
-                }),
-                on(cx.bump, "mousemove", move |root, vdom, e| {
-                    let model = root.unwrap_mut::<super::Model>();
-                    let (x, y) =
-                        to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                    model.update(super::Msg::MouseMove(x, y));
-                    vdom.schedule_render();
-                }),
-                on(cx.bump, "wheel", move |root, vdom, e| {
-                    let e = e.dyn_into::<web_sys::WheelEvent>().unwrap();
-                    let model = root.unwrap_mut::<super::Model>();
-                    let wheel = e.delta_y();
-                    let (x, y) = to_svg_coords(e.into(), "game");
-                    model.update(super::Msg::MouseWheel(x, y, wheel));
-                    vdom.schedule_render();
-                }),
+                on(
+                    cx.bump,
+                    "mousedown",
+                    handler(move |e| {
+                        let (x, y) =
+                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+                        crate::Msg::MouseDown(x, y, crate::DragObject::Background)
+                    }),
+                ),
+                on(
+                    cx.bump,
+                    "mouseup",
+                    handler(move |e| {
+                        let (x, y) =
+                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+                        crate::Msg::MouseUp(x, y)
+                    }),
+                ),
+                on(
+                    cx.bump,
+                    "mousemove",
+                    handler(move |e| {
+                        let (x, y) =
+                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+                        crate::Msg::MouseMove(x, y)
+                    }),
+                ),
+                on(
+                    cx.bump,
+                    "wheel",
+                    handler(move |e| {
+                        let e = e.dyn_into::<web_sys::WheelEvent>().unwrap();
+                        let wheel = e.delta_y();
+                        let (x, y) = to_svg_coords(e.into(), "game");
+                        crate::Msg::MouseWheel(x, y, wheel)
+                    }),
+                ),
             ])
             .children([
                 // Wires

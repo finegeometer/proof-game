@@ -112,7 +112,7 @@ impl CaseTree {
 
 mod render {
     use super::*;
-    use crate::render::{bezier, g};
+    use crate::render::{bezier, g, handler};
     use dodrio::builder::*;
     use dodrio::bumpalo;
 
@@ -163,11 +163,10 @@ mod render {
                 ]);
 
                 if clickable {
-                    circle = circle.on("click", move |root, vdom, _| {
-                        let model = root.unwrap_mut::<crate::Model>();
-                        model.update(crate::Msg::GotoCase(CaseId(node)));
-                        vdom.schedule_render();
-                    })
+                    circle = circle.on(
+                        "click",
+                        handler(move |_| crate::Msg::GotoCase(CaseId(node))),
+                    )
                 }
 
                 builder = builder.child(circle.finish());

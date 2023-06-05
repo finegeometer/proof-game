@@ -33,6 +33,7 @@ impl LevelState {
 
 mod render {
     use super::*;
+    use crate::render::handler;
     use dodrio::builder::*;
     use dodrio::bumpalo;
 
@@ -59,11 +60,7 @@ mod render {
                         attr("class", "resetButton button"),
                         attr("style", "top: 88%; height: 10%; left: 81%; width: 10%;"),
                     ])
-                    .on("click", move |root, vdom, _| {
-                        let model = root.unwrap_mut::<crate::Model>();
-                        model.update(crate::Msg::ResetLevel);
-                        vdom.schedule_render();
-                    })
+                    .on("click", handler(move |_| crate::Msg::ResetLevel))
                     .children([text("Reset")])
                     .finish(),
             );
@@ -73,11 +70,7 @@ mod render {
                 builder = builder.child(
                     div(cx.bump)
                         .attributes([attr("class", "nextLevel button")])
-                        .on("click", move |root, vdom, _| {
-                            let model = root.unwrap_mut::<crate::Model>();
-                            model.update(crate::Msg::NextLevel);
-                            vdom.schedule_render();
-                        })
+                        .on("click", handler(move |_| crate::Msg::NextLevel))
                         .children([text("Next Level!")])
                         .finish(),
                 );
