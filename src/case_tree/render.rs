@@ -27,8 +27,6 @@ impl CaseTree {
             subtrees.push(subtree);
         }
 
-        let mut builder = g(cx.bump);
-
         if xs.is_empty() {
             let mut clickable = false;
 
