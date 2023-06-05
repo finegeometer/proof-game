@@ -4,6 +4,7 @@
 
 <head>
   <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     body {
       background: #344;
@@ -13,6 +14,71 @@
       font-family: sans-serif;
       font-size: 72px;
     }
+
+
+    #top {
+      display: flex;
+      flex-direction: row;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      margin: 2%;
+      gap: 2%
+    }
+
+    #col0 {
+      display: flex;
+      flex-direction: column;
+      flex: 4;
+    }
+
+    #col1 {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    #game {
+      flex-grow: 1;
+      flex-shrink: 0;
+      flex-basis: 80%;
+    }
+
+    #text-box {
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    #class-tree {}
+
+    #reset {
+      border-radius: 4vmin;
+      background: #c66;
+      border: 2px solid #800;
+      cursor: pointer;
+    }
+
+    #reset:hover {
+      background: #b55;
+    }
+
+    #next-level {
+      border-radius: 4vmin;
+      background: #3a3;
+      border: 2px solid #060;
+      cursor: pointer;
+    }
+
+    #next-level:hover {
+      background: #292
+    }
+
+
+
+
+
 
     .button {
       display: flex;
@@ -26,7 +92,7 @@
     }
 
     .background {
-      position: fixed;
+      /* position: fixed; */
       border-radius: 4vmin;
       background: #cdd;
       border: 2px solid #011;
@@ -40,20 +106,26 @@
       background: #788;
     }
 
-    .resetButton {
-      position: fixed;
-      border-radius: 4vmin;
-      background: #c66;
-      border: 2px solid #800;
+    .background.complete {
+      background: #7d8;
     }
 
-    .resetButton:hover {
-      background: #b55;
-    }
 
     .node {
       fill: #9ab;
       stroke: #789;
+      stroke-width: 0.04;
+    }
+
+    .node.known {
+      fill: #3a3;
+      stroke: #080;
+      stroke-width: 0.04;
+    }
+
+    .node.goal {
+      fill: #da3;
+      stroke: #b70;
       stroke-width: 0.04;
     }
 
@@ -99,21 +171,6 @@
 
     .wire.border.goal {
       stroke: #b70;
-    }
-
-    .nextLevel {
-      position: fixed;
-      top: 40%;
-      left: 40%;
-      width: 20%;
-      height: 20%;
-      background: #3a3;
-      border: 2px solid #060;
-      cursor: pointer;
-    }
-
-    .nextLevel:hover {
-      background: #292
     }
   </style>
 </head>
