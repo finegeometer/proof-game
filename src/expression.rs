@@ -171,13 +171,13 @@ So we might as well merge the wires.",
     pub fn interact_wire(&mut self, wire: Wire) {
         self.edit_case([
             box_closure(move |case: &mut Case| {
-                case.set_proven(
-                    wire,
-                    ValidityReason::new("In the next case, I require you to prove this."),
-                );
+                case.set_goal(wire);
             }),
             box_closure(move |case: &mut Case| {
-                case.set_goal(wire);
+                case.set_proven(
+                    wire,
+                    ValidityReason::new("In the next case, you were required to prove this."),
+                );
             }),
         ]);
     }
