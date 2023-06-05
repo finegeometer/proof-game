@@ -17,9 +17,19 @@ pub struct LevelData<'a> {
 
 impl<'a> LevelData<'a> {
     pub fn load(&self) -> Result<LevelState, ()> {
+        let mut x_min = f64::INFINITY;
+        let mut y_min = f64::INFINITY;
+        let mut x_max = f64::NEG_INFINITY;
+        let mut y_max = f64::NEG_INFINITY;
+
         let mut case = Case::new();
         let mut wires = Vec::with_capacity(self.nodes.len());
         for (op, inputs, position) in &self.nodes {
+            x_min = x_min.min(position[0]);
+            y_min = y_min.min(position[1]);
+            x_max = x_max.max(position[0]);
+            y_max = y_max.max(position[1]);
+
             if inputs.iter().any(|idx| *idx >= wires.len()) {
                 return Err(());
             }
@@ -55,6 +65,10 @@ impl<'a> LevelData<'a> {
             )
         }
         case.set_goal(wires.get(self.conclusion).copied().ok_or(())?);
-        Ok(LevelState::new(case, self.text_box.map(|s| s.to_owned())))
+        Ok(LevelState::new(
+            case,
+            ([x_min - 1., y_min - 1.], [x_max + 1., y_max + 3.]),
+            self.text_box.map(|s| s.to_owned()),
+        ))
     }
 }

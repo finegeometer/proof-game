@@ -10,10 +10,10 @@ pub struct LevelState {
 }
 
 impl LevelState {
-    pub fn new(case: Case, text_box: Option<String>) -> Self {
+    pub fn new(case: Case, svg_corners: ([f64; 2], [f64; 2]), text_box: Option<String>) -> Self {
         Self {
             case_tree: CaseTree::new(case),
-            svg_corners: ([-10., -1.], [10., 19.]),
+            svg_corners,
             text_box,
         }
     }

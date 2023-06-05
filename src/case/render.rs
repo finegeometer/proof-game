@@ -8,6 +8,7 @@ impl super::Node {
         self,
         case: &super::Case,
         cx: &mut dodrio::RenderContext<'a>,
+        enable_hover: bool,
     ) -> dodrio::Node<'a> {
         let [x, y] = case.position(self);
         let x = bumpalo::format!(in cx.bump, "{}", x).into_bump_str();
@@ -22,7 +23,7 @@ impl super::Node {
                         attr("cy", y),
                         attr(
                             "class",
-                            if case.node_has_interaction(self) {
+                            if enable_hover && case.node_has_interaction(self) {
                                 "node hoverable"
                             } else {
                                 "node"
@@ -181,7 +182,7 @@ impl super::Case {
                         "background"
                     },
                 ),
-                attr("preserveAspectRatio", "xMidYMin slice"),
+                attr("preserveAspectRatio", "xMidYMid meet"),
                 attr("font-size", "0.75"),
                 attr("style", "top: 2%; height: 86%; left: 9%; width: 82%;"),
                 attr(
@@ -255,7 +256,7 @@ impl super::Case {
                 {
                     let mut builder = g(cx.bump);
                     for node in self.nodes() {
-                        builder = builder.child(node.render(self, cx));
+                        builder = builder.child(node.render(self, cx, !complete));
                     }
                     builder.finish()
                 },
