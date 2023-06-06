@@ -4,8 +4,8 @@
 mod case;
 mod case_tree;
 mod expression;
+mod game_data;
 mod level_state;
-mod load;
 mod render;
 
 pub use case::{Case, Node, ValidityReason, Wire};
@@ -26,10 +26,10 @@ pub fn run() {
 }
 
 struct Model {
+    game_data: game_data::GameData,
+    level_num: usize,
     level_state: level_state::LevelState,
     drag: Option<DragState>,
-    current_level: load::LevelData<'static>,
-    future_levels: std::vec::IntoIter<load::LevelData<'static>>,
 }
 
 #[derive(Clone, Copy)]
@@ -68,27 +68,17 @@ pub enum UnlockState {
 }
 
 impl Model {
-    fn unlock_state(&self) -> UnlockState {
-        match self.future_levels.as_slice().len() {
-            0..=12 => UnlockState::Lemmas,
-            13..=22 => UnlockState::CaseTree,
-            _ => UnlockState::None,
-        }
-    }
-
     fn new() -> Self {
-        let levels: Vec<load::LevelData> =
+        let game_data: game_data::GameData =
             serde_json::from_str(include_str!("./levels.json")).unwrap();
-        let mut future_levels = levels.into_iter();
-
-        let current_level = future_levels.next().unwrap();
-        let level_state = current_level.load().unwrap();
+        let level_num = 0;
+        let level_state = game_data.load(level_num);
 
         Self {
             level_state,
+            level_num,
+            game_data,
             drag: None,
-            current_level,
-            future_levels,
         }
     }
 
@@ -125,7 +115,7 @@ impl Model {
                         ..
                     }) => {
                         let (case, complete) = self.level_state.case_tree.current_case();
-                        if self.unlock_state() >= UnlockState::Lemmas
+                        if self.game_data.unlocks(self.level_num) >= UnlockState::Lemmas
                             && !complete
                             && case.wire_has_interaction(wire)
                         {
@@ -182,15 +172,15 @@ impl Model {
             }
             Msg::NextLevel => {
                 if self.level_state.case_tree.all_complete() {
-                    if let Some(level) = self.future_levels.next() {
-                        self.level_state = load::LevelData::load(&level).unwrap();
-                        self.current_level = level;
+                    if let Some(level_num) = self.game_data.next_level(self.level_num) {
+                        self.level_num = level_num;
+                        self.level_state = self.game_data.load(level_num);
                     }
                 }
             }
             Msg::ResetLevel => {
                 self.drag = None;
-                self.level_state = self.current_level.load().unwrap();
+                self.level_state = self.game_data.load(self.level_num);
             }
         }
     }
@@ -237,7 +227,7 @@ impl<'a> dodrio::Render<'a> for Model {
     fn render(&self, cx: &mut dodrio::RenderContext<'a>) -> dodrio::Node<'a> {
         self.level_state.render(
             cx,
-            self.unlock_state(),
+            self.game_data.unlocks(self.level_num),
             match self.drag {
                 Some(DragState {
                     object: DragObject::Node(node),
