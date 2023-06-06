@@ -30,6 +30,7 @@ struct LevelJson<'a> {
     hypotheses: Vec<usize>,
     conclusion: usize,
     text_box: Option<&'a str>,
+    map_position: [f64; 2],
 }
 
 impl<'a> TryFrom<LevelJson<'a>> for Level {
@@ -107,6 +108,7 @@ impl<'a> TryFrom<LevelJson<'a>> for Level {
             case,
             svg_corners: ([x_min - 1., y_min - 1.], [x_max + 1., y_max + 3.]),
             text_box: level.text_box.map(|s| s.to_owned()),
+            map_position: level.map_position,
         })
     }
 }

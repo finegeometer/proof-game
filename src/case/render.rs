@@ -1,3 +1,4 @@
+use crate::level;
 use crate::render::{bezier, g, handler, text_, to_svg_coords};
 use dodrio::builder::*;
 use dodrio::bumpalo;
@@ -41,7 +42,11 @@ impl super::Node {
                                     e.dyn_into::<web_sys::MouseEvent>().unwrap(),
                                     "game",
                                 );
-                                crate::Msg::MouseDown(x, y, crate::DragObject::Node(self))
+                                crate::Msg::Level(level::Msg::MouseDown(
+                                    x,
+                                    y,
+                                    level::DragObject::Node(self),
+                                ))
                             }),
                         ),
                         on(
@@ -52,7 +57,7 @@ impl super::Node {
                                     e.dyn_into::<web_sys::MouseEvent>().unwrap(),
                                     "game",
                                 );
-                                crate::Msg::MouseUp(x, y, Some(self))
+                                crate::Msg::Level(level::Msg::MouseUp(x, y, Some(self)))
                             }),
                         ),
                     ])
@@ -152,7 +157,7 @@ impl super::Wire {
 
         let closure = move |e: web_sys::Event| {
             let (x, y) = to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-            crate::Msg::MouseDown(x, y, crate::DragObject::Wire(self))
+            crate::Msg::Level(level::Msg::MouseDown(x, y, level::DragObject::Wire(self)))
         };
 
         [
@@ -225,7 +230,11 @@ impl super::Case {
                     handler(move |e| {
                         let (x, y) =
                             to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                        crate::Msg::MouseDown(x, y, crate::DragObject::Background)
+                        crate::Msg::Level(level::Msg::MouseDown(
+                            x,
+                            y,
+                            level::DragObject::Background,
+                        ))
                     }),
                 ),
                 on(
@@ -234,7 +243,7 @@ impl super::Case {
                     handler(move |e| {
                         let (x, y) =
                             to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                        crate::Msg::MouseUp(x, y, None)
+                        crate::Msg::Level(level::Msg::MouseUp(x, y, None))
                     }),
                 ),
                 on(
@@ -243,7 +252,7 @@ impl super::Case {
                     handler(move |e| {
                         let (x, y) =
                             to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                        crate::Msg::MouseMove(x, y)
+                        crate::Msg::Level(level::Msg::MouseMove(x, y))
                     }),
                 ),
                 on(
@@ -253,7 +262,7 @@ impl super::Case {
                         let e = e.dyn_into::<web_sys::WheelEvent>().unwrap();
                         let wheel = e.delta_y();
                         let (x, y) = to_svg_coords(e.into(), "game");
-                        crate::Msg::MouseWheel(x, y, wheel)
+                        crate::Msg::Level(level::Msg::MouseWheel(x, y, wheel))
                     }),
                 ),
             ])

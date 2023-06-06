@@ -8,7 +8,8 @@
     ]
   , "hypotheses": [0,1,2]
   , "conclusion": 5
-  , "_comment" : "Tree of conjunctions."
+  , "_comment": "Tree of conjunctions."
+  , "map_position": [0,0]
   }
 , { "nodes":
     [ ["a", []   , [ 0,0]]
@@ -18,6 +19,7 @@
     ]
   , "hypotheses": [0]
   , "conclusion": 3
+  , "map_position": [1,0]
   }
 , { "nodes":
     [ ["a", []   , [-2,0]]
@@ -30,6 +32,7 @@
   , "hypotheses": [5]
   , "conclusion": 1
   , "_comment" : "Conjunction elimination."
+  , "map_position": [2,0]
   }
 , { "nodes":
     [ ["a", []   , [-1,0]]
@@ -40,6 +43,7 @@
   , "hypotheses": [2]
   , "conclusion": 3
   , "_comment" : "Conjunction commutativity."
+  , "map_position": [3,0]
   }
 , { "nodes":
     [ ["a", []   , [-2,0]]
@@ -53,6 +57,7 @@
   , "hypotheses": [0,1,2]
   , "conclusion": 6
   , "_comment" : "N-ary conjunctions."
+  , "map_position": [4,0]
   }
 , { "nodes":
     [ ["a", []   , [-1,0]]
@@ -62,6 +67,7 @@
   , "hypotheses": [0]
   , "conclusion": 2
   , "_comment" : "Introduce disjunctions."
+  , "map_position": [5,0]
   }
 , { "nodes":
     [ ["a", []   , [-2,0]]
@@ -72,6 +78,7 @@
     ]
   , "hypotheses": [3]
   , "conclusion": 4
+  , "map_position": [6,0]
   }
 , { "nodes":
     [ ["a", []   , [-1,0]]
@@ -83,6 +90,7 @@
   , "conclusion": 3
   , "_comment" : "Disjunction elimination, demonstrated via commutativity."
   , "text_box" : "New feature: Proof by cases."
+  , "map_position": [7,0]
   }
 , { "nodes":
     [ ["a", []   , [-3,0]]
@@ -99,6 +107,7 @@
   , "hypotheses": [8]
   , "conclusion": 9
   , "_comment" : "A more complicated level, mixing conjunctions and disjunctions."
+  , "map_position": [8,0]
   }
 , { "nodes":
     [ ["∨", []   , [-1,0]]
@@ -107,6 +116,7 @@
   , "hypotheses": [0]
   , "conclusion": 1
   , "_comment" : "The empty disjunction: falsity."
+  , "map_position": [9,0]
   }
 , { "nodes":
     [ ["∨", []   , [-1.25,0]]
@@ -119,6 +129,7 @@
   , "hypotheses": [5]
   , "conclusion": 1
   , "_comment" : "A tree of n-ary disjunctions."
+  , "map_position": [10,0]
   }
 , { "nodes":
     [ ["a", []   , [-1,0]]
@@ -128,6 +139,7 @@
   , "hypotheses": [0,2]
   , "conclusion": 1
   , "_comment" : "Introduce implications."
+  , "map_position": [11,0]
   }
 , { "nodes":
     [ ["a", []   , [-4,0]]
@@ -143,6 +155,7 @@
   , "hypotheses": [0,5,6,7,8]
   , "conclusion": 4
   , "_comment" : "Implication chain."
+  , "map_position": [12,0]
   }
 , { "nodes":
     [ ["a", []   , [-2,0]]
@@ -155,6 +168,7 @@
   , "hypotheses": [3,4]
   , "conclusion": 5
   , "_comment" : "Implication introduction."
+  , "map_position": [13,0]
   }
 , { "nodes":
     [ ["a", []   , [-2   ,0]]
@@ -168,6 +182,7 @@
   , "hypotheses": [4]
   , "conclusion": 6
   , "_comment" : "Currying."
+  , "map_position": [14,0]
   }
 , { "nodes":
   [ ["a", []   , [0,0]]
@@ -176,6 +191,7 @@
   , "hypotheses": []
   , "conclusion": 1
   , "_comment" : "Identity."
+  , "map_position": [15,0]
   }
 , { "nodes":
     [ ["a", []   , [-2,0]]
@@ -190,6 +206,7 @@
   , "hypotheses": [7]
   , "conclusion": 6
   , "_comment" : "Distributivity."
+  , "map_position": [16,0]
   }
 , { "nodes":
     [ ["∧", []   , [-1,0]]
@@ -201,7 +218,8 @@
   , "conclusion": 3
   , "_comment" : "Introduce lemmas."
   , "text_box" : "Wires are clickable now."
-}
+  , "map_position": [17,0]
+  }
 , { "nodes":
     [ ["a", []   , [-2,0]]
     , ["b", []   , [ 0,0]]
@@ -215,6 +233,7 @@
   , "hypotheses": [6]
   , "conclusion": 7
   , "_comment" : "Other distributivity."
+  , "map_position": [18,0]
   }
 , { "nodes":
     [ ["a", []   , [-1,0]]
@@ -223,6 +242,7 @@
   , "hypotheses": [0]
   , "conclusion": 1
   , "text_box" : "Drag equal nodes together."
+  , "map_position": [19,0]
   }
 , { "nodes":
     [ ["a", []   , [-3,0]]
@@ -235,6 +255,7 @@
   , "hypotheses": [4]
   , "conclusion": 5
   , "_comment" : "You can even merge nested structures."
+  , "map_position": [20,0]
   }
 , { "nodes":
     [ ["a", []   , [-3,0]]
@@ -246,6 +267,7 @@
     ]
   , "hypotheses": [4]
   , "conclusion": 5
+  , "map_position": [21,0]
   }
 , { "nodes":
     [ ["a", []   , [-3,0]]
@@ -260,6 +282,7 @@
     ]
   , "hypotheses": [2,5]
   , "conclusion": 8
+  , "map_position": [22,0]
   }
 , { "nodes":
     [ ["a", []   , [ 0,0]]
@@ -268,6 +291,7 @@
   , "hypotheses": []
   , "conclusion": 1
   , "_comment" : "Equality"
+  , "map_position": [23,0]
   }
 , { "nodes":
     [ ["a", []   , [-1,0]]
@@ -276,6 +300,7 @@
     ]
   , "hypotheses": []
   , "conclusion": 2
+  , "map_position": [24,0]
   }
 , { "nodes":
     [ ["a", []   , [-2,0]]
@@ -287,6 +312,7 @@
   , "hypotheses": [0,3,4]
   , "conclusion": 2
   , "_comment" : "Equality elimination."
+  , "map_position": [25,0]
   }
 , { "nodes":
     [ ["a", []   , [-2,0]]
@@ -299,6 +325,7 @@
   , "hypotheses": [3,4]
   , "conclusion": 5
   , "_comment" : "Transitivity of equality."
+  , "map_position": [26,0]
   }
 , { "nodes":
     [ ["a", []   , [-3,0]]
@@ -311,6 +338,7 @@
   , "hypotheses": [4]
   , "conclusion": 5
   , "_comment" : "Symmetry of equality."
+  , "map_position": [27,0]
   }
 , { "nodes":
     [ ["a", []   , [-1,0]]
@@ -321,6 +349,7 @@
     ]
   , "hypotheses": []
   , "conclusion": 4
+  , "map_position": [28,0]
   }
 , { "nodes":
     [ ["a", []   , [-3,0]]
@@ -334,5 +363,6 @@
   , "hypotheses": []
   , "conclusion": 6
   , "text_box": "This one's hard."
+  , "map_position": [29,0]
   }
 ]

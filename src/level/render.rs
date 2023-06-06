@@ -3,19 +3,26 @@ use crate::render::handler;
 use dodrio::builder::*;
 use dodrio::bumpalo;
 
-impl LevelState {
-    pub fn render<'a>(
-        &self,
-        cx: &mut dodrio::RenderContext<'a>,
-        unlocks: crate::UnlockState,
-        dragging: Option<crate::Node>,
-    ) -> dodrio::Node<'a> {
+impl State {
+    pub fn render<'a>(&self, cx: &mut dodrio::RenderContext<'a>) -> [dodrio::Node<'a>; 2] {
         let (case, complete) = self.case_tree.current_case();
 
         let mut col0 = div(cx.bump).attributes([attr("id", "col0")]);
 
         // Main Screen
-        col0 = col0.child(case.render(self.svg_corners, cx, unlocks, complete, dragging));
+        col0 = col0.child(case.render(
+            self.svg_corners,
+            cx,
+            self.unlocks,
+            complete,
+            match self.drag {
+                Some(DragState {
+                    object: DragObject::Node(node),
+                    ..
+                }) => Some(node),
+                _ => None,
+            },
+        ));
 
         // Text Box
         if let Some(text_box) = &self.text_box {
@@ -33,7 +40,7 @@ impl LevelState {
         let mut col1 = div(cx.bump).attributes([attr("id", "col1")]);
 
         // Case Tree
-        if unlocks >= crate::UnlockState::CaseTree {
+        if self.unlocks >= crate::UnlockState::CaseTree {
             col1 = col1.child(self.case_tree.render(cx));
         }
 
@@ -64,10 +71,15 @@ impl LevelState {
                 .finish(),
         );
 
-        div(cx.bump)
-            .attributes([attr("id", "top")])
-            .children([col0.finish(), col1.finish()])
-            .listeners([on(cx.bump, "contextmenu", |_, _, e| e.prevent_default())])
-            .finish()
+        // World Map
+        col1 = col1.child(
+            div(cx.bump)
+                .attributes([attr("id", "return-to-map"), attr("class", "button")])
+                .on("click", handler(move |_| crate::Msg::LoadMap))
+                .children([text("Return to World Map")])
+                .finish(),
+        );
+
+        [col0.finish(), col1.finish()]
     }
 }

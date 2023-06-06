@@ -52,7 +52,7 @@ impl CaseTree {
             if clickable {
                 circle = circle.on(
                     "click",
-                    handler(move |_| crate::Msg::GotoCase(CaseId(node))),
+                    handler(move |_| crate::Msg::Level(crate::level::Msg::GotoCase(CaseId(node)))),
                 )
             }
 
