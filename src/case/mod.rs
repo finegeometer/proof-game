@@ -1,7 +1,7 @@
 mod render;
 mod union_find;
 
-use std::{collections::BTreeMap, rc::Rc};
+use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
 use super::*;
 use union_find::UnionFind;
@@ -39,11 +39,15 @@ pub struct Case {
     // Two nodes are in the same equivalence class iff their output wires are connected.
     connections: Rc<UnionFind<Node>>,
     goal: Option<Wire>,
+
+    // Keeps track of which nodes describe identical expressions, even if they're displayed separately.
+    egg: RefCell<egg::EGraph<Expression<egg::Id>, ()>>,
+    node_to_egg: Vec<egg::Id>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct Data {
-    expression: Expression,
+    expression: Expression<Wire>,
     /// Positions that the nodes will be displayed on the screen.
     /// Units are such that the default size of a node is a diameter 1 circle.
     position: [f64; 2],
@@ -57,6 +61,8 @@ impl Case {
             nodes: Vec::new(),
             connections: Rc::new(UnionFind::new()),
             goal: None,
+            egg: RefCell::new(egg::EGraph::new(())),
+            node_to_egg: Vec::new(),
         }
     }
 
@@ -69,13 +75,18 @@ impl Case {
             .expect("Attempt to retrieve goal before setting it.")
     }
 
-    pub fn make_node(&mut self, expression: Expression, position: [f64; 2]) -> Node {
+    pub fn make_node(&mut self, expression: Expression<Wire>, position: [f64; 2]) -> Node {
         let n = Node(self.nodes.len());
         self.nodes.push(Data {
-            expression,
+            expression: expression.clone(),
             position,
             proven: false,
         });
+        self.node_to_egg.push(
+            self.egg
+                .borrow_mut()
+                .add(expression.map(|node| self.node_to_egg[node.0 .0])),
+        );
         n
     }
 
@@ -83,7 +94,7 @@ impl Case {
         Wire(n)
     }
 
-    pub fn node_expression(&self, n: Node) -> &Expression {
+    pub fn node_expression(&self, n: Node) -> &Expression<Wire> {
         &self.nodes[n.0].expression
     }
 
@@ -93,6 +104,19 @@ impl Case {
 
     pub fn wire_eq(&self, w1: Wire, w2: Wire) -> bool {
         self.connections.eq(w1.0, w2.0)
+    }
+
+    /// Test whether the wires describe the same *expression*.
+    /// For instance, if there are two copies of `a` on screen,
+    /// `wire_equiv` will say they are equal, while `wire_eq` will not.
+    pub fn wire_equiv(&self, w1: Wire, w2: Wire) -> bool {
+        let mut egg = self.egg.borrow_mut();
+        if !egg.clean {
+            egg.rebuild();
+        }
+        assert!(egg.clean);
+
+        egg.find(self.node_to_egg[w1.0 .0]) == egg.find(self.node_to_egg[w2.0 .0])
     }
 
     pub fn connect(&mut self, w1: Wire, w2: Wire, _why_valid: ValidityReason) {
@@ -113,6 +137,10 @@ impl Case {
         }
 
         Rc::make_mut(&mut self.connections).merge(w1.0, w2.0);
+
+        self.egg
+            .borrow_mut()
+            .union(self.node_to_egg[w1.0 .0], self.node_to_egg[w2.0 .0]);
     }
 
     pub fn proven(&self, w: Wire) -> bool {
@@ -120,7 +148,9 @@ impl Case {
     }
 
     pub fn set_proven(&mut self, w: Wire, _why_valid: ValidityReason) {
-        self.nodes[w.0 .0].proven = true;
+        for node in self.connections.iter_class(w.0) {
+            self.nodes[node.0].proven = true;
+        }
     }
 
     pub fn position(&self, n: Node) -> [f64; 2] {

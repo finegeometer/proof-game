@@ -1,16 +1,16 @@
 use super::*;
 use smallvec::SmallVec;
 
-#[derive(Debug, Clone)]
-pub enum Expression {
-    And(SmallVec<[Wire; 2]>),
-    Or(SmallVec<[Wire; 2]>),
-    Implies([Wire; 2]),
-    Equal([Wire; 2]),
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Expression<T> {
+    And(SmallVec<[T; 2]>),
+    Or(SmallVec<[T; 2]>),
+    Implies([T; 2]),
+    Equal([T; 2]),
     Other(String),
 }
 
-impl Expression {
+impl<T> Expression<T> {
     pub fn text(&self) -> &str {
         match self {
             Expression::And(_) => "∧",
@@ -21,7 +21,7 @@ impl Expression {
         }
     }
 
-    pub fn inputs(&self) -> &[Wire] {
+    pub fn inputs(&self) -> &[T] {
         match self {
             Expression::And(inputs) => inputs,
             Expression::Or(inputs) => inputs,
@@ -29,6 +29,47 @@ impl Expression {
             Expression::Equal(inputs) => inputs,
             Expression::Other(_) => &[],
         }
+    }
+
+    fn inputs_mut(&mut self) -> &mut [T] {
+        match self {
+            Expression::And(inputs) => inputs,
+            Expression::Or(inputs) => inputs,
+            Expression::Implies(inputs) => inputs,
+            Expression::Equal(inputs) => inputs,
+            Expression::Other(_) => &mut [],
+        }
+    }
+
+    pub fn map<U>(self, f: impl FnMut(T) -> U) -> Expression<U> {
+        match self {
+            Expression::And(inputs) => Expression::And(inputs.into_iter().map(f).collect()),
+            Expression::Or(inputs) => Expression::Or(inputs.into_iter().map(f).collect()),
+            Expression::Implies(inputs) => Expression::Implies(inputs.map(f)),
+            Expression::Equal(inputs) => Expression::Equal(inputs.map(f)),
+            Expression::Other(s) => Expression::Other(s),
+        }
+    }
+}
+
+impl egg::Language for Expression<egg::Id> {
+    fn matches(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Expression::And(a), Expression::And(b)) => a.len() == b.len(),
+            (Expression::Or(a), Expression::Or(b)) => a.len() == b.len(),
+            (Expression::Implies(_), Expression::Implies(_)) => true,
+            (Expression::Equal(_), Expression::Equal(_)) => true,
+            (Expression::Other(a), Expression::Other(b)) => a == b,
+            (_, _) => false,
+        }
+    }
+
+    fn children(&self) -> &[egg::Id] {
+        self.inputs()
+    }
+
+    fn children_mut(&mut self) -> &mut [egg::Id] {
+        self.inputs_mut()
     }
 }
 
@@ -45,9 +86,8 @@ impl Case {
                 self.proven(*hypothesis) && !self.proven(*conclusion)
             }
             (Expression::Implies(_), false) => self.wire_eq(self.goal(), output),
-            (Expression::Equal([w1, w2]), true) => self.wire_eq(*w1, *w2),
-            // FIXME
-            (Expression::Equal(_), false) => todo!("Check whether nodes are equivalent."),
+            (Expression::Equal([w1, w2]), true) => !self.wire_eq(*w1, *w2),
+            (Expression::Equal(_), false) => true, // `wire_equiv` triggers an egraph rebuild, so I'd rather not.
             (Expression::Other(_), _) => false,
         }
     }
@@ -160,8 +200,15 @@ So we might as well merge the wires.",
                     )
                 }]);
             }
-            (Expression::Equal(_), false) => {
-                todo!("Check whether nodes are equivalent.")
+            (Expression::Equal([w1, w2]), false) => {
+                let w1 = *w1;
+                let w2 = *w2;
+                self.edit_case([|case: &mut Case| {
+                    if case.wire_equiv(w1, w2) {
+                        case.connect(w1, w2, ValidityReason::new("I just checked equivalence."));
+                        case.set_proven(output, ValidityReason::new("I just checked equivalence."));
+                    }
+                }]);
             }
             (Expression::Other(_), true) => {}
             (Expression::Other(_), false) => {}

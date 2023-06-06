@@ -70,8 +70,8 @@ pub enum UnlockState {
 impl Model {
     fn unlock_state(&self) -> UnlockState {
         match self.future_levels.as_slice().len() {
-            0..=1 => UnlockState::Lemmas,
-            2..=11 => UnlockState::CaseTree,
+            0..=7 => UnlockState::Lemmas,
+            8..=17 => UnlockState::CaseTree,
             _ => UnlockState::None,
         }
     }

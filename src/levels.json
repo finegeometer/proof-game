@@ -216,4 +216,68 @@
   , "conclusion": 7
   , "_comment" : "Other distributivity."
   }
+, { "nodes":
+    [ ["a", []   , [-1,0]]
+    , ["a", []   , [ 1,0]]
+    , ["=", [0,1], [ 0,3]]
+    ]
+  , "hypotheses": []
+  , "conclusion": 2
+  , "_comment" : "Equality"
+  }
+, { "nodes":
+    [ ["a", []   , [-2,0]]
+    , ["b", []   , [ 0,0]]
+    , ["a", []   , [ 2,0]]
+    , ["∧", [0,1], [-1,3]]
+    , ["∧", [2,1], [ 1,3]]
+    , ["=", [3,4], [ 0,6]]
+    ]
+  , "hypotheses": []
+  , "conclusion": 5
+  , "_comment" : "Equality works on nested structures."
+  }
+, { "nodes":
+    [ ["a", []   , [-2,0]]
+    , ["a", []   , [ 0,0]]
+    , ["a", []   , [ 2,0]]
+    , ["=", [0,1], [-1,3]]
+    , ["=", [1,2], [ 1,3]]
+    ]
+  , "hypotheses": [0]
+  , "conclusion": 2
+  , "_comment" : "Equality elimination."
+  }
+, { "nodes":
+    [ ["a", []   , [-1,0]]
+    , ["b", []   , [ 1,0]]
+    , ["=", [0,1], [-1,3]]
+    , ["=", [1,0], [ 1,3]]
+    ]
+  , "hypotheses": [2]
+  , "conclusion": 3
+  , "_comment" : "Symmetry of equality."
+  }
+, { "nodes":
+    [ ["a", []   , [-2,0]]
+    , ["b", []   , [ 0,0]]
+    , ["c", []   , [ 2,0]]
+    , ["=", [0,1], [-2,3]]
+    , ["=", [1,2], [ 2,3]]
+    , ["=", [0,2], [ 0,3]]
+    ]
+  , "hypotheses": [3,4]
+  , "conclusion": 5
+  , "_comment" : "Transitivity of equality."
+  }
+, { "nodes":
+    [ ["a", []   , [-1,0]]
+    , ["b", []   , [ 1,0]]
+    , ["⇒", [0,1], [ 1,2]]
+    , ["=", [0,2], [-1,3]]
+    , ["⇒", [3,2], [ 0,5]]
+    ]
+  , "hypotheses": []
+  , "conclusion": 4
+  }
 ]

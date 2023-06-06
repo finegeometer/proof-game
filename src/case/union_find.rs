@@ -1,12 +1,12 @@
 use std::{cell::RefCell, collections::HashMap, hash::Hash};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct UnionFind<T> {
     tree: RefCell<HashMap<T, Node<T>>>,
     cycles: HashMap<T, T>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 enum Node<T> {
     Root { rank: u8 },
     Child { parent: T },
