@@ -53,7 +53,7 @@ enum DragObject {
 enum Msg {
     MouseDown(f64, f64, DragObject),
     MouseMove(f64, f64),
-    MouseUp(f64, f64),
+    MouseUp(f64, f64, Option<Node>),
     MouseWheel(f64, f64, f64),
     GotoCase(case_tree::CaseId),
     NextLevel,
@@ -70,8 +70,8 @@ pub enum UnlockState {
 impl Model {
     fn unlock_state(&self) -> UnlockState {
         match self.future_levels.as_slice().len() {
-            0..=7 => UnlockState::Lemmas,
-            8..=17 => UnlockState::CaseTree,
+            0..=12 => UnlockState::Lemmas,
+            13..=22 => UnlockState::CaseTree,
             _ => UnlockState::None,
         }
     }
@@ -104,8 +104,10 @@ impl Model {
                 }
             }
             Msg::MouseMove(x, y) => self.mouse_move(x, y),
-            Msg::MouseUp(x, y) => {
+            Msg::MouseUp(x, y, dropped_on) => {
                 self.mouse_move(x, y);
+
+                #[allow(clippy::collapsible_match)]
                 match self.drag {
                     Some(DragState {
                         confirmed_drag: Err(_),
@@ -137,8 +139,25 @@ impl Model {
                     }) => {}
                     Some(DragState {
                         confirmed_drag: Ok(()),
+                        object,
                         ..
-                    }) => {}
+                    }) => {
+                        if let DragObject::Node(n1) = object {
+                            if let Some(n2) = dropped_on {
+                                self.level_state.case_tree.edit_case([|case: &mut Case| {
+                                    let w1 = case.node_output(n1);
+                                    let w2 = case.node_output(n2);
+                                    if case.wire_equiv(w1, w2) {
+                                        case.connect(
+                                            w1,
+                                            w2,
+                                            ValidityReason::new("I just checked equivalence."),
+                                        );
+                                    }
+                                }])
+                            }
+                        }
+                    }
                     None => {}
                 }
                 self.drag = None;
@@ -216,6 +235,16 @@ impl Model {
 
 impl<'a> dodrio::Render<'a> for Model {
     fn render(&self, cx: &mut dodrio::RenderContext<'a>) -> dodrio::Node<'a> {
-        self.level_state.render(cx, self.unlock_state())
+        self.level_state.render(
+            cx,
+            self.unlock_state(),
+            match self.drag {
+                Some(DragState {
+                    object: DragObject::Node(node),
+                    ..
+                }) => Some(node),
+                _ => None,
+            },
+        )
     }
 }

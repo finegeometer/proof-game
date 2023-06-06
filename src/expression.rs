@@ -87,7 +87,7 @@ impl Case {
             }
             (Expression::Implies(_), false) => self.wire_eq(self.goal(), output),
             (Expression::Equal([w1, w2]), true) => !self.wire_eq(*w1, *w2),
-            (Expression::Equal(_), false) => true, // `wire_equiv` triggers an egraph rebuild, so I'd rather not.
+            (Expression::Equal([w1, w2]), false) => self.wire_eq(*w1, *w2),
             (Expression::Other(_), _) => false,
         }
     }
@@ -200,14 +200,12 @@ So we might as well merge the wires.",
                     )
                 }]);
             }
-            (Expression::Equal([w1, w2]), false) => {
-                let w1 = *w1;
-                let w2 = *w2;
+            (Expression::Equal(_), false) => {
                 self.edit_case([|case: &mut Case| {
-                    if case.wire_equiv(w1, w2) {
-                        case.connect(w1, w2, ValidityReason::new("I just checked equivalence."));
-                        case.set_proven(output, ValidityReason::new("I just checked equivalence."));
-                    }
+                    case.set_proven(
+                        output,
+                        ValidityReason::new("The inputs are literally the same."),
+                    );
                 }]);
             }
             (Expression::Other(_), true) => {}

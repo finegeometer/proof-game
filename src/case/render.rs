@@ -9,6 +9,7 @@ impl super::Node {
         case: &super::Case,
         cx: &mut dodrio::RenderContext<'a>,
         enable_hover: bool,
+        events: bool,
     ) -> dodrio::Node<'a> {
         let [x, y] = case.position(self);
         let x = bumpalo::format!(in cx.bump, "{}", x).into_bump_str();
@@ -29,15 +30,32 @@ impl super::Node {
                                 "node"
                             },
                         ),
+                        attr("pointer-events", if events { "auto" } else { "none" }),
                     ])
-                    .on(
-                        "mousedown",
-                        handler(move |e| {
-                            let (x, y) =
-                                to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                            crate::Msg::MouseDown(x, y, crate::DragObject::Node(self))
-                        }),
-                    )
+                    .listeners([
+                        on(
+                            cx.bump,
+                            "mousedown",
+                            handler(move |e| {
+                                let (x, y) = to_svg_coords(
+                                    e.dyn_into::<web_sys::MouseEvent>().unwrap(),
+                                    "game",
+                                );
+                                crate::Msg::MouseDown(x, y, crate::DragObject::Node(self))
+                            }),
+                        ),
+                        on(
+                            cx.bump,
+                            "mouseup",
+                            handler(move |e| {
+                                let (x, y) = to_svg_coords(
+                                    e.dyn_into::<web_sys::MouseEvent>().unwrap(),
+                                    "game",
+                                );
+                                crate::Msg::MouseUp(x, y, Some(self))
+                            }),
+                        ),
+                    ])
                     .finish(),
                 text_(cx.bump)
                     .attributes([
@@ -67,6 +85,7 @@ impl super::Wire {
         case: &super::Case,
         cx: &mut dodrio::RenderContext<'a>,
         enable_hover: bool,
+        events: bool,
     ) -> [dodrio::Node<'a>; 2] {
         use bumpalo::collections::Vec;
 
@@ -145,6 +164,7 @@ impl super::Wire {
                             .into_bump_str(),
                     ),
                     attr("d", d),
+                    attr("pointer-events", if events { "auto" } else { "none" }),
                 ])
                 .on("mousedown", handler(closure))
                 .finish(),
@@ -156,6 +176,7 @@ impl super::Wire {
                             .into_bump_str(),
                     ),
                     attr("d", d),
+                    attr("pointer-events", if events { "auto" } else { "none" }),
                 ])
                 .on("mousedown", handler(closure))
                 .finish(),
@@ -170,6 +191,7 @@ impl super::Case {
         cx: &mut dodrio::RenderContext<'a>,
         unlocks: crate::UnlockState,
         complete: bool,
+        dragging: Option<crate::Node>,
     ) -> dodrio::Node<'a> {
         svg(cx.bump)
             .attributes([
@@ -212,7 +234,7 @@ impl super::Case {
                     handler(move |e| {
                         let (x, y) =
                             to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                        crate::Msg::MouseUp(x, y)
+                        crate::Msg::MouseUp(x, y, None)
                     }),
                 ),
                 on(
@@ -245,6 +267,7 @@ impl super::Case {
                             self,
                             cx,
                             !complete && unlocks >= crate::UnlockState::Lemmas,
+                            dragging.is_none(),
                         ) {
                             builder = builder.child(svg_node);
                         }
@@ -255,7 +278,8 @@ impl super::Case {
                 {
                     let mut builder = g(cx.bump);
                     for node in self.nodes() {
-                        builder = builder.child(node.render(self, cx, !complete));
+                        builder =
+                            builder.child(node.render(self, cx, !complete, dragging != Some(node)));
                     }
                     builder.finish()
                 },
