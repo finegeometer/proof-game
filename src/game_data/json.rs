@@ -4,6 +4,7 @@ use crate::level::expression::Expression;
 use super::*;
 use ::serde::Deserialize;
 use anyhow::*;
+use serde::Deserializer;
 use smallvec::SmallVec;
 
 #[derive(Deserialize)]
@@ -32,6 +33,20 @@ struct LevelJson<'a> {
     conclusion: usize,
     text_box: Option<&'a str>,
     map_position: [f64; 2],
+    bezier_vector: [f64; 2],
+    prereqs: Vec<usize>,
+    #[serde(default, deserialize_with = "deserialize_some")]
+    next_level: Option<Option<usize>>,
+}
+
+// https://github.com/serde-rs/serde/issues/984
+// Any value that is present is considered Some value, including null.
+fn deserialize_some<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+    T: Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    Deserialize::deserialize(deserializer).map(Some)
 }
 
 impl<'a> TryFrom<LevelJson<'a>> for Level {
@@ -112,6 +127,11 @@ impl<'a> TryFrom<LevelJson<'a>> for Level {
             },
             text_box: level.text_box.map(|s| s.to_owned()),
             map_position: level.map_position,
+            bezier_vector: level.bezier_vector,
+            prereqs: level.prereqs,
+            next_level: level
+                .next_level
+                .ok_or(anyhow!("Missing next_level field."))?,
         })
     }
 }

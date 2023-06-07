@@ -71,7 +71,7 @@ impl State {
                     div(cx.bump)
                         .attributes([attr("id", "next-level"), attr("class", "button")])
                         .on("click", handler(move |_| crate::Msg::LoadMap))
-                        .children([text("Select a Level.")])
+                        .children([text("Select a Level!")])
                         .finish(),
                 );
             }
@@ -94,7 +94,7 @@ impl State {
             div(cx.bump)
                 .attributes([attr("id", "return-to-map"), attr("class", "button")])
                 .on("click", handler(move |_| crate::Msg::LoadMap))
-                .children([text("Return to World Map")])
+                .children([text("Return to Map")])
                 .finish(),
         );
 

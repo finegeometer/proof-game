@@ -14,6 +14,9 @@ pub struct Level {
     pan_zoom: crate::render::PanZoom,
     text_box: Option<String>,
     map_position: [f64; 2],
+    bezier_vector: [f64; 2],
+    prereqs: Vec<usize>,
+    next_level: Option<usize>,
 }
 
 impl GameData {
@@ -37,15 +40,19 @@ impl GameData {
     }
 
     pub fn next_level(&self, level: usize) -> Option<usize> {
-        (level + 1 < self.levels.len()).then_some(level + 1)
+        self.levels[level].next_level
     }
 
-    pub fn prereqs(&self, level: usize) -> impl Iterator<Item = usize> {
-        (level > 0).then_some(level - 1).into_iter()
+    pub fn prereqs(&self, level: usize) -> impl '_ + Iterator<Item = usize> {
+        self.levels[level].prereqs.iter().copied()
     }
 
     pub fn map_position(&self, level: usize) -> [f64; 2] {
         self.levels[level].map_position
+    }
+
+    pub fn bezier_vector(&self, level: usize) -> [f64; 2] {
+        self.levels[level].bezier_vector
     }
 
     fn unlocks(&self, level: usize) -> crate::UnlockState {
