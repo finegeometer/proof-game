@@ -24,7 +24,7 @@ impl State {
         }
     }
 
-    pub fn update(&mut self, msg: Msg) -> bool {
+    pub fn update(&mut self, msg: Msg, global_state: &mut crate::GlobalState) -> bool {
         match msg {
             Msg::MouseDown(x, y) => {
                 if self.drag.is_some() {
@@ -34,20 +34,21 @@ impl State {
                 self.drag = Some([x, y]);
                 true
             }
-            Msg::MouseMove(x, y) => self.mouse_move(x, y),
+            Msg::MouseMove(x, y) => self.mouse_move(x, y, global_state),
             Msg::MouseUp(x, y) => {
-                let rerender = self.mouse_move(x, y);
+                let rerender = self.mouse_move(x, y, global_state);
                 self.drag = None;
                 rerender
             }
             Msg::MouseWheel(x, y, wheel) => {
                 self.pan_zoom.zoom(x, y, (wheel * 0.001).exp());
+                global_state.map_panzoom = self.pan_zoom;
                 true
             }
         }
     }
 
-    fn mouse_move(&mut self, x: f64, y: f64) -> bool {
+    fn mouse_move(&mut self, x: f64, y: f64, global_state: &mut crate::GlobalState) -> bool {
         let Some(coord) = &mut self.drag else {return false};
 
         let dx = x - coord[0];
@@ -57,6 +58,7 @@ impl State {
         coord[1] = y;
 
         self.pan_zoom.pan(dx, dy);
+        global_state.map_panzoom = self.pan_zoom;
 
         // Update coord in response to changing coordinate system.
         coord[0] -= dx;

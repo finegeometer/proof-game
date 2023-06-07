@@ -70,7 +70,10 @@ impl State {
                 col1 = col1.child(
                     div(cx.bump)
                         .attributes([attr("id", "next-level"), attr("class", "button")])
-                        .on("click", handler(move |_| crate::Msg::LoadMap))
+                        .on(
+                            "click",
+                            handler(move |_| crate::Msg::LoadMap { recenter: true }),
+                        )
                         .children([text("Select a Level!")])
                         .finish(),
                 );
@@ -93,7 +96,10 @@ impl State {
         col1 = col1.child(
             div(cx.bump)
                 .attributes([attr("id", "return-to-map"), attr("class", "button")])
-                .on("click", handler(move |_| crate::Msg::LoadMap))
+                .on(
+                    "click",
+                    handler(move |_| crate::Msg::LoadMap { recenter: false }),
+                )
                 .children([text("Return to Map")])
                 .finish(),
         );

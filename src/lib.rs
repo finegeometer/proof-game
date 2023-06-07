@@ -24,6 +24,11 @@ pub fn run() {
 struct Model {
     game_data: game_data::GameData,
     game_state: GameState,
+    global_state: GlobalState,
+}
+
+pub struct GlobalState {
+    map_panzoom: render::PanZoom,
 }
 
 enum GameState {
@@ -42,8 +47,8 @@ impl GameState {
         }
     }
 
-    fn map(pos: [f64; 2]) -> Self {
-        Self::WorldMap(world_map::State::new(render::PanZoom::center(pos, 10.)))
+    fn map(panzoom: render::PanZoom) -> Self {
+        Self::WorldMap(world_map::State::new(panzoom))
     }
 }
 
@@ -52,7 +57,7 @@ enum Msg {
     Level(level::Msg),
     WorldMap(world_map::Msg),
     LoadLevel(usize),
-    LoadMap,
+    LoadMap { recenter: bool },
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -66,15 +71,15 @@ impl Model {
     fn new() -> Self {
         let game_data: game_data::GameData =
             serde_json::from_str(include_str!("./levels.json")).unwrap();
-        let level_num = 0;
-        let level_state = game_data.load(level_num);
+
+        let global_state = GlobalState {
+            map_panzoom: render::PanZoom::center([0.; 2], 10.),
+        };
 
         Self {
             game_data,
-            game_state: GameState::Level {
-                level_num,
-                level_state,
-            },
+            game_state: GameState::map(global_state.map_panzoom),
+            global_state,
         }
     }
 
@@ -86,16 +91,20 @@ impl Model {
             }
             Msg::WorldMap(msg) => {
                 let GameState::WorldMap(map_state) = &mut self.game_state else {return false};
-                map_state.update(msg)
+                map_state.update(msg, &mut self.global_state)
             }
             Msg::LoadLevel(level) => {
                 // TODO: Check that all prereqs are complete. If not, load map instead.
                 self.game_state = GameState::level(&self.game_data, level);
                 true
             }
-            Msg::LoadMap => match self.game_state {
+            Msg::LoadMap { recenter } => match self.game_state {
                 GameState::Level { level_num, .. } => {
-                    self.game_state = GameState::map(self.game_data.map_position(level_num));
+                    self.game_state = GameState::map(if recenter {
+                        render::PanZoom::center(self.game_data.map_position(level_num), 10.)
+                    } else {
+                        self.global_state.map_panzoom
+                    });
                     true
                 }
                 GameState::WorldMap { .. } => false,
