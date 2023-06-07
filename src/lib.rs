@@ -49,8 +49,8 @@ impl GameState {
         }
     }
 
-    fn map(panzoom: render::PanZoom) -> Self {
-        Self::WorldMap(world_map::State::new(panzoom))
+    fn map() -> Self {
+        Self::WorldMap(world_map::State::new())
     }
 }
 
@@ -82,7 +82,7 @@ impl Model {
 
         Self {
             game_data,
-            game_state: GameState::map(global_state.map_panzoom),
+            game_state: GameState::map(),
             global_state,
         }
     }
@@ -114,20 +114,19 @@ impl Model {
                     self.game_state =
                         GameState::level(&self.game_data, level, self.global_state.unlocks);
                 } else {
-                    self.game_state = GameState::map(render::PanZoom::center(
-                        self.game_data.map_position(level),
-                        10.,
-                    ))
+                    self.game_state = GameState::map();
+                    self.global_state.map_panzoom =
+                        render::PanZoom::center(self.game_data.map_position(level), 10.);
                 }
                 true
             }
             Msg::LoadMap { recenter } => match self.game_state {
                 GameState::Level { level_num, .. } => {
-                    self.game_state = GameState::map(if recenter {
-                        render::PanZoom::center(self.game_data.map_position(level_num), 10.)
-                    } else {
-                        self.global_state.map_panzoom
-                    });
+                    self.game_state = GameState::map();
+                    if recenter {
+                        self.global_state.map_panzoom =
+                            render::PanZoom::center(self.game_data.map_position(level_num), 10.);
+                    }
                     true
                 }
                 GameState::WorldMap { .. } => false,

@@ -16,7 +16,7 @@ impl State {
                 attr("class", "background"),
                 attr("preserveAspectRatio", "xMidYMid meet"),
                 attr("font-size", "0.75"),
-                self.pan_zoom.viewbox(cx.bump),
+                global_state.map_panzoom.viewbox(cx.bump),
             ])
             .listeners([
                 on(

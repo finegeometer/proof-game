@@ -1,9 +1,6 @@
 mod render;
 
-use crate::render::PanZoom;
-
 pub struct State {
-    pan_zoom: PanZoom,
     drag: Option<[f64; 2]>,
 }
 
@@ -17,11 +14,8 @@ pub enum Msg {
 }
 
 impl State {
-    pub fn new(pan_zoom: PanZoom) -> Self {
-        Self {
-            pan_zoom,
-            drag: None,
-        }
+    pub fn new() -> Self {
+        Self { drag: None }
     }
 
     pub fn update(&mut self, msg: Msg, global_state: &mut crate::GlobalState) -> bool {
@@ -41,8 +35,7 @@ impl State {
                 rerender
             }
             Msg::MouseWheel(x, y, wheel) => {
-                self.pan_zoom.zoom(x, y, (wheel * 0.001).exp());
-                global_state.map_panzoom = self.pan_zoom;
+                global_state.map_panzoom.zoom(x, y, (wheel * 0.001).exp());
                 true
             }
         }
@@ -57,8 +50,7 @@ impl State {
         coord[0] = x;
         coord[1] = y;
 
-        self.pan_zoom.pan(dx, dy);
-        global_state.map_panzoom = self.pan_zoom;
+        global_state.map_panzoom.pan(dx, dy);
 
         // Update coord in response to changing coordinate system.
         coord[0] -= dx;
