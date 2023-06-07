@@ -1,5 +1,4 @@
 mod json;
-mod render;
 
 /// Any data that pertains to the game as a whole,
 /// as opposed to what the player has done in the game.
@@ -18,6 +17,10 @@ pub struct Level {
 }
 
 impl GameData {
+    pub fn num_levels(&self) -> usize {
+        self.levels.len()
+    }
+
     pub fn load(&self, level: usize) -> crate::level::State {
         let Level {
             case,

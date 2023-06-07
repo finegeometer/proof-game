@@ -2,7 +2,10 @@
 #![allow(clippy::new_without_default)]
 
 mod game_data;
+
 mod level;
+mod world_map;
+
 mod render;
 
 #[wasm_bindgen::prelude::wasm_bindgen]
@@ -28,9 +31,7 @@ enum GameState {
         level_num: usize,
         level_state: level::State,
     },
-    WorldMap {
-        pan_zoom: render::PanZoom,
-    },
+    WorldMap(world_map::State),
 }
 
 impl GameState {
@@ -42,15 +43,14 @@ impl GameState {
     }
 
     fn map(pos: [f64; 2]) -> Self {
-        Self::WorldMap {
-            pan_zoom: render::PanZoom::center(pos, 10.),
-        }
+        Self::WorldMap(world_map::State::new(render::PanZoom::center(pos, 10.)))
     }
 }
 
 #[derive(Debug)]
 enum Msg {
     Level(level::Msg),
+    WorldMap(world_map::Msg),
     LoadLevel(usize),
     NextLevel,
     ResetLevel,
@@ -85,6 +85,11 @@ impl Model {
             Msg::Level(msg) => {
                 if let GameState::Level { level_state, .. } = &mut self.game_state {
                     level_state.update(msg);
+                }
+            }
+            Msg::WorldMap(msg) => {
+                if let GameState::WorldMap(map_state) = &mut self.game_state {
+                    map_state.update(msg);
                 }
             }
             Msg::LoadLevel(level) => self.game_state = GameState::level(&self.game_data, level),
@@ -131,8 +136,8 @@ impl<'a> dodrio::Render<'a> for Model {
             GameState::Level { level_state, .. } => {
                 builder.children(level_state.render(cx)).finish()
             }
-            GameState::WorldMap { pan_zoom } => builder
-                .children([self.game_data.world_map(cx, *pan_zoom)])
+            GameState::WorldMap(map_state) => builder
+                .children([map_state.render(cx, &self.game_data)])
                 .finish(),
         }
     }
