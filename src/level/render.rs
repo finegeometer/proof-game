@@ -11,7 +11,7 @@ impl State {
 
         // Main Screen
         col0 = col0.child(case.render(
-            self.svg_corners,
+            self.pan_zoom,
             cx,
             self.unlocks,
             complete,

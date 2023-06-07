@@ -2,12 +2,13 @@ mod render;
 
 use crate::{
     case_tree::{CaseId, CaseTree},
+    render::PanZoom,
     Case, Node, ValidityReason, Wire,
 };
 
 pub struct State {
     pub case_tree: CaseTree,
-    svg_corners: ([f64; 2], [f64; 2]),
+    pan_zoom: PanZoom,
     text_box: Option<String>,
     drag: Option<DragState>,
     unlocks: crate::UnlockState,
@@ -42,13 +43,13 @@ pub enum DragObject {
 impl State {
     pub fn new(
         case: Case,
-        svg_corners: ([f64; 2], [f64; 2]),
+        pan_zoom: PanZoom,
         text_box: Option<String>,
         unlocks: crate::UnlockState,
     ) -> Self {
         Self {
             case_tree: CaseTree::new(case),
-            svg_corners,
+            pan_zoom,
             text_box,
             drag: None,
             unlocks,
@@ -126,12 +127,7 @@ impl State {
                 self.drag = None;
             }
             Msg::MouseWheel(x, y, wheel) => {
-                let scale_factor = (wheel * 0.001).exp();
-
-                self.svg_corners.0[0] = (self.svg_corners.0[0] - x) * scale_factor + x;
-                self.svg_corners.1[0] = (self.svg_corners.1[0] - x) * scale_factor + x;
-                self.svg_corners.0[1] = (self.svg_corners.0[1] - y) * scale_factor + y;
-                self.svg_corners.1[1] = (self.svg_corners.1[1] - y) * scale_factor + y;
+                self.pan_zoom.zoom(x, y, (wheel * 0.001).exp());
 
                 if let Some(DragState {
                     coord,
@@ -177,10 +173,7 @@ impl State {
                     }
                     DragObject::Wire(_) => {}
                     DragObject::Background => {
-                        self.svg_corners.0[0] -= dx;
-                        self.svg_corners.1[0] -= dx;
-                        self.svg_corners.0[1] -= dy;
-                        self.svg_corners.1[1] -= dy;
+                        self.pan_zoom.pan(dx, dy);
 
                         // Update coord in response to changing coordinate system.
                         coord.0 -= dx;

@@ -1,5 +1,5 @@
 use crate::level;
-use crate::render::{bezier, g, handler, text_, to_svg_coords};
+use crate::render::{bezier, g, handler, text_, to_svg_coords, PanZoom};
 use dodrio::builder::*;
 use dodrio::bumpalo;
 use wasm_bindgen::JsCast;
@@ -192,7 +192,7 @@ impl super::Wire {
 impl super::Case {
     pub fn render<'a>(
         &self,
-        svg_corners: ([f64; 2], [f64; 2]),
+        pan_zoom: PanZoom,
         cx: &mut dodrio::RenderContext<'a>,
         unlocks: crate::UnlockState,
         complete: bool,
@@ -211,17 +211,7 @@ impl super::Case {
                 ),
                 attr("preserveAspectRatio", "xMidYMid meet"),
                 attr("font-size", "0.75"),
-                attr(
-                    "viewBox",
-                    bumpalo::format!(in cx.bump,
-                        "{} {} {} {}",
-                        svg_corners.0[0],
-                        svg_corners.0[1],
-                        svg_corners.1[0] - svg_corners.0[0],
-                        svg_corners.1[1] - svg_corners.0[1]
-                    )
-                    .into_bump_str(),
-                ),
+                pan_zoom.viewbox(cx.bump),
             ])
             .listeners([
                 on(

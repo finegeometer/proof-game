@@ -6,7 +6,7 @@ impl GameData {
     pub fn world_map<'a>(
         &self,
         cx: &mut dodrio::RenderContext<'a>,
-        svg_corners: ([f64; 2], [f64; 2]),
+        pan_zoom: PanZoom,
     ) -> dodrio::Node<'a> {
         svg(cx.bump)
             .attributes([
@@ -14,17 +14,7 @@ impl GameData {
                 attr("class", "background"),
                 attr("preserveAspectRatio", "xMidYMid meet"),
                 attr("font-size", "0.75"),
-                attr(
-                    "viewBox",
-                    bumpalo::format!(in cx.bump,
-                        "{} {} {} {}",
-                        svg_corners.0[0],
-                        svg_corners.0[1],
-                        svg_corners.1[0] - svg_corners.0[0],
-                        svg_corners.1[1] - svg_corners.0[1]
-                    )
-                    .into_bump_str(),
-                ),
+                pan_zoom.viewbox(cx.bump),
             ])
             .children(bumpalo::collections::Vec::from_iter_in(
                 self.levels.iter().enumerate().map(|(level_num, level)| {

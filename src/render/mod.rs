@@ -54,3 +54,43 @@ pub(crate) fn handler(
         vdom.schedule_render();
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct PanZoom {
+    pub svg_corners: ([f64; 2], [f64; 2]),
+}
+
+impl PanZoom {
+    pub fn center([x, y]: [f64; 2], r: f64) -> Self {
+        Self {
+            svg_corners: ([x - r, y - r], [x + r, y + r]),
+        }
+    }
+    pub fn pan(&mut self, dx: f64, dy: f64) {
+        self.svg_corners.0[0] -= dx;
+        self.svg_corners.1[0] -= dx;
+        self.svg_corners.0[1] -= dy;
+        self.svg_corners.1[1] -= dy;
+    }
+
+    pub fn zoom(&mut self, x: f64, y: f64, scale_factor: f64) {
+        self.svg_corners.0[0] = (self.svg_corners.0[0] - x) * scale_factor + x;
+        self.svg_corners.1[0] = (self.svg_corners.1[0] - x) * scale_factor + x;
+        self.svg_corners.0[1] = (self.svg_corners.0[1] - y) * scale_factor + y;
+        self.svg_corners.1[1] = (self.svg_corners.1[1] - y) * scale_factor + y;
+    }
+
+    pub fn viewbox<'bump>(&self, bump: &'bump bumpalo::Bump) -> dodrio::Attribute<'bump> {
+        dodrio::builder::attr(
+            "viewBox",
+            bumpalo::format!(in bump,
+                "{} {} {} {}",
+                self.svg_corners.0[0],
+                self.svg_corners.0[1],
+                self.svg_corners.1[0] - self.svg_corners.0[0],
+                self.svg_corners.1[1] - self.svg_corners.0[1]
+            )
+            .into_bump_str(),
+        )
+    }
+}

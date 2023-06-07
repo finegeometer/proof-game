@@ -106,7 +106,9 @@ impl<'a> TryFrom<LevelJson<'a>> for Level {
         ))?);
         Ok(Level {
             case,
-            svg_corners: ([x_min - 1., y_min - 1.], [x_max + 1., y_max + 3.]),
+            pan_zoom: crate::render::PanZoom {
+                svg_corners: ([x_min - 1., y_min - 1.], [x_max + 1., y_max + 3.]),
+            },
             text_box: level.text_box.map(|s| s.to_owned()),
             map_position: level.map_position,
         })

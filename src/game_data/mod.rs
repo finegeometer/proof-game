@@ -12,7 +12,7 @@ pub struct GameData {
 
 pub struct Level {
     case: crate::case::Case,
-    svg_corners: ([f64; 2], [f64; 2]),
+    pan_zoom: crate::render::PanZoom,
     text_box: Option<String>,
     map_position: [f64; 2],
 }
@@ -21,13 +21,13 @@ impl GameData {
     pub fn load(&self, level: usize) -> crate::level::State {
         let Level {
             case,
-            svg_corners,
+            pan_zoom,
             text_box,
             ..
         } = &self.levels[level];
         crate::level::State::new(
             case.clone(),
-            *svg_corners,
+            *pan_zoom,
             text_box.clone(),
             self.unlocks(level),
         )

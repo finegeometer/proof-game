@@ -36,7 +36,7 @@ enum GameState {
         level_state: level::State,
     },
     WorldMap {
-        svg_corners: ([f64; 2], [f64; 2]),
+        pan_zoom: render::PanZoom,
     },
 }
 
@@ -48,9 +48,9 @@ impl GameState {
         }
     }
 
-    fn map([x, y]: [f64; 2]) -> Self {
+    fn map(pos: [f64; 2]) -> Self {
         Self::WorldMap {
-            svg_corners: ([x - 10., y - 10.], [x + 10., y + 10.]),
+            pan_zoom: render::PanZoom::center(pos, 10.),
         }
     }
 }
@@ -138,8 +138,8 @@ impl<'a> dodrio::Render<'a> for Model {
             GameState::Level { level_state, .. } => {
                 builder.children(level_state.render(cx)).finish()
             }
-            GameState::WorldMap { svg_corners } => builder
-                .children([self.game_data.world_map(cx, *svg_corners)])
+            GameState::WorldMap { pan_zoom } => builder
+                .children([self.game_data.world_map(cx, *pan_zoom)])
                 .finish(),
         }
     }
