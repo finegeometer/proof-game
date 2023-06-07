@@ -41,9 +41,11 @@
     }
 
     #game {
-      flex-grow: 1;
-      flex-shrink: 0;
-      flex-basis: 80%;
+      flex: 1;
+    }
+
+    #map {
+      flex: 1;
     }
 
     #text-box {
@@ -57,7 +59,6 @@
       border-radius: 4vmin;
       background: #c66;
       border: 2px solid #800;
-      cursor: pointer;
     }
 
     #reset:hover {
@@ -68,13 +69,21 @@
       border-radius: 4vmin;
       background: #3a3;
       border: 2px solid #060;
-      cursor: pointer;
     }
 
     #next-level:hover {
       background: #292
     }
 
+    #return-to-map {
+      border-radius: 4vmin;
+      background: #66c;
+      border: 2px solid #008;
+    }
+
+    #return-to-map:hover {
+      background: #55b;
+    }
 
 
 
@@ -85,6 +94,8 @@
       flex-wrap: wrap;
       align-items: center;
       justify-content: center;
+      text-align: center;
+      cursor: pointer;
     }
 
     .hoverable {
