@@ -1,3 +1,4 @@
+use super::case::*;
 use super::*;
 use smallvec::SmallVec;
 

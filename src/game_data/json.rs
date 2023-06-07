@@ -1,4 +1,5 @@
-use crate::{Case, Expression, ValidityReason, Wire};
+use crate::level::case::{Case, ValidityReason, Wire};
+use crate::level::expression::Expression;
 
 use super::*;
 use ::serde::Deserialize;

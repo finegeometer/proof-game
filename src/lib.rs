@@ -1,16 +1,9 @@
 #![warn(clippy::todo)]
 #![allow(clippy::new_without_default)]
 
-mod case;
-mod case_tree;
-mod expression;
 mod game_data;
 mod level;
 mod render;
-
-pub use case::{Case, Node, ValidityReason, Wire};
-pub use case_tree::CaseTree;
-pub use expression::Expression;
 
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn run() {

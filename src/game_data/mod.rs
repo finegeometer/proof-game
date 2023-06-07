@@ -11,7 +11,7 @@ pub struct GameData {
 }
 
 pub struct Level {
-    case: crate::case::Case,
+    case: crate::level::case::Case,
     pan_zoom: crate::render::PanZoom,
     text_box: Option<String>,
     map_position: [f64; 2],

@@ -1,10 +1,13 @@
+//! Code pertaining to individual levels of the game.
+
+pub mod case;
+mod case_tree;
+pub mod expression;
 mod render;
 
-use crate::{
-    case_tree::{CaseId, CaseTree},
-    render::PanZoom,
-    Case, Node, ValidityReason, Wire,
-};
+use crate::render::PanZoom;
+use case::{Case, Node, ValidityReason, Wire};
+use case_tree::{CaseId, CaseTree};
 
 pub struct State {
     pub case_tree: CaseTree,

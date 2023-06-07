@@ -3,7 +3,7 @@ mod union_find;
 
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
-use super::*;
+use super::expression::Expression;
 use union_find::UnionFind;
 
 /// This is a safety feature.

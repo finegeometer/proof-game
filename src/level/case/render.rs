@@ -1,7 +1,5 @@
-use crate::level;
-use crate::render::{bezier, g, handler, text_, to_svg_coords, PanZoom};
-use dodrio::builder::*;
-use dodrio::bumpalo;
+use crate::{level, render::*};
+use dodrio::{builder::*, bumpalo};
 use wasm_bindgen::JsCast;
 
 impl super::Node {
@@ -196,7 +194,7 @@ impl super::Case {
         cx: &mut dodrio::RenderContext<'a>,
         unlocks: crate::UnlockState,
         complete: bool,
-        dragging: Option<crate::Node>,
+        dragging: Option<super::Node>,
     ) -> dodrio::Node<'a> {
         svg(cx.bump)
             .attributes([
