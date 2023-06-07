@@ -24,37 +24,44 @@ impl State {
         }
     }
 
-    pub fn update(&mut self, msg: Msg) {
+    pub fn update(&mut self, msg: Msg) -> bool {
         match msg {
             Msg::MouseDown(x, y) => {
-                if self.drag.is_none() {
-                    self.drag = Some([x, y]);
+                if self.drag.is_some() {
+                    return false;
                 }
+
+                self.drag = Some([x, y]);
+                true
             }
             Msg::MouseMove(x, y) => self.mouse_move(x, y),
             Msg::MouseUp(x, y) => {
-                self.mouse_move(x, y);
+                let rerender = self.mouse_move(x, y);
                 self.drag = None;
+                rerender
             }
             Msg::MouseWheel(x, y, wheel) => {
                 self.pan_zoom.zoom(x, y, (wheel * 0.001).exp());
+                true
             }
         }
     }
 
-    fn mouse_move(&mut self, x: f64, y: f64) {
-        if let Some(coord) = &mut self.drag {
-            let dx = x - coord[0];
-            let dy = y - coord[1];
+    fn mouse_move(&mut self, x: f64, y: f64) -> bool {
+        let Some(coord) = &mut self.drag else {return false};
 
-            coord[0] = x;
-            coord[1] = y;
+        let dx = x - coord[0];
+        let dy = y - coord[1];
 
-            self.pan_zoom.pan(dx, dy);
+        coord[0] = x;
+        coord[1] = y;
 
-            // Update coord in response to changing coordinate system.
-            coord[0] -= dx;
-            coord[1] -= dy;
-        }
+        self.pan_zoom.pan(dx, dy);
+
+        // Update coord in response to changing coordinate system.
+        coord[0] -= dx;
+        coord[1] -= dy;
+
+        true
     }
 }

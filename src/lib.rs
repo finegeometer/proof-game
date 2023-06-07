@@ -80,43 +80,45 @@ impl Model {
         }
     }
 
-    fn update(&mut self, msg: Msg) {
+    fn update(&mut self, msg: Msg) -> bool {
         match msg {
             Msg::Level(msg) => {
-                if let GameState::Level { level_state, .. } = &mut self.game_state {
-                    level_state.update(msg);
-                }
+                let GameState::Level { level_state, .. } = &mut self.game_state else {return false};
+                level_state.update(msg)
             }
             Msg::WorldMap(msg) => {
-                if let GameState::WorldMap(map_state) = &mut self.game_state {
-                    map_state.update(msg);
-                }
+                let GameState::WorldMap(map_state) = &mut self.game_state else {return false};
+                map_state.update(msg)
             }
-            Msg::LoadLevel(level) => self.game_state = GameState::level(&self.game_data, level),
+            Msg::LoadLevel(level) => {
+                self.game_state = GameState::level(&self.game_data, level);
+                true
+            }
             Msg::NextLevel => {
-                if let GameState::Level {
-                    level_num,
-                    level_state,
-                } = &self.game_state
-                {
-                    if level_state.case_tree.all_complete() {
-                        if let Some(level) = self.game_data.next_level(*level_num) {
-                            // TODO: Check that all prereqs are complete.
-                            self.game_state = GameState::level(&self.game_data, level)
-                        }
-                    }
+                let GameState::Level { level_num, level_state} = &self.game_state else {return false};
+
+                if !level_state.case_tree.all_complete() {
+                    return false;
                 }
+
+                let Some(level) = self.game_data.next_level(*level_num) else {return false};
+
+                // TODO: Check that all prereqs are complete.
+                self.game_state = GameState::level(&self.game_data, level);
+                true
             }
             Msg::ResetLevel => {
-                if let GameState::Level { level_num, .. } = self.game_state {
-                    self.game_state = GameState::level(&self.game_data, level_num)
-                }
+                let GameState::Level { level_num, .. } = self.game_state else {return false};
+
+                self.game_state = GameState::level(&self.game_data, level_num);
+                true
             }
             Msg::LoadMap => match self.game_state {
                 GameState::Level { level_num, .. } => {
-                    self.game_state = GameState::map(self.game_data.map_position(level_num))
+                    self.game_state = GameState::map(self.game_data.map_position(level_num));
+                    true
                 }
-                GameState::WorldMap { .. } => {}
+                GameState::WorldMap { .. } => false,
             },
         }
     }

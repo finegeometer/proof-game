@@ -59,20 +59,23 @@ impl State {
         }
     }
 
-    pub fn update(&mut self, msg: Msg) {
+    pub fn update(&mut self, msg: Msg) -> bool {
         match msg {
             Msg::MouseDown(x, y, object) => {
-                if self.drag.is_none() {
-                    self.drag = Some(DragState {
-                        coord: (x, y),
-                        confirmed_drag: Err((x, y)),
-                        object,
-                    });
+                if self.drag.is_some() {
+                    return false;
                 }
+
+                self.drag = Some(DragState {
+                    coord: (x, y),
+                    confirmed_drag: Err((x, y)),
+                    object,
+                });
+                true
             }
             Msg::MouseMove(x, y) => self.mouse_move(x, y),
             Msg::MouseUp(x, y, dropped_on) => {
-                self.mouse_move(x, y);
+                let mut rerender = self.mouse_move(x, y);
 
                 #[allow(clippy::collapsible_match)]
                 match self.drag {
@@ -83,7 +86,8 @@ impl State {
                     }) => {
                         let (case, complete) = self.case_tree.current_case();
                         if !complete && case.node_has_interaction(node) {
-                            self.case_tree.interact_node(node)
+                            self.case_tree.interact_node(node);
+                            rerender = true;
                         }
                     }
                     Some(DragState {
@@ -96,7 +100,8 @@ impl State {
                             && !complete
                             && case.wire_has_interaction(wire)
                         {
-                            self.case_tree.interact_wire(wire)
+                            self.case_tree.interact_wire(wire);
+                            rerender = true;
                         }
                     }
                     Some(DragState {
@@ -121,13 +126,15 @@ impl State {
                                             ValidityReason::new("I just checked equivalence."),
                                         );
                                     }
-                                }])
+                                }]);
+                                rerender = true;
                             }
                         }
                     }
                     None => {}
                 }
                 self.drag = None;
+                rerender
             }
             Msg::MouseWheel(x, y, wheel) => {
                 self.pan_zoom.zoom(x, y, (wheel * 0.001).exp());
@@ -143,47 +150,53 @@ impl State {
                     *coord = (x, y);
                     *confirmed_drag = Ok(());
                 }
+
+                true
             }
             Msg::GotoCase(id) => {
                 self.case_tree.goto_case(id);
+                true
             }
         }
     }
 
-    fn mouse_move(&mut self, x: f64, y: f64) {
-        if let Some(DragState {
+    fn mouse_move(&mut self, x: f64, y: f64) -> bool {
+        let Some(DragState {
             coord,
             confirmed_drag,
             object,
-        }) = &mut self.drag
-        {
-            let dx = x - coord.0;
-            let dy = y - coord.1;
+        }) = &mut self.drag else {return false};
 
-            coord.0 = x;
-            coord.1 = y;
+        let dx = x - coord.0;
+        let dy = y - coord.1;
 
-            if let Err(init_coord) = confirmed_drag {
-                if (coord.0 - init_coord.0).powi(2) + (coord.1 - init_coord.1).powi(2) > 0.01 {
-                    *confirmed_drag = Ok(());
-                }
-            }
+        coord.0 = x;
+        coord.1 = y;
 
-            if confirmed_drag.is_ok() {
-                match object {
-                    DragObject::Node(node) => {
-                        self.case_tree.set_node_position(*node, [x, y]);
-                    }
-                    DragObject::Wire(_) => {}
-                    DragObject::Background => {
-                        self.pan_zoom.pan(dx, dy);
-
-                        // Update coord in response to changing coordinate system.
-                        coord.0 -= dx;
-                        coord.1 -= dy;
-                    }
-                }
+        if let Err(init_coord) = confirmed_drag {
+            if (coord.0 - init_coord.0).powi(2) + (coord.1 - init_coord.1).powi(2) > 0.01 {
+                *confirmed_drag = Ok(());
             }
         }
+
+        if confirmed_drag.is_err() {
+            return false;
+        }
+
+        match object {
+            DragObject::Node(node) => {
+                self.case_tree.set_node_position(*node, [x, y]);
+            }
+            DragObject::Wire(_) => return false,
+            DragObject::Background => {
+                self.pan_zoom.pan(dx, dy);
+
+                // Update coord in response to changing coordinate system.
+                coord.0 -= dx;
+                coord.1 -= dy;
+            }
+        }
+
+        true
     }
 }

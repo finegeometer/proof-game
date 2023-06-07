@@ -50,8 +50,9 @@ pub(crate) fn handler(
         e.stop_propagation();
         e.prevent_default();
         let model = root.unwrap_mut::<super::Model>();
-        model.update(msg(e));
-        vdom.schedule_render();
+        if model.update(msg(e)) {
+            vdom.schedule_render();
+        }
     }
 }
 
