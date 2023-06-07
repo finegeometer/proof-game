@@ -12,7 +12,7 @@
       padding: 0;
       overflow: hidden;
       font-family: sans-serif;
-      font-size: 72px;
+      font-size: 48px;
     }
 
 
@@ -128,21 +128,11 @@
       stroke-width: 0.04;
     }
 
-    .node.known {
-      fill: #3a3;
-      stroke: #080;
-      stroke-width: 0.04;
-    }
-
-    .node.goal {
-      fill: #da3;
-      stroke: #b70;
-      stroke-width: 0.04;
-    }
-
     .node.hoverable:hover {
       fill: #89a;
     }
+
+
 
     .wire {
       fill: transparent;
@@ -160,8 +150,20 @@
       stroke-width: 0.12;
     }
 
+
+
+    .node.known {
+      fill: #3a3;
+      stroke: #080;
+      stroke-width: 0.04;
+    }
+
     .wire.known {
       stroke: #3a3;
+    }
+
+    .node.known.hoverable:hover {
+      fill: #292;
     }
 
     .wire.known.hoverable:hover {
@@ -170,6 +172,19 @@
 
     .wire.border.known {
       stroke: #080;
+    }
+
+
+
+
+    .node.goal {
+      fill: #da3;
+      stroke: #b70;
+      stroke-width: 0.04;
+    }
+
+    .node.goal.hoverable:hover {
+      fill: #c92;
     }
 
     .wire.goal {
