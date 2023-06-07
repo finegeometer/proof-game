@@ -52,8 +52,6 @@ enum Msg {
     Level(level::Msg),
     WorldMap(world_map::Msg),
     LoadLevel(usize),
-    NextLevel,
-    ResetLevel,
     LoadMap,
 }
 
@@ -91,26 +89,8 @@ impl Model {
                 map_state.update(msg)
             }
             Msg::LoadLevel(level) => {
+                // TODO: Check that all prereqs are complete. If not, load map instead.
                 self.game_state = GameState::level(&self.game_data, level);
-                true
-            }
-            Msg::NextLevel => {
-                let GameState::Level { level_num, level_state} = &self.game_state else {return false};
-
-                if !level_state.case_tree.all_complete() {
-                    return false;
-                }
-
-                let Some(level) = self.game_data.next_level(*level_num) else {return false};
-
-                // TODO: Check that all prereqs are complete.
-                self.game_state = GameState::level(&self.game_data, level);
-                true
-            }
-            Msg::ResetLevel => {
-                let GameState::Level { level_num, .. } = self.game_state else {return false};
-
-                self.game_state = GameState::level(&self.game_data, level_num);
                 true
             }
             Msg::LoadMap => match self.game_state {
@@ -135,9 +115,12 @@ impl<'a> dodrio::Render<'a> for Model {
         )]);
 
         match &self.game_state {
-            GameState::Level { level_state, .. } => {
-                builder.children(level_state.render(cx)).finish()
-            }
+            GameState::Level {
+                level_state,
+                level_num,
+            } => builder
+                .children(level_state.render(cx, *level_num, self.game_data.next_level(*level_num)))
+                .finish(),
             GameState::WorldMap(map_state) => builder
                 .children([map_state.render(cx, &self.game_data)])
                 .finish(),

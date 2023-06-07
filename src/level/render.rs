@@ -4,7 +4,12 @@ use dodrio::builder::*;
 use dodrio::bumpalo;
 
 impl State {
-    pub fn render<'a>(&self, cx: &mut dodrio::RenderContext<'a>) -> [dodrio::Node<'a>; 2] {
+    pub fn render<'a>(
+        &self,
+        cx: &mut dodrio::RenderContext<'a>,
+        current_level: usize,
+        next_level: Option<usize>,
+    ) -> [dodrio::Node<'a>; 2] {
         let (case, complete) = self.case_tree.current_case();
 
         let mut col0 = div(cx.bump).attributes([attr("id", "col0")]);
@@ -53,20 +58,33 @@ impl State {
 
         // Next Level
         if self.case_tree.all_complete() {
-            col1 = col1.child(
-                div(cx.bump)
-                    .attributes([attr("id", "next-level"), attr("class", "button")])
-                    .on("click", handler(move |_| crate::Msg::NextLevel))
-                    .children([text("Next Level!")])
-                    .finish(),
-            );
+            if let Some(next_level) = next_level {
+                col1 = col1.child(
+                    div(cx.bump)
+                        .attributes([attr("id", "next-level"), attr("class", "button")])
+                        .on("click", handler(move |_| crate::Msg::LoadLevel(next_level)))
+                        .children([text("Next Level!")])
+                        .finish(),
+                );
+            } else {
+                col1 = col1.child(
+                    div(cx.bump)
+                        .attributes([attr("id", "next-level"), attr("class", "button")])
+                        .on("click", handler(move |_| crate::Msg::LoadMap))
+                        .children([text("Select a Level.")])
+                        .finish(),
+                );
+            }
         }
 
         // Reset Level
         col1 = col1.child(
             div(cx.bump)
                 .attributes([attr("id", "reset"), attr("class", "button")])
-                .on("click", handler(move |_| crate::Msg::ResetLevel))
+                .on(
+                    "click",
+                    handler(move |_| crate::Msg::LoadLevel(current_level)),
+                )
                 .children([text("Reset")])
                 .finish(),
         );
