@@ -35,17 +35,24 @@ pub struct GlobalState {
 
 enum GameState {
     Level {
-        level_num: usize,
+        level: usize,
+        next_level: Option<usize>,
         level_state: level::State,
     },
     WorldMap(world_map::State),
 }
 
 impl GameState {
-    fn level(game_data: &game_data::GameData, level: usize, global_unlocks: UnlockState) -> Self {
+    fn level(game_data: &game_data::GameData, level: usize, global_state: &GlobalState) -> Self {
         Self::Level {
-            level_num: level,
-            level_state: game_data.load(level, global_unlocks),
+            level,
+            next_level: game_data.next_level(level).filter(|&next_level| {
+                game_data
+                    .prereqs(next_level)
+                    .filter(|&prereq| prereq != level)
+                    .all(|prereq| global_state.completed[prereq])
+            }),
+            level_state: game_data.load(level, global_state.unlocks),
         }
     }
 
@@ -90,14 +97,14 @@ impl Model {
     fn update(&mut self, msg: Msg) -> bool {
         match msg {
             Msg::Level(msg) => {
-                let GameState::Level { level_state, level_num } = &mut self.game_state else {return false};
+                let GameState::Level { level_state, level, .. } = &mut self.game_state else {return false};
                 let rerender = level_state.update(msg);
                 if level_state.complete() {
                     self.global_state.unlocks = self
                         .global_state
                         .unlocks
-                        .max(self.game_data.unlocks(*level_num));
-                    self.global_state.completed[*level_num] = true;
+                        .max(self.game_data.unlocks(*level));
+                    self.global_state.completed[*level] = true;
                 }
                 rerender
             }
@@ -106,22 +113,13 @@ impl Model {
                 map_state.update(msg, &mut self.global_state)
             }
             Msg::LoadLevel(level) => {
-                if self
-                    .game_data
-                    .prereqs(level)
-                    .all(|prereq| self.global_state.completed[prereq])
-                {
-                    self.game_state =
-                        GameState::level(&self.game_data, level, self.global_state.unlocks);
-                } else {
-                    self.game_state = GameState::map();
-                    self.global_state.map_panzoom =
-                        render::PanZoom::center(self.game_data.map_position(level), 10.);
-                }
+                self.game_state = GameState::level(&self.game_data, level, &self.global_state);
                 true
             }
             Msg::LoadMap { recenter } => match self.game_state {
-                GameState::Level { level_num, .. } => {
+                GameState::Level {
+                    level: level_num, ..
+                } => {
                     self.game_state = GameState::map();
                     if recenter {
                         self.global_state.map_panzoom =
@@ -148,9 +146,10 @@ impl<'a> dodrio::Render<'a> for Model {
         match &self.game_state {
             GameState::Level {
                 level_state,
-                level_num,
+                level,
+                next_level,
             } => builder
-                .children(level_state.render(cx, *level_num, self.game_data.next_level(*level_num)))
+                .children(level_state.render(cx, *level, *next_level))
                 .finish(),
             GameState::WorldMap(map_state) => builder
                 .children([map_state.render(cx, &self.game_data, &self.global_state)])
