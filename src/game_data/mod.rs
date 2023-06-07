@@ -17,6 +17,7 @@ pub struct Level {
     bezier_vector: [f64; 2],
     prereqs: Vec<usize>,
     next_level: Option<usize>,
+    unlocks: crate::UnlockState,
 }
 
 impl GameData {
@@ -24,7 +25,7 @@ impl GameData {
         self.levels.len()
     }
 
-    pub fn load(&self, level: usize) -> crate::level::State {
+    pub fn load(&self, level: usize, global_unlocks: crate::UnlockState) -> crate::level::State {
         let Level {
             case,
             pan_zoom,
@@ -35,7 +36,7 @@ impl GameData {
             case.clone(),
             *pan_zoom,
             text_box.clone(),
-            self.unlocks(level),
+            global_unlocks.max(self.unlocks(level)),
         )
     }
 
@@ -55,11 +56,7 @@ impl GameData {
         self.levels[level].bezier_vector
     }
 
-    fn unlocks(&self, level: usize) -> crate::UnlockState {
-        match level {
-            0..=6 => crate::UnlockState::None,
-            7..=16 => crate::UnlockState::CaseTree,
-            _ => crate::UnlockState::Lemmas,
-        }
+    pub fn unlocks(&self, level: usize) -> crate::UnlockState {
+        self.levels[level].unlocks
     }
 }

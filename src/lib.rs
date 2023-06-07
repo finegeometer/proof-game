@@ -29,6 +29,7 @@ struct Model {
 
 pub struct GlobalState {
     map_panzoom: render::PanZoom,
+    unlocks: UnlockState,
 }
 
 enum GameState {
@@ -40,10 +41,10 @@ enum GameState {
 }
 
 impl GameState {
-    fn level(game_data: &game_data::GameData, level: usize) -> Self {
+    fn level(game_data: &game_data::GameData, level: usize, global_unlocks: UnlockState) -> Self {
         Self::Level {
             level_num: level,
-            level_state: game_data.load(level),
+            level_state: game_data.load(level, global_unlocks),
         }
     }
 
@@ -74,6 +75,7 @@ impl Model {
 
         let global_state = GlobalState {
             map_panzoom: render::PanZoom::center([0.; 2], 10.),
+            unlocks: UnlockState::None,
         };
 
         Self {
@@ -86,8 +88,15 @@ impl Model {
     fn update(&mut self, msg: Msg) -> bool {
         match msg {
             Msg::Level(msg) => {
-                let GameState::Level { level_state, .. } = &mut self.game_state else {return false};
-                level_state.update(msg)
+                let GameState::Level { level_state, level_num } = &mut self.game_state else {return false};
+                let rerender = level_state.update(msg);
+                if level_state.complete() {
+                    self.global_state.unlocks = self
+                        .global_state
+                        .unlocks
+                        .max(self.game_data.unlocks(*level_num));
+                }
+                rerender
             }
             Msg::WorldMap(msg) => {
                 let GameState::WorldMap(map_state) = &mut self.game_state else {return false};
@@ -95,7 +104,8 @@ impl Model {
             }
             Msg::LoadLevel(level) => {
                 // TODO: Check that all prereqs are complete. If not, load map instead.
-                self.game_state = GameState::level(&self.game_data, level);
+                self.game_state =
+                    GameState::level(&self.game_data, level, self.global_state.unlocks);
                 true
             }
             Msg::LoadMap { recenter } => match self.game_state {

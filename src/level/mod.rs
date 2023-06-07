@@ -160,6 +160,10 @@ impl State {
         }
     }
 
+    pub fn complete(&self) -> bool {
+        self.case_tree.all_complete()
+    }
+
     fn mouse_move(&mut self, x: f64, y: f64) -> bool {
         let Some(DragState {
             coord,
