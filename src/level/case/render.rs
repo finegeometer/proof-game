@@ -163,7 +163,7 @@ impl super::Wire {
                 .attributes([
                     attr(
                         "class",
-                        bumpalo::format!(in cx.bump, "wire border{}{}", extra_classes, hoverable)
+                        bumpalo::format!(in cx.bump, "wire border{}", extra_classes)
                             .into_bump_str(),
                     ),
                     attr("d", d),

@@ -30,6 +30,7 @@ struct Model {
 pub struct GlobalState {
     map_panzoom: render::PanZoom,
     unlocks: UnlockState,
+    completed: Vec<bool>,
 }
 
 enum GameState {
@@ -76,6 +77,7 @@ impl Model {
         let global_state = GlobalState {
             map_panzoom: render::PanZoom::center([0.; 2], 10.),
             unlocks: UnlockState::None,
+            completed: vec![false; game_data.num_levels()],
         };
 
         Self {
@@ -95,6 +97,7 @@ impl Model {
                         .global_state
                         .unlocks
                         .max(self.game_data.unlocks(*level_num));
+                    self.global_state.completed[*level_num] = true;
                 }
                 rerender
             }
@@ -103,9 +106,19 @@ impl Model {
                 map_state.update(msg, &mut self.global_state)
             }
             Msg::LoadLevel(level) => {
-                // TODO: Check that all prereqs are complete. If not, load map instead.
-                self.game_state =
-                    GameState::level(&self.game_data, level, self.global_state.unlocks);
+                if self
+                    .game_data
+                    .prereqs(level)
+                    .all(|prereq| self.global_state.completed[prereq])
+                {
+                    self.game_state =
+                        GameState::level(&self.game_data, level, self.global_state.unlocks);
+                } else {
+                    self.game_state = GameState::map(render::PanZoom::center(
+                        self.game_data.map_position(level),
+                        10.,
+                    ))
+                }
                 true
             }
             Msg::LoadMap { recenter } => match self.game_state {
@@ -141,7 +154,7 @@ impl<'a> dodrio::Render<'a> for Model {
                 .children(level_state.render(cx, *level_num, self.game_data.next_level(*level_num)))
                 .finish(),
             GameState::WorldMap(map_state) => builder
-                .children([map_state.render(cx, &self.game_data)])
+                .children([map_state.render(cx, &self.game_data, &self.global_state)])
                 .finish(),
         }
     }

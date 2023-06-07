@@ -8,6 +8,7 @@ impl State {
         &self,
         cx: &mut dodrio::RenderContext<'a>,
         game_data: &GameData,
+        global_state: &crate::GlobalState,
     ) -> dodrio::Node<'a> {
         let mut builder = svg(cx.bump)
             .attributes([
@@ -84,29 +85,39 @@ impl State {
             );
 
         for level in 0..game_data.num_levels() {
-            builder = builder.child(
-                circle(cx.bump)
-                    .attributes([
-                        attr("r", "0.5"),
-                        attr(
-                            "cx",
-                            bumpalo::format!(in cx.bump, "{}", &game_data.map_position(level)[0])
-                                .into_bump_str(),
-                        ),
-                        attr(
-                            "cy",
-                            bumpalo::format!(in cx.bump, "{}", &game_data.map_position(level)[1])
-                                .into_bump_str(),
-                        ),
-                        attr("class", "node hoverable"),
-                    ])
-                    .listeners([on(
-                        cx.bump,
-                        "click",
-                        handler(move |_| crate::Msg::LoadLevel(level)),
-                    )])
-                    .finish(),
-            );
+            let prereqs_complete = game_data
+                .prereqs(level)
+                .all(|prereq| global_state.completed[prereq]);
+
+            let mut circle = circle(cx.bump).attributes([
+                attr("r", "0.5"),
+                attr(
+                    "cx",
+                    bumpalo::format!(in cx.bump, "{}", &game_data.map_position(level)[0])
+                        .into_bump_str(),
+                ),
+                attr(
+                    "cy",
+                    bumpalo::format!(in cx.bump, "{}", &game_data.map_position(level)[1])
+                        .into_bump_str(),
+                ),
+                attr(
+                    "class",
+                    if global_state.completed[level] {
+                        "node hoverable known"
+                    } else if prereqs_complete {
+                        "node hoverable goal"
+                    } else {
+                        "node"
+                    },
+                ),
+            ]);
+
+            if prereqs_complete {
+                circle = circle.on("click", handler(move |_| crate::Msg::LoadLevel(level)));
+            }
+
+            builder = builder.child(circle.finish());
         }
 
         builder.finish()
