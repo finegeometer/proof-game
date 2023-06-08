@@ -1,6 +1,8 @@
 #![warn(clippy::todo)]
 #![allow(clippy::new_without_default)]
 
+mod file;
+
 mod game_data;
 
 mod level;
