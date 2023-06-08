@@ -270,19 +270,6 @@
   }
 , "∨.5":
   { "nodes":
-    [ ["∨", []   , [-1,0]]
-    , ["a", []   , [ 1,0]]
-    ]
-  , "hypotheses": [0]
-  , "conclusion": 1
-  , "_comment" : "The empty disjunction: falsity."
-  , "map_position": [16.5,-2]
-  , "bezier_vector": [1,0]
-  , "prereqs": ["∨.4"]
-  , "next_level": "∨.6"
-  }
-, "∨.6":
-  { "nodes":
     [ ["∨", []   , [-1.25,0]]
     , ["a", []   , [ 1.25,0]]
     , ["∨", [0]  , [-2,3]]
@@ -293,6 +280,19 @@
   , "hypotheses": [5]
   , "conclusion": 1
   , "_comment" : "A tree of n-ary disjunctions."
+  , "map_position": [16.5,-2]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∨.4"]
+  , "next_level": "∨.6"
+  }
+, "∨.6":
+  { "nodes":
+    [ ["∨", []   , [-1,0]]
+    , ["a", []   , [ 1,0]]
+    ]
+  , "hypotheses": [0]
+  , "conclusion": 1
+  , "_comment" : "The empty disjunction: falsity."
   , "map_position": [18,-2]
   , "bezier_vector": [1,0]
   , "prereqs": ["∨.5"]
