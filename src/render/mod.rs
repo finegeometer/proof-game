@@ -46,13 +46,13 @@ pub fn to_svg_coords(e: web_sys::MouseEvent, id: &str) -> (f64, f64) {
 pub(crate) fn handler(
     msg: impl 'static + Fn(web_sys::Event) -> crate::Msg,
 ) -> impl 'static + Fn(&mut dyn dodrio::RootRender, dodrio::VdomWeak, web_sys::Event) {
-    move |root, vdom, e| {
+    move |root, _, e| {
         e.stop_propagation();
         e.prevent_default();
-        let model = root.unwrap_mut::<super::Model>();
-        if model.update(msg(e)) {
-            vdom.schedule_render();
-        }
+        root.unwrap_mut::<super::Model>()
+            .send_msg
+            .send_blocking(msg(e))
+            .unwrap();
     }
 }
 

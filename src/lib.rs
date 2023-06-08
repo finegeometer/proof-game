@@ -12,16 +12,47 @@ mod render;
 pub fn run() {
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
 
+    let (send_msg, recv_msg) = async_channel::unbounded();
+
     let body = web_sys::window()
         .unwrap()
         .document()
         .unwrap()
         .body()
         .unwrap();
-    dodrio::Vdom::new(&body, Model::new()).forget()
+    let vdom = dodrio::Vdom::new(&body, Model::new(send_msg));
+
+    wasm_bindgen_futures::spawn_local(async move {
+        let vdom = vdom.weak();
+
+        loop {
+            let recv_msg = recv_msg.clone();
+
+            let msg = recv_msg.recv().await.unwrap();
+
+            let rerender = vdom
+                .with_component(move |root| {
+                    let mut rerender = false;
+                    let model = root.unwrap_mut::<Model>();
+                    rerender |= model.update(msg);
+                    while let Ok(msg) = recv_msg.try_recv() {
+                        rerender |= model.update(msg);
+                    }
+                    rerender
+                })
+                .await
+                .unwrap();
+
+            if rerender {
+                vdom.render().await.unwrap();
+            }
+        }
+    })
 }
 
 struct Model {
+    send_msg: async_channel::Sender<Msg>,
+
     game_data: game_data::GameData,
     game_state: GameState,
     global_state: GlobalState,
@@ -77,7 +108,7 @@ pub enum UnlockState {
 }
 
 impl Model {
-    fn new() -> Self {
+    fn new(send_msg: async_channel::Sender<Msg>) -> Self {
         let game_data: game_data::GameData =
             serde_json::from_str(include_str!("./levels.json")).unwrap();
 
@@ -88,6 +119,8 @@ impl Model {
         };
 
         Self {
+            send_msg,
+
             game_data,
             game_state: GameState::map(),
             global_state,

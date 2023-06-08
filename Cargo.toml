@@ -21,7 +21,9 @@ anyhow = "1"
 console_error_panic_hook = "0.1.7"
 wasm-bindgen = "0.2.84"
 js-sys = "0.3.61"
+wasm-bindgen-futures = "0.4.36"
 
+async-channel = "1.8.0"
 dodrio = "0.2"
 
 [target.'cfg(target_family = "wasm")'.dependencies.web-sys]
