@@ -4,13 +4,13 @@ use crate::level::expression::Expression;
 use super::*;
 use ::serde::Deserialize;
 use anyhow::*;
-use serde::Deserializer;
+use serde::{Deserializer, Serialize};
 use smallvec::SmallVec;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Deserialize)]
 #[serde(transparent)]
-pub struct GameJson<'a>(#[serde(borrow)] HashMap<&'a str, LevelJson<'a>>);
+pub(super) struct GameJson<'a>(#[serde(borrow)] HashMap<&'a str, LevelJson<'a>>);
 
 impl<'a> TryFrom<GameJson<'a>> for GameData {
     type Error = Error;
@@ -22,7 +22,7 @@ impl<'a> TryFrom<GameJson<'a>> for GameData {
             .0
             .into_iter()
             .map(|(name, json)| {
-                json.parse(&indices)
+                json.parse(&indices, name.to_owned())
                     .with_context(|| format!("Failed to parse level {name}"))
             })
             .collect::<Result<_, _>>()?;
@@ -58,7 +58,7 @@ where
 }
 
 impl<'a> LevelJson<'a> {
-    fn parse(&self, indices: &HashMap<&'a str, usize>) -> Result<Level> {
+    fn parse(&self, indices: &HashMap<&'a str, usize>, name: String) -> Result<Level> {
         let mut x_min = f64::INFINITY;
         let mut y_min = f64::INFINITY;
         let mut x_max = f64::NEG_INFINITY;
@@ -126,6 +126,7 @@ impl<'a> LevelJson<'a> {
             )
         })?);
         Ok(Level {
+            name,
             case,
             pan_zoom: crate::render::PanZoom {
                 svg_corners: ([x_min - 1., y_min - 1.], [x_max + 1., y_max + 3.]),
@@ -166,5 +167,61 @@ impl<'a> LevelJson<'a> {
                 out
             },
         })
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub(super) struct SaveJson<'a> {
+    #[serde(borrow)]
+    completed: HashSet<&'a str>,
+    #[serde(borrow)]
+    unlocks: Vec<&'a str>,
+}
+
+impl<'a> SaveJson<'a> {
+    pub(super) fn to_data(&self, game_data: &GameData) -> SaveData {
+        SaveData {
+            unlocks: {
+                let mut out = crate::UnlockState::None;
+                for &unlock in &self.unlocks {
+                    out = out.max(match unlock {
+                        "cases" => crate::UnlockState::CaseTree,
+                        "lemmas" => crate::UnlockState::Lemmas,
+                        _ => crate::UnlockState::None,
+                    })
+                }
+                out
+            },
+            completed: (0..game_data.num_levels())
+                .map(|level| {
+                    self.completed
+                        .contains(&game_data.levels[level].name.as_str())
+                })
+                .collect(),
+        }
+    }
+}
+
+impl SaveData {
+    pub(super) fn to_json<'a>(&self, game_data: &'a GameData) -> SaveJson<'a> {
+        SaveJson {
+            completed: self
+                .completed
+                .iter()
+                .enumerate()
+                .filter_map(|(level, completed)| {
+                    if *completed {
+                        Some(game_data.levels[level].name.as_str())
+                    } else {
+                        None
+                    }
+                })
+                .collect(),
+            unlocks: match self.unlocks {
+                crate::UnlockState::None => vec![],
+                crate::UnlockState::CaseTree => vec!["cases"],
+                crate::UnlockState::Lemmas => vec!["cases", "lemmas"],
+            },
+        }
     }
 }

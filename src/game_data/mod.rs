@@ -10,6 +10,7 @@ pub struct GameData {
 }
 
 pub struct Level {
+    name: String,
     case: crate::level::case::Case,
     pan_zoom: crate::render::PanZoom,
     text_box: Option<String>,
@@ -58,5 +59,50 @@ impl GameData {
 
     pub fn unlocks(&self, level: usize) -> crate::UnlockState {
         self.levels[level].unlocks
+    }
+}
+
+/// Data describing what the player has done in the game.
+/// In other words, this is what the save/load game buttons manipulate.
+pub struct SaveData {
+    unlocks: crate::UnlockState,
+    completed: Vec<bool>,
+}
+
+impl SaveData {
+    pub fn new(game_data: &GameData) -> Self {
+        Self {
+            unlocks: crate::UnlockState::None,
+            completed: vec![false; game_data.num_levels()],
+        }
+    }
+
+    pub fn save(&self, game_data: &GameData) -> String {
+        serde_json::to_string(&self.to_json(game_data)).unwrap()
+    }
+
+    pub fn load(game_data: &GameData, json: &str) -> Result<Self, serde_json::Error> {
+        let json: json::SaveJson = serde_json::from_str(json)?;
+        Ok(json.to_data(game_data))
+    }
+
+    pub fn completed(&self, level: usize) -> bool {
+        self.completed[level]
+    }
+
+    /// Returns whether the save data has changed.
+    pub fn mark_completed(&mut self, level: usize) -> bool {
+        !std::mem::replace(&mut self.completed[level], true)
+    }
+
+    pub fn unlocks(&self) -> crate::UnlockState {
+        self.unlocks
+    }
+
+    /// Returns whether the save data has changed.
+    pub fn set_unlocked(&mut self, unlock: crate::UnlockState) -> bool {
+        let dirty = !(unlock <= self.unlocks);
+        self.unlocks = self.unlocks.max(unlock);
+        dirty
     }
 }

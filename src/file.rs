@@ -1,7 +1,8 @@
+#![allow(clippy::needless_lifetimes)]
+
 use wasm_bindgen::prelude::*;
 
-#[allow(clippy::needless_lifetimes)]
-pub(crate) fn file_listener<'a>(
+pub(crate) fn load_listener<'a>(
     bump: &'a dodrio::bumpalo::Bump,
     msg: impl 'static + Clone + FnOnce(String) -> crate::Msg,
     fail: impl 'static + Clone + FnOnce() -> crate::Msg,
@@ -41,5 +42,32 @@ pub(crate) fn file_listener<'a>(
                 .await
                 .unwrap();
         });
+    })
+}
+
+pub(crate) fn save_listener<'a>(
+    bump: &'a dodrio::bumpalo::Bump,
+    save: impl 'static + Fn(&mut crate::Model) -> String,
+    filename: &'static str,
+) -> dodrio::Listener<'a> {
+    dodrio::builder::on(bump, "click", move |root, _, _| {
+        let a: web_sys::HtmlAnchorElement = web_sys::window()
+            .unwrap()
+            .document()
+            .unwrap()
+            .create_element("a")
+            .unwrap()
+            .dyn_into()
+            .unwrap();
+
+        let data = save(root.unwrap_mut());
+        let blob = web_sys::Blob::new_with_str_sequence(&js_sys::Array::from_iter(
+            std::iter::once(JsValue::from_str(&data)),
+        ))
+        .unwrap();
+
+        a.set_href(&web_sys::Url::create_object_url_with_blob(&blob).unwrap());
+        a.set_download(filename);
+        a.click();
     })
 }

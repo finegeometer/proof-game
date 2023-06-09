@@ -9,6 +9,7 @@ impl State {
         cx: &mut dodrio::RenderContext<'a>,
         game_data: &GameData,
         global_state: &crate::GlobalState,
+        save_data: &crate::SaveData,
     ) -> dodrio::Node<'a> {
         let mut builder = svg(cx.bump)
             .attributes([
@@ -87,7 +88,7 @@ impl State {
         for level in 0..game_data.num_levels() {
             let prereqs_complete = game_data
                 .prereqs(level)
-                .all(|prereq| global_state.completed[prereq]);
+                .all(|prereq| save_data.completed(prereq));
 
             let mut circle = circle(cx.bump).attributes([
                 attr("r", "0.5"),
@@ -103,7 +104,7 @@ impl State {
                 ),
                 attr(
                     "class",
-                    if global_state.completed[level] {
+                    if save_data.completed(level) {
                         "node hoverable known"
                     } else if prereqs_complete {
                         "node hoverable goal"

@@ -1,6 +1,7 @@
 #![warn(clippy::todo)]
 #![allow(clippy::new_without_default)]
 
+use game_data::{GameData, SaveData};
 use wasm_bindgen::JsCast;
 
 mod file;
@@ -57,7 +58,8 @@ pub fn run() {
 struct Model {
     send_msg: async_channel::Sender<Msg>,
 
-    game_data: game_data::GameData,
+    game_data: GameData,
+    save_data: game_data::SaveData,
     game_state: GameState,
     global_state: GlobalState,
 
@@ -66,8 +68,6 @@ struct Model {
 
 pub struct GlobalState {
     map_panzoom: render::PanZoom,
-    unlocks: UnlockState,
-    completed: Vec<bool>,
 }
 
 enum GameState {
@@ -80,16 +80,16 @@ enum GameState {
 }
 
 impl GameState {
-    fn level(game_data: &game_data::GameData, level: usize, global_state: &GlobalState) -> Self {
+    fn level(game_data: &GameData, level: usize, save_data: &SaveData) -> Self {
         Self::Level {
             level,
             next_level: game_data.next_level(level).filter(|&next_level| {
                 game_data
                     .prereqs(next_level)
                     .filter(|&prereq| prereq != level)
-                    .all(|prereq| global_state.completed[prereq])
+                    .all(|prereq| save_data.completed(prereq))
             }),
-            level_state: game_data.load(level, global_state.unlocks),
+            level_state: game_data.load(level, save_data.unlocks()),
         }
     }
 
@@ -104,6 +104,9 @@ enum Msg {
     WorldMap(world_map::Msg),
     LoadLevel(usize),
     LoadMap { recenter: bool },
+
+    LoadSave(String),
+    LoadSaveFailed(),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -115,13 +118,11 @@ pub enum UnlockState {
 
 impl Model {
     fn new(send_msg: async_channel::Sender<Msg>) -> Self {
-        let game_data: game_data::GameData =
-            serde_json::from_str(include_str!("./levels.json")).unwrap();
+        let game_data: GameData = serde_json::from_str(include_str!("./levels.json")).unwrap();
+        let save_data = SaveData::new(&game_data);
 
         let global_state = GlobalState {
             map_panzoom: render::PanZoom::center([0.; 2], 10.),
-            unlocks: UnlockState::None,
-            completed: vec![false; game_data.num_levels()],
         };
 
         let save_listener: wasm_bindgen::closure::Closure<dyn FnMut(web_sys::Event)> =
@@ -136,6 +137,7 @@ impl Model {
             send_msg,
 
             game_data,
+            save_data,
             game_state: GameState::map(),
             global_state,
 
@@ -149,17 +151,15 @@ impl Model {
                 let GameState::Level { level_state, level, .. } = &mut self.game_state else {return false};
                 let rerender = level_state.update(msg);
                 if level_state.complete() {
-                    let complete = &mut self.global_state.completed[*level];
-                    if !*complete {
-                        *complete = true;
-                        self.global_state.unlocks = self
-                            .global_state
-                            .unlocks
-                            .max(self.game_data.unlocks(*level));
+                    if self.save_data.mark_completed(*level) {
                         web_sys::window()
                             .unwrap()
-                            .add_event_listener_with_callback("beforeunload", &self.save_listener)
-                            .unwrap();
+                            .set_onbeforeunload(Some(&self.save_listener));
+                    }
+                    if self.save_data.set_unlocked(self.game_data.unlocks(*level)) {
+                        web_sys::window()
+                            .unwrap()
+                            .set_onbeforeunload(Some(&self.save_listener));
                     }
                 }
                 rerender
@@ -169,7 +169,7 @@ impl Model {
                 map_state.update(msg, &mut self.global_state)
             }
             Msg::LoadLevel(level) => {
-                self.game_state = GameState::level(&self.game_data, level, &self.global_state);
+                self.game_state = GameState::level(&self.game_data, level, &self.save_data);
                 true
             }
             Msg::LoadMap { recenter } => match self.game_state {
@@ -185,6 +185,22 @@ impl Model {
                 }
                 GameState::WorldMap { .. } => false,
             },
+
+            Msg::LoadSave(save_file) => match SaveData::load(&self.game_data, &save_file) {
+                Ok(save_data) => {
+                    self.save_data = save_data;
+                    web_sys::window().unwrap().set_onbeforeunload(None);
+                    true
+                }
+                Err(err) => {
+                    web_sys::console::warn_1(&format!("Failed to parse save file: {err}").into());
+                    false
+                }
+            },
+            Msg::LoadSaveFailed() => {
+                web_sys::console::warn_1(&"Failed to load save file.".into());
+                false
+            }
         }
     }
 }
@@ -208,8 +224,73 @@ impl<'a> dodrio::Render<'a> for Model {
                 .children(level_state.render(cx, *level, *next_level))
                 .finish(),
             GameState::WorldMap(map_state) => builder
-                .children([map_state.render(cx, &self.game_data, &self.global_state)])
+                .children([
+                    div(cx.bump)
+                        .attributes([attr("id", "col0")])
+                        .children([map_state.render(
+                            cx,
+                            &self.game_data,
+                            &self.global_state,
+                            &self.save_data,
+                        )])
+                        .finish(),
+                    div(cx.bump)
+                        .attributes([attr("id", "col1")])
+                        .children(save_load_buttons(cx.bump))
+                        .finish(),
+                ])
                 .finish(),
         }
     }
+}
+
+fn save_load_buttons(bump: &dodrio::bumpalo::Bump) -> [dodrio::Node; 3] {
+    use dodrio::builder::*;
+    [
+        div(bump)
+            .attributes([
+                attr("id", "save-game"),
+                attr(
+                    "class",
+                    if web_sys::window().unwrap().onbeforeunload().is_none() {
+                        "button disabled"
+                    } else {
+                        "button"
+                    },
+                ),
+            ])
+            .listeners([file::save_listener(
+                bump,
+                |model| {
+                    web_sys::window().unwrap().set_onbeforeunload(None);
+                    model.save_data.save(&model.game_data)
+                },
+                "savefile.json",
+            )])
+            .children([text("Save Game")])
+            .finish(),
+        div(bump)
+            .attributes([attr("id", "load-savegame"), attr("class", "button")])
+            .listeners([on(bump, "click", |_, _, _| {
+                let _ = || -> Option<()> {
+                    web_sys::window()?
+                        .document()?
+                        .get_element_by_id("load-savegame-input")?
+                        .dyn_into::<web_sys::HtmlElement>()
+                        .ok()?
+                        .click();
+                    Some(())
+                }();
+            })])
+            .children([text("Load Save")])
+            .finish(),
+        input(bump)
+            .attributes([attr("id", "load-savegame-input"), attr("type", "file")])
+            .listeners([file::load_listener(
+                bump,
+                Msg::LoadSave,
+                Msg::LoadSaveFailed,
+            )])
+            .finish(),
+    ]
 }

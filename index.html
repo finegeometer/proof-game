@@ -55,8 +55,21 @@
 
     /* #class-tree {} */
 
-    #reset {
+    .button {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
       border-radius: 4vmin;
+    }
+
+    .button.disabled {
+      cursor: default;
+    }
+
+    #reset {
       background: #c66;
       border: 2px solid #800;
     }
@@ -66,7 +79,6 @@
     }
 
     #next-level {
-      border-radius: 4vmin;
       background: #3a3;
       border: 2px solid #060;
     }
@@ -76,7 +88,6 @@
     }
 
     #return-to-map {
-      border-radius: 4vmin;
       background: #66c;
       border: 2px solid #008;
     }
@@ -85,18 +96,34 @@
       background: #55b;
     }
 
-
-
-
-
-    .button {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      cursor: pointer;
+    #save-game {
+      background: #66c;
+      border: 2px solid #008;
     }
+
+    #save-game:hover {
+      background: #55b;
+    }
+
+    #save-game.disabled {
+      background: #788;
+      border: 2px solid #223;
+    }
+
+    #load-savegame {
+      background: #66c;
+      border: 2px solid #008;
+    }
+
+    #load-savegame:hover {
+      background: #55b;
+    }
+
+    #load-savegame-input {
+      display: none;
+    }
+
+
 
     .hoverable {
       cursor: pointer;
