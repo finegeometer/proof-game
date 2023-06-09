@@ -35,6 +35,8 @@ features = [
   'Element',
   'Event',
   'EventTarget',
+  'File',
+  'FileList',
   'HtmlElement',
   'HtmlCanvasElement',
   'HtmlParagraphElement',
