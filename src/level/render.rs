@@ -1,4 +1,5 @@
 use super::*;
+use crate::game_data::Unlocks;
 use crate::render::handler;
 use dodrio::builder::*;
 use dodrio::bumpalo;
@@ -45,7 +46,7 @@ impl State {
         let mut col1 = div(cx.bump).attributes([attr("id", "col1")]);
 
         // Case Tree
-        if self.unlocks >= crate::UnlockState::CaseTree {
+        if self.unlocks >= Unlocks::CASES {
             col1 = col1.child(self.case_tree.render(cx));
         }
 

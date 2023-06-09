@@ -5,7 +5,7 @@ mod case_tree;
 pub mod expression;
 mod render;
 
-use crate::render::PanZoom;
+use crate::{game_data::Unlocks, render::PanZoom};
 use case::{Case, Node, ValidityReason, Wire};
 use case_tree::{CaseId, CaseTree};
 
@@ -14,7 +14,7 @@ pub struct State {
     pan_zoom: PanZoom,
     text_box: Option<String>,
     drag: Option<DragState>,
-    unlocks: crate::UnlockState,
+    unlocks: Unlocks,
 }
 
 #[derive(Clone, Copy)]
@@ -44,12 +44,7 @@ pub enum DragObject {
 }
 
 impl State {
-    pub fn new(
-        case: Case,
-        pan_zoom: PanZoom,
-        text_box: Option<String>,
-        unlocks: crate::UnlockState,
-    ) -> Self {
+    pub fn new(case: Case, pan_zoom: PanZoom, text_box: Option<String>, unlocks: Unlocks) -> Self {
         Self {
             case_tree: CaseTree::new(case),
             pan_zoom,
@@ -96,7 +91,7 @@ impl State {
                         ..
                     }) => {
                         let (case, complete) = self.case_tree.current_case();
-                        if self.unlocks >= crate::UnlockState::Lemmas
+                        if self.unlocks >= Unlocks::LEMMAS
                             && !complete
                             && case.wire_has_interaction(wire)
                         {

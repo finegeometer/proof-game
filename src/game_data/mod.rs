@@ -1,4 +1,8 @@
 mod json;
+use std::{
+    cmp::Ordering,
+    ops::{BitOr, BitOrAssign},
+};
 
 /// Any data that pertains to the game as a whole,
 /// as opposed to what the player has done in the game.
@@ -18,7 +22,7 @@ pub struct Level {
     bezier_vector: [f64; 2],
     prereqs: Vec<usize>,
     next_level: Option<usize>,
-    unlocks: crate::UnlockState,
+    unlocks: Unlocks,
 }
 
 impl GameData {
@@ -26,7 +30,7 @@ impl GameData {
         self.levels.len()
     }
 
-    pub fn load(&self, level: usize, global_unlocks: crate::UnlockState) -> crate::level::State {
+    pub fn load(&self, level: usize, global_unlocks: Unlocks) -> crate::level::State {
         let Level {
             case,
             pan_zoom,
@@ -37,7 +41,7 @@ impl GameData {
             case.clone(),
             *pan_zoom,
             text_box.clone(),
-            global_unlocks.max(self.unlocks(level)),
+            global_unlocks | self.unlocks(level),
         )
     }
 
@@ -57,7 +61,7 @@ impl GameData {
         self.levels[level].bezier_vector
     }
 
-    pub fn unlocks(&self, level: usize) -> crate::UnlockState {
+    pub fn unlocks(&self, level: usize) -> Unlocks {
         self.levels[level].unlocks
     }
 }
@@ -65,14 +69,14 @@ impl GameData {
 /// Data describing what the player has done in the game.
 /// In other words, this is what the save/load game buttons manipulate.
 pub struct SaveData {
-    unlocks: crate::UnlockState,
+    unlocks: Unlocks,
     completed: Vec<bool>,
 }
 
 impl SaveData {
     pub fn new(game_data: &GameData) -> Self {
         Self {
-            unlocks: crate::UnlockState::None,
+            unlocks: Unlocks::NONE,
             completed: vec![false; game_data.num_levels()],
         }
     }
@@ -95,14 +99,87 @@ impl SaveData {
         !std::mem::replace(&mut self.completed[level], true)
     }
 
-    pub fn unlocks(&self) -> crate::UnlockState {
+    pub fn unlocks(&self) -> Unlocks {
         self.unlocks
     }
 
     /// Returns whether the save data has changed.
-    pub fn set_unlocked(&mut self, unlock: crate::UnlockState) -> bool {
+    pub fn set_unlocked(&mut self, unlock: Unlocks) -> bool {
+        #[allow(clippy::neg_cmp_op_on_partial_ord)]
         let dirty = !(unlock <= self.unlocks);
-        self.unlocks = self.unlocks.max(unlock);
+        self.unlocks |= unlock;
         dirty
     }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(from = "Vec<&str>", into = "Vec<&str>")]
+pub struct Unlocks(u8);
+
+impl From<Unlocks> for Vec<&'static str> {
+    fn from(unlocks: Unlocks) -> Self {
+        [("cases", Unlocks::CASES), ("lemmas", Unlocks::LEMMAS)]
+            .into_iter()
+            .filter_map(|(name, unlock)| (unlocks >= unlock).then_some(name))
+            .collect()
+    }
+}
+
+impl<'a> From<Vec<&'a str>> for Unlocks {
+    fn from(unlocks: Vec<&'a str>) -> Self {
+        let mut out = Self::NONE;
+        for unlock in unlocks {
+            out |= match unlock {
+                "cases" => Unlocks::CASES,
+                "lemmas" => Unlocks::LEMMAS,
+                _ => Unlocks::NONE,
+            }
+        }
+        out
+    }
+}
+
+impl BitOr for Unlocks {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Self(self.0 | rhs.0)
+    }
+}
+
+impl BitOrAssign for Unlocks {
+    fn bitor_assign(&mut self, rhs: Self) {
+        self.0 |= rhs.0;
+    }
+}
+
+impl PartialOrd for Unlocks {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match (self.le(other), self.ge(other)) {
+            (true, true) => Some(Ordering::Equal),
+            (true, false) => Some(Ordering::Less),
+            (false, true) => Some(Ordering::Greater),
+            (false, false) => None,
+        }
+    }
+
+    fn le(&self, other: &Self) -> bool {
+        self.0 & !other.0 == 0
+    }
+
+    fn ge(&self, other: &Self) -> bool {
+        !self.0 & other.0 == 0
+    }
+}
+
+impl Default for Unlocks {
+    fn default() -> Self {
+        Self::NONE
+    }
+}
+
+impl Unlocks {
+    pub const NONE: Self = Self(0);
+    pub const CASES: Self = Self(1);
+    pub const LEMMAS: Self = Self(2);
 }

@@ -1,4 +1,4 @@
-use crate::{level, render::*};
+use crate::{game_data::Unlocks, level, render::*};
 use dodrio::{builder::*, bumpalo};
 use wasm_bindgen::JsCast;
 
@@ -192,7 +192,7 @@ impl super::Case {
         &self,
         pan_zoom: PanZoom,
         cx: &mut dodrio::RenderContext<'a>,
-        unlocks: crate::UnlockState,
+        unlocks: Unlocks,
         complete: bool,
         dragging: Option<super::Node>,
     ) -> dodrio::Node<'a> {
@@ -263,7 +263,7 @@ impl super::Case {
                             &outputs,
                             self,
                             cx,
-                            !complete && unlocks >= crate::UnlockState::Lemmas,
+                            !complete && unlocks >= Unlocks::LEMMAS,
                             dragging.is_none(),
                         ) {
                             builder = builder.child(svg_node);

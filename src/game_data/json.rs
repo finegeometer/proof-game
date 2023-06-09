@@ -44,7 +44,7 @@ struct LevelJson<'a> {
     #[serde(default, deserialize_with = "deserialize_some")]
     next_level: Option<Option<&'a str>>,
     #[serde(default)]
-    unlocks: Vec<&'a str>,
+    unlocks: Unlocks,
 }
 
 // https://github.com/serde-rs/serde/issues/984
@@ -155,17 +155,7 @@ impl<'a> LevelJson<'a> {
                 ),
                 None => None,
             },
-            unlocks: {
-                let mut out = crate::UnlockState::None;
-                for &unlock in &self.unlocks {
-                    out = out.max(match unlock {
-                        "cases" => crate::UnlockState::CaseTree,
-                        "lemmas" => crate::UnlockState::Lemmas,
-                        _ => crate::UnlockState::None,
-                    })
-                }
-                out
-            },
+            unlocks: self.unlocks,
         })
     }
 }
@@ -174,24 +164,13 @@ impl<'a> LevelJson<'a> {
 pub(super) struct SaveJson<'a> {
     #[serde(borrow)]
     completed: HashSet<&'a str>,
-    #[serde(borrow)]
-    unlocks: Vec<&'a str>,
+    unlocks: Unlocks,
 }
 
 impl<'a> SaveJson<'a> {
     pub(super) fn to_data(&self, game_data: &GameData) -> SaveData {
         SaveData {
-            unlocks: {
-                let mut out = crate::UnlockState::None;
-                for &unlock in &self.unlocks {
-                    out = out.max(match unlock {
-                        "cases" => crate::UnlockState::CaseTree,
-                        "lemmas" => crate::UnlockState::Lemmas,
-                        _ => crate::UnlockState::None,
-                    })
-                }
-                out
-            },
+            unlocks: self.unlocks,
             completed: (0..game_data.num_levels())
                 .map(|level| {
                     self.completed
@@ -217,11 +196,7 @@ impl SaveData {
                     }
                 })
                 .collect(),
-            unlocks: match self.unlocks {
-                crate::UnlockState::None => vec![],
-                crate::UnlockState::CaseTree => vec!["cases"],
-                crate::UnlockState::Lemmas => vec!["cases", "lemmas"],
-            },
+            unlocks: self.unlocks,
         }
     }
 }
