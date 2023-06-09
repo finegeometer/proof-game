@@ -1,6 +1,8 @@
 #![warn(clippy::todo)]
 #![allow(clippy::new_without_default)]
 
+use wasm_bindgen::JsCast;
+
 mod file;
 
 mod game_data;
@@ -58,6 +60,8 @@ struct Model {
     game_data: game_data::GameData,
     game_state: GameState,
     global_state: GlobalState,
+
+    save_listener: js_sys::Function,
 }
 
 pub struct GlobalState {
@@ -120,12 +124,22 @@ impl Model {
             completed: vec![false; game_data.num_levels()],
         };
 
+        let save_listener: wasm_bindgen::closure::Closure<dyn FnMut(web_sys::Event)> =
+            wasm_bindgen::closure::Closure::wrap(Box::new(|e| {
+                let e: web_sys::BeforeUnloadEvent = e.dyn_into().unwrap();
+                e.prevent_default();
+                e.set_return_value("The game is unsaved — are you sure you want to leave?");
+            }));
+        let save_listener: js_sys::Function = save_listener.into_js_value().unchecked_into();
+
         Self {
             send_msg,
 
             game_data,
             game_state: GameState::map(),
             global_state,
+
+            save_listener,
         }
     }
 
@@ -135,11 +149,18 @@ impl Model {
                 let GameState::Level { level_state, level, .. } = &mut self.game_state else {return false};
                 let rerender = level_state.update(msg);
                 if level_state.complete() {
-                    self.global_state.unlocks = self
-                        .global_state
-                        .unlocks
-                        .max(self.game_data.unlocks(*level));
-                    self.global_state.completed[*level] = true;
+                    let complete = &mut self.global_state.completed[*level];
+                    if !*complete {
+                        *complete = true;
+                        self.global_state.unlocks = self
+                            .global_state
+                            .unlocks
+                            .max(self.game_data.unlocks(*level));
+                        web_sys::window()
+                            .unwrap()
+                            .add_event_listener_with_callback("beforeunload", &self.save_listener)
+                            .unwrap();
+                    }
                 }
                 rerender
             }

@@ -30,6 +30,7 @@ dodrio = "0.2"
 version = "0.3.61"
 # TODO: Exactly which features do I need?
 features = [
+  'BeforeUnloadEvent',
   'CssStyleDeclaration',
   'Document',
   'Element',
