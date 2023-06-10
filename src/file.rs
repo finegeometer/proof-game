@@ -78,7 +78,7 @@ pub(crate) fn fetch_listener<'a>(
     msg: impl 'static + Clone + FnOnce(String) -> crate::Msg,
     fail: impl 'static + Clone + FnOnce() -> crate::Msg,
 ) -> dodrio::Listener<'a> {
-    dodrio::builder::on(bump, "click", move |root, _, event| {
+    dodrio::builder::on(bump, "click", move |root, _, _| {
         let msg = msg.clone();
         let fail = fail.clone();
 
