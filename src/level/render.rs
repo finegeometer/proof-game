@@ -62,18 +62,18 @@ impl State {
             if let Some(next_level) = next_level {
                 col1 = col1.child(
                     div(cx.bump)
-                        .attributes([attr("id", "next-level"), attr("class", "button")])
-                        .on("click", handler(move |_| crate::Msg::LoadLevel(next_level)))
+                        .attributes([attr("id", "next-level"), attr("class", "button green")])
+                        .on("click", handler(move |_| crate::Msg::GotoLevel(next_level)))
                         .children([text("Next Level!")])
                         .finish(),
                 );
             } else {
                 col1 = col1.child(
                     div(cx.bump)
-                        .attributes([attr("id", "next-level"), attr("class", "button")])
+                        .attributes([attr("id", "next-level"), attr("class", "button green")])
                         .on(
                             "click",
-                            handler(move |_| crate::Msg::LoadMap { recenter: true }),
+                            handler(move |_| crate::Msg::GotoMap { recenter: true }),
                         )
                         .children([text("Select a Level!")])
                         .finish(),
@@ -84,10 +84,10 @@ impl State {
         // Reset Level
         col1 = col1.child(
             div(cx.bump)
-                .attributes([attr("id", "reset"), attr("class", "button")])
+                .attributes([attr("id", "reset"), attr("class", "button red")])
                 .on(
                     "click",
-                    handler(move |_| crate::Msg::LoadLevel(current_level)),
+                    handler(move |_| crate::Msg::GotoLevel(current_level)),
                 )
                 .children([text("Reset")])
                 .finish(),
@@ -96,10 +96,10 @@ impl State {
         // World Map
         col1 = col1.child(
             div(cx.bump)
-                .attributes([attr("id", "return-to-map"), attr("class", "button")])
+                .attributes([attr("id", "return-to-map"), attr("class", "button blue")])
                 .on(
                     "click",
-                    handler(move |_| crate::Msg::LoadMap { recenter: false }),
+                    handler(move |_| crate::Msg::GotoMap { recenter: false }),
                 )
                 .children([text("Return to Map")])
                 .finish(),

@@ -115,7 +115,7 @@ impl State {
             ]);
 
             if prereqs_complete {
-                circle = circle.on("click", handler(move |_| crate::Msg::LoadLevel(level)));
+                circle = circle.on("click", handler(move |_| crate::Msg::GotoLevel(level)));
             }
 
             builder = builder.child(circle.finish());

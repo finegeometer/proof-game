@@ -71,12 +71,13 @@ pub struct GlobalState {
 }
 
 enum GameState {
+    Menu,
+    WorldMap(world_map::State),
     Level {
         level: usize,
         next_level: Option<usize>,
         level_state: level::State,
     },
-    WorldMap(world_map::State),
 }
 
 impl GameState {
@@ -102,11 +103,12 @@ impl GameState {
 enum Msg {
     Level(level::Msg),
     WorldMap(world_map::Msg),
-    LoadLevel(usize),
-    LoadMap { recenter: bool },
+    GotoLevel(usize),
+    GotoMap { recenter: bool },
 
-    LoadSave(String),
-    LoadSaveFailed(),
+    LoadedSave(String),
+    LoadingSaveFailed(),
+    LoadedLevels(String),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -118,13 +120,6 @@ pub enum UnlockState {
 
 impl Model {
     fn new(send_msg: async_channel::Sender<Msg>) -> Self {
-        let game_data: GameData = serde_json::from_str(include_str!("./levels.json")).unwrap();
-        let save_data = SaveData::new(&game_data);
-
-        let global_state = GlobalState {
-            map_panzoom: render::PanZoom::center([0.; 2], 10.),
-        };
-
         let save_listener: wasm_bindgen::closure::Closure<dyn FnMut(web_sys::Event)> =
             wasm_bindgen::closure::Closure::wrap(Box::new(|e| {
                 let e: web_sys::BeforeUnloadEvent = e.dyn_into().unwrap();
@@ -136,10 +131,12 @@ impl Model {
         Self {
             send_msg,
 
-            game_data,
-            save_data,
-            game_state: GameState::map(),
-            global_state,
+            game_data: Default::default(),
+            save_data: Default::default(),
+            game_state: GameState::Menu,
+            global_state: GlobalState {
+                map_panzoom: render::PanZoom::center([0.; 2], 10.),
+            },
 
             save_listener,
         }
@@ -168,11 +165,11 @@ impl Model {
                 let GameState::WorldMap(map_state) = &mut self.game_state else {return false};
                 map_state.update(msg, &mut self.global_state)
             }
-            Msg::LoadLevel(level) => {
+            Msg::GotoLevel(level) => {
                 self.game_state = GameState::level(&self.game_data, level, &self.save_data);
                 true
             }
-            Msg::LoadMap { recenter } => match self.game_state {
+            Msg::GotoMap { recenter } => match self.game_state {
                 GameState::Level {
                     level: level_num, ..
                 } => {
@@ -183,10 +180,10 @@ impl Model {
                     }
                     true
                 }
-                GameState::WorldMap { .. } => false,
+                GameState::WorldMap { .. } | GameState::Menu => false,
             },
 
-            Msg::LoadSave(save_file) => match SaveData::load(&self.game_data, &save_file) {
+            Msg::LoadedSave(save_file) => match SaveData::load(&self.game_data, &save_file) {
                 Ok(save_data) => {
                     self.save_data = save_data;
                     web_sys::window().unwrap().set_onbeforeunload(None);
@@ -197,9 +194,18 @@ impl Model {
                     false
                 }
             },
-            Msg::LoadSaveFailed() => {
+            Msg::LoadingSaveFailed() => {
                 web_sys::console::warn_1(&"Failed to load save file.".into());
                 false
+            }
+            Msg::LoadedLevels(json) => {
+                self.game_data = serde_json::from_str(&json).unwrap();
+                self.save_data = SaveData::new(&self.game_data);
+                self.game_state = GameState::map();
+                self.global_state = GlobalState {
+                    map_panzoom: render::PanZoom::center([0.; 2], 10.),
+                };
+                true
             }
         }
     }
@@ -240,6 +246,21 @@ impl<'a> dodrio::Render<'a> for Model {
                         .finish(),
                 ])
                 .finish(),
+            GameState::Menu => builder
+                .children([div(cx.bump)
+                    .attributes([attr("id", "col0")])
+                    .children([div(cx.bump)
+                        .attributes([attr("class", "button green")])
+                        .listeners([file::fetch_listener(
+                            cx.bump,
+                            "levels.json",
+                            Msg::LoadedLevels,
+                            || panic!("Failed to load levels."),
+                        )])
+                        .children([text("Start!")])
+                        .finish()])
+                    .finish()])
+                .finish(),
         }
     }
 }
@@ -253,9 +274,9 @@ fn save_load_buttons(bump: &dodrio::bumpalo::Bump) -> [dodrio::Node; 3] {
                 attr(
                     "class",
                     if web_sys::window().unwrap().onbeforeunload().is_none() {
-                        "button disabled"
+                        "button blue disabled"
                     } else {
-                        "button"
+                        "button blue"
                     },
                 ),
             ])
@@ -270,7 +291,7 @@ fn save_load_buttons(bump: &dodrio::bumpalo::Bump) -> [dodrio::Node; 3] {
             .children([text("Save Game")])
             .finish(),
         div(bump)
-            .attributes([attr("id", "load-savegame"), attr("class", "button")])
+            .attributes([attr("id", "load-savegame"), attr("class", "button blue")])
             .listeners([on(bump, "click", |_, _, _| {
                 let _ = || -> Option<()> {
                     web_sys::window()?
@@ -288,8 +309,8 @@ fn save_load_buttons(bump: &dodrio::bumpalo::Bump) -> [dodrio::Node; 3] {
             .attributes([attr("id", "load-savegame-input"), attr("type", "file")])
             .listeners([file::load_listener(
                 bump,
-                Msg::LoadSave,
-                Msg::LoadSaveFailed,
+                Msg::LoadedSave,
+                Msg::LoadingSaveFailed,
             )])
             .finish(),
     ]

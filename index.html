@@ -65,58 +65,37 @@
       border-radius: 4vmin;
     }
 
-    .button.disabled {
-      cursor: default;
-    }
-
-    #reset {
+    .button.red {
       background: #c66;
       border: 2px solid #800;
     }
 
-    #reset:hover {
+    .button.red:hover {
       background: #b55;
     }
 
-    #next-level {
+    .button.green {
       background: #3a3;
       border: 2px solid #060;
     }
 
-    #next-level:hover {
+    .button.green:hover {
       background: #292
     }
 
-    #return-to-map {
+    .button.blue {
       background: #66c;
       border: 2px solid #008;
     }
 
-    #return-to-map:hover {
+    .button.blue:hover {
       background: #55b;
     }
 
-    #save-game {
-      background: #66c;
-      border: 2px solid #008;
-    }
-
-    #save-game:hover {
-      background: #55b;
-    }
-
-    #save-game.disabled {
+    .button.disabled {
       background: #788;
       border: 2px solid #223;
-    }
-
-    #load-savegame {
-      background: #66c;
-      border: 2px solid #008;
-    }
-
-    #load-savegame:hover {
-      background: #55b;
+      cursor: default;
     }
 
     #load-savegame-input {
@@ -185,12 +164,12 @@
       stroke-width: 0.04;
     }
 
-    .wire.known {
-      stroke: #3a3;
-    }
-
     .node.known.hoverable:hover {
       fill: #292;
+    }
+
+    .wire.known {
+      stroke: #3a3;
     }
 
     .wire.known.hoverable:hover {

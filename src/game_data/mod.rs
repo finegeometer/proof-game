@@ -7,7 +7,7 @@ use std::{
 /// Any data that pertains to the game as a whole,
 /// as opposed to what the player has done in the game.
 /// In other words, to create a custom map, this is what needs to be replaced.
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Default)]
 #[serde(try_from = "json::GameJson")]
 pub struct GameData {
     levels: Vec<Level>,
@@ -68,6 +68,7 @@ impl GameData {
 
 /// Data describing what the player has done in the game.
 /// In other words, this is what the save/load game buttons manipulate.
+#[derive(Default)]
 pub struct SaveData {
     unlocks: Unlocks,
     completed: Vec<bool>,

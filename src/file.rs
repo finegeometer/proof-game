@@ -2,6 +2,33 @@
 
 use wasm_bindgen::prelude::*;
 
+pub(crate) fn save_listener<'a>(
+    bump: &'a dodrio::bumpalo::Bump,
+    save: impl 'static + Fn(&mut crate::Model) -> String,
+    filename: &'static str,
+) -> dodrio::Listener<'a> {
+    dodrio::builder::on(bump, "click", move |root, _, _| {
+        let a: web_sys::HtmlAnchorElement = web_sys::window()
+            .unwrap()
+            .document()
+            .unwrap()
+            .create_element("a")
+            .unwrap()
+            .dyn_into()
+            .unwrap();
+
+        let data = save(root.unwrap_mut());
+        let blob = web_sys::Blob::new_with_str_sequence(&js_sys::Array::from_iter(
+            std::iter::once(JsValue::from_str(&data)),
+        ))
+        .unwrap();
+
+        a.set_href(&web_sys::Url::create_object_url_with_blob(&blob).unwrap());
+        a.set_download(filename);
+        a.click();
+    })
+}
+
 pub(crate) fn load_listener<'a>(
     bump: &'a dodrio::bumpalo::Bump,
     msg: impl 'static + Clone + FnOnce(String) -> crate::Msg,
@@ -45,29 +72,30 @@ pub(crate) fn load_listener<'a>(
     })
 }
 
-pub(crate) fn save_listener<'a>(
+pub(crate) fn fetch_listener<'a>(
     bump: &'a dodrio::bumpalo::Bump,
-    save: impl 'static + Fn(&mut crate::Model) -> String,
-    filename: &'static str,
+    path: &'static str,
+    msg: impl 'static + Clone + FnOnce(String) -> crate::Msg,
+    fail: impl 'static + Clone + FnOnce() -> crate::Msg,
 ) -> dodrio::Listener<'a> {
-    dodrio::builder::on(bump, "click", move |root, _, _| {
-        let a: web_sys::HtmlAnchorElement = web_sys::window()
-            .unwrap()
-            .document()
-            .unwrap()
-            .create_element("a")
-            .unwrap()
-            .dyn_into()
-            .unwrap();
+    dodrio::builder::on(bump, "click", move |root, _, event| {
+        let msg = msg.clone();
+        let fail = fail.clone();
 
-        let data = save(root.unwrap_mut());
-        let blob = web_sys::Blob::new_with_str_sequence(&js_sys::Array::from_iter(
-            std::iter::once(JsValue::from_str(&data)),
-        ))
-        .unwrap();
+        let send_msg = root.unwrap_mut::<super::Model>().send_msg.clone();
 
-        a.set_href(&web_sys::Url::create_object_url_with_blob(&blob).unwrap());
-        a.set_download(filename);
-        a.click();
+        #[rustfmt::skip]
+        wasm_bindgen_futures::spawn_local(async move {
+            let Ok(response) = wasm_bindgen_futures::JsFuture::from(web_sys::window().unwrap().fetch_with_str(path)).await
+            else {return send_msg.send(fail()).await.unwrap()};
+            let Ok(response) = response.dyn_into::<web_sys::Response>()
+            else {return send_msg.send(fail()).await.unwrap()};
+            let Ok(promise) = response.text()
+            else {return send_msg.send(fail()).await.unwrap()};
+            let Ok(text) = wasm_bindgen_futures::JsFuture::from(promise).await
+            else {return send_msg.send(fail()).await.unwrap()};
+
+            send_msg.send(msg(text.as_string().unwrap())).await.unwrap();
+        });
     })
 }
