@@ -96,14 +96,12 @@ impl<'a> LevelJson<'a> {
                             )
                         })?)
                     }
-                    "=" => {
-                        Expression::Implies(<[usize; 2]>::try_from(inputs).map_err(|inputs| {
-                            anyhow!(
-                                "Wrong number of inputs to `=`: expected 2, found {}.",
-                                inputs.len()
-                            )
-                        })?)
-                    }
+                    "=" => Expression::Equal(<[usize; 2]>::try_from(inputs).map_err(|inputs| {
+                        anyhow!(
+                            "Wrong number of inputs to `=`: expected 2, found {}.",
+                            inputs.len()
+                        )
+                    })?),
                     _ => Expression::Other(op.to_owned()),
                 };
 
