@@ -1,7 +1,4 @@
-use super::{
-    case::{Case, ValidityReason},
-    expression::Expression,
-};
+use super::{super::expression::Expression, Case, ValidityReason};
 
 pub struct LevelSpec {
     /// Invariant: `nodes[n].inputs()[k] < n`.

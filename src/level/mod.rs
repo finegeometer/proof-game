@@ -4,7 +4,8 @@ mod case;
 mod case_tree;
 pub mod expression;
 mod render;
-pub mod spec;
+
+pub use case::LevelSpec;
 
 use crate::{game_data::Unlocks, render::PanZoom};
 use case::{Case, Node, ValidityReason, Wire};
@@ -47,7 +48,7 @@ pub enum DragObject {
 
 impl State {
     pub fn new(
-        spec: &spec::LevelSpec,
+        spec: &LevelSpec,
         pan_zoom: PanZoom,
         text_box: Option<String>,
         unlocks: Unlocks,

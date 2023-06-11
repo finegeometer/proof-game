@@ -2,7 +2,7 @@ use crate::{game_data::Unlocks, level, render::*};
 use dodrio::{builder::*, bumpalo};
 use wasm_bindgen::JsCast;
 
-fn render_node<'a>(
+pub(super) fn render_node<'a>(
     cx: &mut dodrio::RenderContext<'a>,
     pos: [f64; 2],
     label: &'a str,
@@ -61,7 +61,7 @@ fn render_node<'a>(
 }
 
 /// `status` must be "" or " known" or " goal".
-fn render_wire<'a>(
+pub(super) fn render_wire<'a>(
     cx: &mut dodrio::RenderContext<'a>,
     inputs: &[[f64; 2]],
     outputs: &[[f64; 2]],

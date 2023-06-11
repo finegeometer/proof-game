@@ -1,4 +1,4 @@
-use crate::level::{expression::Expression, spec::LevelSpec};
+use crate::level::{expression::Expression, LevelSpec};
 
 use super::*;
 use ::serde::Deserialize;

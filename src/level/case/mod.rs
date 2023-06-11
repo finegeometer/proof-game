@@ -1,5 +1,8 @@
 mod render;
+mod spec;
 mod union_find;
+
+pub use spec::LevelSpec;
 
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 

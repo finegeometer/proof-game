@@ -15,7 +15,7 @@ pub struct GameData {
 
 pub struct Level {
     name: String,
-    spec: crate::level::spec::LevelSpec,
+    spec: crate::level::LevelSpec,
     pan_zoom: crate::render::PanZoom,
     text_box: Option<String>,
     pub map_position: [f64; 2],
