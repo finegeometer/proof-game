@@ -195,13 +195,16 @@ impl super::Case {
         unlocks: Unlocks,
         complete: bool,
         dragging: Option<super::Node>,
+        axiom: bool,
     ) -> dodrio::Node<'a> {
         svg(cx.bump)
             .attributes([
                 attr("id", "game"),
                 attr(
                     "class",
-                    if complete {
+                    if axiom {
+                        "background disabled"
+                    } else if complete {
                         "background complete"
                     } else {
                         "background"
@@ -264,7 +267,7 @@ impl super::Case {
                             self,
                             cx,
                             !complete && unlocks >= Unlocks::LEMMAS,
-                            dragging.is_none(),
+                            !axiom && dragging.is_none(),
                         ) {
                             builder = builder.child(svg_node);
                         }
@@ -275,8 +278,12 @@ impl super::Case {
                 {
                     let mut builder = g(cx.bump);
                     for node in self.nodes() {
-                        builder =
-                            builder.child(node.render(self, cx, !complete, dragging != Some(node)));
+                        builder = builder.child(node.render(
+                            self,
+                            cx,
+                            !complete,
+                            !axiom && dragging != Some(node),
+                        ));
                     }
                     builder.finish()
                 },

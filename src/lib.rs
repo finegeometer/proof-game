@@ -84,11 +84,13 @@ impl GameState {
     fn level(game_data: &GameData, level: usize, save_data: &SaveData) -> Self {
         Self::Level {
             level,
-            next_level: game_data.next_level(level).filter(|&next_level| {
+            next_level: game_data.level(level).next_level.filter(|&next_level| {
                 game_data
-                    .prereqs(next_level)
-                    .filter(|&prereq| prereq != level)
-                    .all(|prereq| save_data.completed(prereq))
+                    .level(next_level)
+                    .prereqs
+                    .iter()
+                    .filter(|&&prereq| prereq != level)
+                    .all(|&prereq| save_data.completed(prereq))
             }),
             level_state: game_data.load(level, save_data.unlocks()),
         }
@@ -153,7 +155,10 @@ impl Model {
                             .unwrap()
                             .set_onbeforeunload(Some(&self.save_listener));
                     }
-                    if self.save_data.set_unlocked(self.game_data.unlocks(*level)) {
+                    if self
+                        .save_data
+                        .set_unlocked(self.game_data.level(*level).unlocks)
+                    {
                         web_sys::window()
                             .unwrap()
                             .set_onbeforeunload(Some(&self.save_listener));
@@ -167,6 +172,14 @@ impl Model {
             }
             Msg::GotoLevel(level) => {
                 self.game_state = GameState::level(&self.game_data, level, &self.save_data);
+                #[allow(clippy::collapsible_if)]
+                if self.game_data.level(level).axiom {
+                    if self.save_data.mark_completed(level) {
+                        web_sys::window()
+                            .unwrap()
+                            .set_onbeforeunload(Some(&self.save_listener));
+                    }
+                }
                 true
             }
             Msg::GotoMap { recenter } => match self.game_state {
@@ -175,8 +188,10 @@ impl Model {
                 } => {
                     self.game_state = GameState::map();
                     if recenter {
-                        self.global_state.map_panzoom =
-                            render::PanZoom::center(self.game_data.map_position(level_num), 10.);
+                        self.global_state.map_panzoom = render::PanZoom::center(
+                            self.game_data.level(level_num).map_position,
+                            10.,
+                        );
                     }
                     true
                 }

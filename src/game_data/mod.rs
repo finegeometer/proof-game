@@ -18,11 +18,12 @@ pub struct Level {
     case: crate::level::case::Case,
     pan_zoom: crate::render::PanZoom,
     text_box: Option<String>,
-    map_position: [f64; 2],
-    bezier_vector: [f64; 2],
-    prereqs: Vec<usize>,
-    next_level: Option<usize>,
-    unlocks: Unlocks,
+    pub map_position: [f64; 2],
+    pub bezier_vector: [f64; 2],
+    pub prereqs: Vec<usize>,
+    pub next_level: Option<usize>,
+    pub unlocks: Unlocks,
+    pub axiom: bool,
 }
 
 impl GameData {
@@ -30,39 +31,25 @@ impl GameData {
         self.levels.len()
     }
 
+    pub fn level(&self, level: usize) -> &Level {
+        &self.levels[level]
+    }
+
     pub fn load(&self, level: usize, global_unlocks: Unlocks) -> crate::level::State {
         let Level {
             case,
             pan_zoom,
             text_box,
+            axiom,
             ..
-        } = &self.levels[level];
+        } = self.level(level);
         crate::level::State::new(
             case.clone(),
             *pan_zoom,
             text_box.clone(),
-            global_unlocks | self.unlocks(level),
+            global_unlocks | self.level(level).unlocks,
+            *axiom,
         )
-    }
-
-    pub fn next_level(&self, level: usize) -> Option<usize> {
-        self.levels[level].next_level
-    }
-
-    pub fn prereqs(&self, level: usize) -> impl '_ + Iterator<Item = usize> {
-        self.levels[level].prereqs.iter().copied()
-    }
-
-    pub fn map_position(&self, level: usize) -> [f64; 2] {
-        self.levels[level].map_position
-    }
-
-    pub fn bezier_vector(&self, level: usize) -> [f64; 2] {
-        self.levels[level].bezier_vector
-    }
-
-    pub fn unlocks(&self, level: usize) -> Unlocks {
-        self.levels[level].unlocks
     }
 }
 

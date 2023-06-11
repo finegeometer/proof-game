@@ -15,6 +15,7 @@ pub struct State {
     text_box: Option<String>,
     drag: Option<DragState>,
     unlocks: Unlocks,
+    axiom: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -44,13 +45,20 @@ pub enum DragObject {
 }
 
 impl State {
-    pub fn new(case: Case, pan_zoom: PanZoom, text_box: Option<String>, unlocks: Unlocks) -> Self {
+    pub fn new(
+        case: Case,
+        pan_zoom: PanZoom,
+        text_box: Option<String>,
+        unlocks: Unlocks,
+        axiom: bool,
+    ) -> Self {
         Self {
             case_tree: CaseTree::new(case),
             pan_zoom,
             text_box,
             drag: None,
             unlocks,
+            axiom,
         }
     }
 
@@ -80,7 +88,7 @@ impl State {
                         ..
                     }) => {
                         let (case, complete) = self.case_tree.current_case();
-                        if !complete && case.node_has_interaction(node) {
+                        if !self.axiom && !complete && case.node_has_interaction(node) {
                             self.case_tree.interact_node(node);
                             rerender = true;
                         }
@@ -91,7 +99,8 @@ impl State {
                         ..
                     }) => {
                         let (case, complete) = self.case_tree.current_case();
-                        if self.unlocks >= Unlocks::LEMMAS
+                        if !self.axiom
+                            && self.unlocks >= Unlocks::LEMMAS
                             && !complete
                             && case.wire_has_interaction(wire)
                         {
@@ -109,20 +118,22 @@ impl State {
                         object,
                         ..
                     }) => {
-                        if let DragObject::Node(n1) = object {
-                            if let Some(n2) = dropped_on {
-                                self.case_tree.edit_case([|case: &mut Case| {
-                                    let w1 = case.node_output(n1);
-                                    let w2 = case.node_output(n2);
-                                    if case.wire_equiv(w1, w2) {
-                                        case.connect(
-                                            w1,
-                                            w2,
-                                            ValidityReason::new("I just checked equivalence."),
-                                        );
-                                    }
-                                }]);
-                                rerender = true;
+                        if !self.axiom {
+                            if let DragObject::Node(n1) = object {
+                                if let Some(n2) = dropped_on {
+                                    self.case_tree.edit_case([|case: &mut Case| {
+                                        let w1 = case.node_output(n1);
+                                        let w2 = case.node_output(n2);
+                                        if case.wire_equiv(w1, w2) {
+                                            case.connect(
+                                                w1,
+                                                w2,
+                                                ValidityReason::new("I just checked equivalence."),
+                                            );
+                                        }
+                                    }]);
+                                    rerender = true;
+                                }
                             }
                         }
                     }

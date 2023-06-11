@@ -61,12 +61,12 @@ impl State {
 
         let mut d = bumpalo::collections::String::new_in(cx.bump);
         for level in 0..game_data.num_levels() {
-            for prereq in game_data.prereqs(level) {
+            for &prereq in &game_data.level(level).prereqs {
                 bezier::path(
-                    game_data.map_position(prereq),
-                    game_data.bezier_vector(prereq),
-                    game_data.bezier_vector(level),
-                    game_data.map_position(level),
+                    game_data.level(prereq).map_position,
+                    game_data.level(prereq).bezier_vector,
+                    game_data.level(level).bezier_vector,
+                    game_data.level(level).map_position,
                     &mut d,
                 )
             }
@@ -87,30 +87,33 @@ impl State {
 
         for level in 0..game_data.num_levels() {
             let prereqs_complete = game_data
-                .prereqs(level)
-                .all(|prereq| save_data.completed(prereq));
+                .level(level)
+                .prereqs
+                .iter()
+                .all(|&prereq| save_data.completed(prereq));
 
             let mut circle = circle(cx.bump).attributes([
                 attr("r", "0.5"),
                 attr(
                     "cx",
-                    bumpalo::format!(in cx.bump, "{}", &game_data.map_position(level)[0])
+                    bumpalo::format!(in cx.bump, "{}", &game_data.level(level).map_position[0])
                         .into_bump_str(),
                 ),
                 attr(
                     "cy",
-                    bumpalo::format!(in cx.bump, "{}", &game_data.map_position(level)[1])
+                    bumpalo::format!(in cx.bump, "{}", &game_data.level(level).map_position[1])
                         .into_bump_str(),
                 ),
                 attr(
                     "class",
-                    if save_data.completed(level) {
-                        "node hoverable known"
+                    bumpalo::format!(in cx.bump, "node{}{}", if game_data.level(level).axiom {" axiom"} else {""}, if save_data.completed(level) {
+                        " hoverable known"
                     } else if prereqs_complete {
-                        "node hoverable goal"
+                        " hoverable goal"
                     } else {
-                        "node"
-                    },
+                        ""
+                    }).into_bump_str()
+                    ,
                 ),
             ]);
 

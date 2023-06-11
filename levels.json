@@ -495,4 +495,23 @@
   , "prereqs": ["=.5", "⇒.5"]
   , "next_level": null
   }
+
+
+  , "PropExt":
+  { "axiom": true
+  , "nodes":
+    [ ["a", []   , [-1,0]]
+    , ["b", []   , [ 1,0]]
+    , ["⇒", [0,1], [-1.5,3]]
+    , ["⇒", [1,0], [ 0,3]]
+    , ["=", [0,1], [ 1.5,3]]
+    ]
+  , "hypotheses": [2,3]
+  , "conclusion": 4
+  , "map_position": [21,1]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["=.6"]
+  , "next_level": null
+  , "text_box": "Axiom: We take this for granted."
+  }
 }

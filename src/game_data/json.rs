@@ -45,6 +45,8 @@ struct LevelJson<'a> {
     next_level: Option<Option<&'a str>>,
     #[serde(default)]
     unlocks: Unlocks,
+    #[serde(default)]
+    axiom: bool,
 }
 
 // https://github.com/serde-rs/serde/issues/984
@@ -156,6 +158,7 @@ impl<'a> LevelJson<'a> {
                 None => None,
             },
             unlocks: self.unlocks,
+            axiom: self.axiom,
         })
     }
 }

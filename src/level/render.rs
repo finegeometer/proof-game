@@ -28,6 +28,7 @@ impl State {
                 }) => Some(node),
                 _ => None,
             },
+            self.axiom,
         ));
 
         // Text Box
@@ -58,40 +59,37 @@ impl State {
         );
 
         // Next Level
-        if self.case_tree.all_complete() {
-            if let Some(next_level) = next_level {
-                col1 = col1.child(
-                    div(cx.bump)
-                        .attributes([attr("id", "next-level"), attr("class", "button green")])
-                        .on("click", handler(move |_| crate::Msg::GotoLevel(next_level)))
-                        .children([text("Next Level!")])
-                        .finish(),
-                );
-            } else {
-                col1 = col1.child(
-                    div(cx.bump)
-                        .attributes([attr("id", "next-level"), attr("class", "button green")])
-                        .on(
-                            "click",
-                            handler(move |_| crate::Msg::GotoMap { recenter: true }),
-                        )
-                        .children([text("Select a Level!")])
-                        .finish(),
-                );
-            }
+        if self.axiom || self.case_tree.all_complete() {
+            #[rustfmt::skip]
+            let (listener, s) = if let Some(next_level) = next_level {(
+                on(cx.bump, "click", handler(move |_| crate::Msg::GotoLevel(next_level))),
+                "Next Level!",
+            )} else {(
+                on(cx.bump, "click", handler(move |_| crate::Msg::GotoMap { recenter: true })),
+                "Select a Level!",
+            )};
+            col1 = col1.child(
+                div(cx.bump)
+                    .attributes([attr("id", "next-level"), attr("class", "button green")])
+                    .listeners([listener])
+                    .children([text(if self.axiom { "Continue." } else { s })])
+                    .finish(),
+            );
         }
 
         // Reset Level
-        col1 = col1.child(
-            div(cx.bump)
-                .attributes([attr("id", "reset"), attr("class", "button red")])
-                .on(
-                    "click",
-                    handler(move |_| crate::Msg::GotoLevel(current_level)),
-                )
-                .children([text("Reset")])
-                .finish(),
-        );
+        if !self.axiom {
+            col1 = col1.child(
+                div(cx.bump)
+                    .attributes([attr("id", "reset"), attr("class", "button red")])
+                    .on(
+                        "click",
+                        handler(move |_| crate::Msg::GotoLevel(current_level)),
+                    )
+                    .children([text("Reset")])
+                    .finish(),
+            );
+        }
 
         // World Map
         col1 = col1.child(
