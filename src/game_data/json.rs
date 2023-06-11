@@ -1,11 +1,9 @@
-use crate::level::case::{Case, ValidityReason, Wire};
-use crate::level::expression::Expression;
+use crate::level::{expression::Expression, spec::LevelSpec};
 
 use super::*;
 use ::serde::Deserialize;
 use anyhow::*;
 use serde::{Deserializer, Serialize};
-use smallvec::SmallVec;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Deserialize)]
@@ -60,85 +58,70 @@ where
 }
 
 impl<'a> LevelJson<'a> {
-    fn parse(&self, indices: &HashMap<&'a str, usize>, name: String) -> Result<Level> {
+    fn parse(self, indices: &HashMap<&'a str, usize>, name: String) -> Result<Level> {
+        let Self {
+            nodes,
+            hypotheses,
+            conclusion,
+            text_box,
+            map_position,
+            bezier_vector,
+            prereqs,
+            next_level,
+            unlocks,
+            axiom,
+        } = self;
+
         let mut x_min = f64::INFINITY;
         let mut y_min = f64::INFINITY;
         let mut x_max = f64::NEG_INFINITY;
         let mut y_max = f64::NEG_INFINITY;
 
-        let mut case = Case::new();
-        let mut wires = Vec::with_capacity(self.nodes.len());
-        for (op, inputs, position) in &self.nodes {
-            x_min = x_min.min(position[0]);
-            y_min = y_min.min(position[1]);
-            x_max = x_max.max(position[0]);
-            y_max = y_max.max(position[1]);
+        let nodes = nodes
+            .into_iter()
+            .map(|(op, inputs, position)| {
+                x_min = x_min.min(position[0]);
+                y_min = y_min.min(position[1]);
+                x_max = x_max.max(position[0]);
+                y_max = y_max.max(position[1]);
 
-            let inputs = inputs.iter().map(|idx| {
-                wires
-                    .get(*idx)
-                    .copied()
-                    .ok_or_else(|| anyhow!("Node {} depends on later node {}", wires.len(), idx))
-            });
-            let expression = {
-                match *op {
-                    "∧" => Expression::And(inputs.collect::<Result<_, _>>()?),
-                    "∨" => Expression::Or(inputs.collect::<Result<_, _>>()?),
-                    "⇒" => Expression::Implies({
-                        inputs
-                            .collect::<Result<SmallVec<[Wire; 2]>, _>>()?
-                            .into_inner()
-                            .map_err(|inputs| {
-                                anyhow!(
-                                    "Incorrect number of inputs to `⇒`: expected 2, found {}",
-                                    inputs.len()
-                                )
-                            })?
-                    }),
-                    "=" => Expression::Equal({
-                        inputs
-                            .collect::<Result<SmallVec<[Wire; 2]>, _>>()?
-                            .into_inner()
-                            .map_err(|inputs| {
-                                anyhow!(
-                                    "Incorrect number of inputs to `=`: expected 2, found {}",
-                                    inputs.len()
-                                )
-                            })?
-                    }),
-                    _ => Expression::Other((*op).into()),
-                }
-            };
-            let node = case.make_node(expression, *position);
-            wires.push(case.node_output(node));
-        }
-        for idx in self.hypotheses.iter() {
-            case.set_proven(
-                *wires.get(*idx).ok_or_else(|| {
-                    anyhow!("Hypothesis index too large. ({} >= {})", idx, wires.len())
-                })?,
-                ValidityReason::new("By assumption."),
-            )
-        }
-        case.set_goal(*wires.get(self.conclusion).ok_or_else(|| {
-            anyhow!(
-                "Conclusion index too large. ({} >= {})",
-                self.conclusion,
-                wires.len()
-            )
-        })?);
+                let expression = match op {
+                    "∧" => Expression::And(inputs.into()),
+                    "∨" => Expression::Or(inputs.into()),
+                    "⇒" => {
+                        Expression::Implies(<[usize; 2]>::try_from(inputs).map_err(|inputs| {
+                            anyhow!(
+                                "Wrong number of inputs to `⇒`: expected 2, found {}.",
+                                inputs.len()
+                            )
+                        })?)
+                    }
+                    "=" => {
+                        Expression::Implies(<[usize; 2]>::try_from(inputs).map_err(|inputs| {
+                            anyhow!(
+                                "Wrong number of inputs to `=`: expected 2, found {}.",
+                                inputs.len()
+                            )
+                        })?)
+                    }
+                    _ => Expression::Other(op.to_owned()),
+                };
+
+                Ok((expression, position))
+            })
+            .collect::<Result<_>>()?;
+
         Ok(Level {
             name,
-            case,
+            spec: LevelSpec::new(nodes, hypotheses, conclusion)?,
             pan_zoom: crate::render::PanZoom {
                 svg_corners: ([x_min - 1., y_min - 1.], [x_max + 1., y_max + 3.]),
             },
-            text_box: self.text_box.map(|s| s.to_owned()),
-            map_position: self.map_position,
-            bezier_vector: self.bezier_vector,
-            prereqs: self
-                .prereqs
-                .iter()
+            text_box: text_box.map(|s| s.to_owned()),
+            map_position,
+            bezier_vector,
+            prereqs: prereqs
+                .into_iter()
                 .map(|x| {
                     indices
                         .get(x)
@@ -146,10 +129,7 @@ impl<'a> LevelJson<'a> {
                         .ok_or_else(|| anyhow!("Unknown level {} in prereqs.", x))
                 })
                 .collect::<Result<_, _>>()?,
-            next_level: match self
-                .next_level
-                .ok_or_else(|| anyhow!("Missing next_level field."))?
-            {
+            next_level: match next_level.ok_or_else(|| anyhow!("Missing next_level field."))? {
                 Some(x) => Some(
                     *indices
                         .get(x)
@@ -157,8 +137,8 @@ impl<'a> LevelJson<'a> {
                 ),
                 None => None,
             },
-            unlocks: self.unlocks,
-            axiom: self.axiom,
+            unlocks,
+            axiom,
         })
     }
 }

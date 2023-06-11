@@ -15,7 +15,7 @@ pub struct GameData {
 
 pub struct Level {
     name: String,
-    case: crate::level::case::Case,
+    spec: crate::level::spec::LevelSpec,
     pan_zoom: crate::render::PanZoom,
     text_box: Option<String>,
     pub map_position: [f64; 2],
@@ -37,14 +37,14 @@ impl GameData {
 
     pub fn load(&self, level: usize, global_unlocks: Unlocks) -> crate::level::State {
         let Level {
-            case,
+            spec,
             pan_zoom,
             text_box,
             axiom,
             ..
         } = self.level(level);
         crate::level::State::new(
-            case.clone(),
+            spec,
             *pan_zoom,
             text_box.clone(),
             global_unlocks | self.level(level).unlocks,

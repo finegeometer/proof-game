@@ -1,9 +1,10 @@
 //! Code pertaining to individual levels of the game.
 
-pub mod case;
+mod case;
 mod case_tree;
 pub mod expression;
 mod render;
+pub mod spec;
 
 use crate::{game_data::Unlocks, render::PanZoom};
 use case::{Case, Node, ValidityReason, Wire};
@@ -46,14 +47,14 @@ pub enum DragObject {
 
 impl State {
     pub fn new(
-        case: Case,
+        spec: &spec::LevelSpec,
         pan_zoom: PanZoom,
         text_box: Option<String>,
         unlocks: Unlocks,
         axiom: bool,
     ) -> Self {
         Self {
-            case_tree: CaseTree::new(case),
+            case_tree: CaseTree::new(spec.to_case()),
             pan_zoom,
             text_box,
             drag: None,
