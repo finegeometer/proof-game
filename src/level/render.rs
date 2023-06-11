@@ -24,6 +24,7 @@ impl State {
             match self.drag {
                 Some(DragState {
                     object: DragObject::Node(node),
+                    confirmed_drag: Ok(()),
                     ..
                 }) => Some(node),
                 _ => None,

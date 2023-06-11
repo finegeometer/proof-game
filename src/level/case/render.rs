@@ -2,189 +2,144 @@ use crate::{game_data::Unlocks, level, render::*};
 use dodrio::{builder::*, bumpalo};
 use wasm_bindgen::JsCast;
 
-impl super::Node {
-    fn render<'a>(
-        self,
-        case: &super::Case,
-        cx: &mut dodrio::RenderContext<'a>,
-        enable_hover: bool,
-        events: bool,
-    ) -> dodrio::Node<'a> {
-        let [x, y] = case.position(self);
-        let x = bumpalo::format!(in cx.bump, "{}", x).into_bump_str();
-        let y = bumpalo::format!(in cx.bump, "{}", y).into_bump_str();
+fn render_node<'a>(
+    cx: &mut dodrio::RenderContext<'a>,
+    pos: [f64; 2],
+    label: &'a str,
+    events: Option<super::Node>,
+    hoverable: bool,
+) -> dodrio::Node<'a> {
+    let [x, y] = pos;
+    let x = bumpalo::format!(in cx.bump, "{}", x).into_bump_str();
+    let y = bumpalo::format!(in cx.bump, "{}", y).into_bump_str();
 
-        g(cx.bump)
-            .children([
-                circle(cx.bump)
-                    .attributes([
-                        attr("r", "0.5"),
-                        attr("cx", x),
-                        attr("cy", y),
-                        attr(
-                            "class",
-                            if enable_hover && case.node_has_interaction(self) {
-                                "node hoverable"
-                            } else {
-                                "node"
-                            },
-                        ),
-                        attr("pointer-events", if events { "auto" } else { "none" }),
-                    ])
-                    .listeners([
-                        on(
-                            cx.bump,
-                            "mousedown",
-                            handler(move |e| {
-                                let (x, y) = to_svg_coords(
-                                    e.dyn_into::<web_sys::MouseEvent>().unwrap(),
-                                    "game",
-                                );
-                                crate::Msg::Level(level::Msg::MouseDown(
-                                    x,
-                                    y,
-                                    level::DragObject::Node(self),
-                                ))
-                            }),
-                        ),
-                        on(
-                            cx.bump,
-                            "mouseup",
-                            handler(move |e| {
-                                let (x, y) = to_svg_coords(
-                                    e.dyn_into::<web_sys::MouseEvent>().unwrap(),
-                                    "game",
-                                );
-                                crate::Msg::Level(level::Msg::MouseUp(x, y, Some(self)))
-                            }),
-                        ),
-                    ])
-                    .finish(),
-                text_(cx.bump)
-                    .attributes([
-                        attr("text-anchor", "middle"),
-                        attr("dominant-baseline", "middle"),
-                        attr("pointer-events", "none"),
-                        attr("x", x),
-                        attr("y", y),
-                    ])
-                    .children([text(
-                        bumpalo::collections::String::from_str_in(
-                            case.node_expression(self).text(),
-                            cx.bump,
-                        )
-                        .into_bump_str(),
-                    )])
-                    .finish(),
-            ])
-            .finish()
+    let mut circle = circle(cx.bump).attributes([
+        attr("r", "0.5"),
+        attr("cx", x),
+        attr("cy", y),
+        attr("class", if hoverable { "node hoverable" } else { "node" }),
+        attr(
+            "pointer-events",
+            if events.is_some() { "auto" } else { "none" },
+        ),
+    ]);
+    if let Some(node) = events {
+        circle = circle
+            .on(
+                "mousedown",
+                handler(move |e| {
+                    let (x, y) =
+                        to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+                    crate::Msg::Level(level::Msg::MouseDown(x, y, level::DragObject::Node(node)))
+                }),
+            )
+            .on(
+                "mouseup",
+                handler(move |e| {
+                    let (x, y) =
+                        to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+                    crate::Msg::Level(level::Msg::MouseUp(x, y, Some(node)))
+                }),
+            );
     }
+
+    g(cx.bump)
+        .children([
+            circle.finish(),
+            text_(cx.bump)
+                .attributes([
+                    attr("text-anchor", "middle"),
+                    attr("dominant-baseline", "middle"),
+                    attr("pointer-events", "none"),
+                    attr("x", x),
+                    attr("y", y),
+                ])
+                .children([text(label)])
+                .finish(),
+        ])
+        .finish()
 }
 
-impl super::Wire {
-    fn render<'a>(
-        self,
-        outputs: &[(super::Node, usize)],
-        case: &super::Case,
-        cx: &mut dodrio::RenderContext<'a>,
-        enable_hover: bool,
-        events: bool,
-    ) -> [dodrio::Node<'a>; 2] {
-        use bumpalo::collections::Vec;
+/// `status` must be "" or " known" or " goal".
+fn render_wire<'a>(
+    cx: &mut dodrio::RenderContext<'a>,
+    inputs: &[[f64; 2]],
+    outputs: &[[f64; 2]],
+    output_vectors: &[[f64; 2]],
+    status: &str,
+    events: Option<super::Wire>,
+    hoverable: bool,
+) -> [dodrio::Node<'a>; 2] {
+    const WIRE_STIFFNESS: f64 = 0.75;
+    let mut outputs = outputs;
+    let mut output_vectors = output_vectors;
 
-        let d: &'a str = {
-            const WIRE_STIFFNESS: f64 = 0.75;
+    let input_avg = bezier::average(inputs);
+    let input_vector = [0., WIRE_STIFFNESS];
 
-            let inputs = Vec::from_iter_in(case.wire_inputs(self), cx.bump);
-            let start = Vec::from_iter_in(inputs.iter().map(|&node| case.position(node)), cx.bump);
-            let start_vector = [0., WIRE_STIFFNESS];
-            let end;
-            let end_vector;
+    debug_assert_eq!(outputs.len(), output_vectors.len());
 
-            if outputs.is_empty() {
-                let start_avg = bezier::average(&start);
-                end = bumpalo::vec![in cx.bump; [start_avg[0], start_avg[1] + 3. * WIRE_STIFFNESS]];
-                end_vector = bumpalo::vec![in cx.bump; [0., WIRE_STIFFNESS]];
-            } else {
-                end = Vec::from_iter_in(
-                    outputs.iter().map(|&(node, _)| case.position(node)),
-                    cx.bump,
-                );
-                end_vector = Vec::from_iter_in(
-                    outputs.iter().map(|&(node, idx)| {
-                        [
-                            -WIRE_STIFFNESS
-                                * (idx as f64
-                                    - (case.node_expression(node).inputs().len() as f64 - 1.) / 2.),
-                            WIRE_STIFFNESS,
-                        ]
-                    }),
-                    cx.bump,
-                );
-            }
-            let (mid, mid_vector) = bezier::split(
-                bezier::average(&start),
-                start_vector,
-                bezier::average(&end_vector),
-                bezier::average(&end),
-            );
+    let tmp;
+    if outputs.is_empty() {
+        tmp = [[input_avg[0], input_avg[1] + 3. * WIRE_STIFFNESS]];
+        outputs = &tmp;
+        output_vectors = &[[0., WIRE_STIFFNESS]]
+    }
 
-            let mut path = bumpalo::collections::String::new_in(cx.bump);
-            for start in start {
-                bezier::path(start, start_vector, mid_vector, mid, &mut path);
-            }
-            for (end, end_vector) in end.into_iter().zip(end_vector) {
-                bezier::path(mid, mid_vector, end_vector, end, &mut path);
-            }
-            path.into_bump_str()
-        };
+    let output_avg = bezier::average(outputs);
+    let output_vector_avg = bezier::average(output_vectors);
 
-        let extra_classes = if case.proven(self) {
-            " known"
-        } else if case.wire_eq(self, case.goal()) {
-            " goal"
-        } else {
-            ""
-        };
+    let (mid, mid_vector) = bezier::split(
+        input_avg,
+        input_vector,
+        [
+            output_vector_avg[0] * WIRE_STIFFNESS,
+            output_vector_avg[1] * WIRE_STIFFNESS,
+        ],
+        output_avg,
+    );
 
-        let hoverable = if enable_hover && case.wire_has_interaction(self) {
-            " hoverable"
-        } else {
-            ""
-        };
+    let mut d = bumpalo::collections::String::new_in(cx.bump);
+    for &input in inputs {
+        bezier::path(input, input_vector, mid_vector, mid, &mut d);
+    }
+    for (&output, &[x, y]) in outputs.iter().zip(output_vectors) {
+        bezier::path(
+            mid,
+            mid_vector,
+            [x * WIRE_STIFFNESS, y * WIRE_STIFFNESS],
+            output,
+            &mut d,
+        );
+    }
+    let d = d.into_bump_str();
 
+    let mut out0 = path(cx.bump).attributes([
+        attr(
+            "class",
+            bumpalo::format!(in cx.bump, "wire border{}", status).into_bump_str(),
+        ),
+        attr("d", d),
+    ]);
+    let mut out1 = path(cx.bump).attributes([
+        attr(
+            "class",
+            bumpalo::format!(in cx.bump, "wire{}{}", status, if hoverable {" hoverable"} else {""})
+                .into_bump_str(),
+        ),
+        attr("d", d),
+    ]);
+
+    if let Some(wire) = events {
         let closure = move |e: web_sys::Event| {
             let (x, y) = to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-            crate::Msg::Level(level::Msg::MouseDown(x, y, level::DragObject::Wire(self)))
+            crate::Msg::Level(level::Msg::MouseDown(x, y, level::DragObject::Wire(wire)))
         };
-
-        [
-            path(cx.bump)
-                .attributes([
-                    attr(
-                        "class",
-                        bumpalo::format!(in cx.bump, "wire border{}", extra_classes)
-                            .into_bump_str(),
-                    ),
-                    attr("d", d),
-                    attr("pointer-events", if events { "auto" } else { "none" }),
-                ])
-                .on("mousedown", handler(closure))
-                .finish(),
-            path(cx.bump)
-                .attributes([
-                    attr(
-                        "class",
-                        bumpalo::format!(in cx.bump, "wire{}{}", extra_classes, hoverable)
-                            .into_bump_str(),
-                    ),
-                    attr("d", d),
-                    attr("pointer-events", if events { "auto" } else { "none" }),
-                ])
-                .on("mousedown", handler(closure))
-                .finish(),
-        ]
+        out0 = out0.on("mousedown", handler(closure));
+        out1 = out1.on("mousedown", handler(closure));
     }
+
+    [out0.finish(), out1.finish()]
 }
 
 impl super::Case {
@@ -262,12 +217,43 @@ impl super::Case {
                 {
                     let mut builder = g(cx.bump);
                     for (wire, outputs) in self.wires() {
-                        for svg_node in wire.render(
-                            &outputs,
-                            self,
+                        use bumpalo::collections::Vec;
+
+                        for svg_node in render_wire(
                             cx,
-                            !complete && unlocks >= Unlocks::LEMMAS,
-                            !axiom && dragging.is_none(),
+                            &Vec::from_iter_in(
+                                self.wire_inputs(wire).map(|node| self.position(node)),
+                                cx.bump,
+                            ),
+                            &Vec::from_iter_in(
+                                outputs.iter().map(|&(node, _)| self.position(node)),
+                                cx.bump,
+                            ),
+                            &Vec::from_iter_in(
+                                outputs.iter().map(|&(node, idx)| {
+                                    [
+                                        -(idx as f64
+                                            - (self.node_expression(node).inputs().len() as f64
+                                                - 1.)
+                                                / 2.),
+                                        1.,
+                                    ]
+                                }),
+                                cx.bump,
+                            ),
+                            if self.proven(wire) {
+                                " known"
+                            } else if self.wire_eq(wire, self.goal()) {
+                                " goal"
+                            } else {
+                                ""
+                            },
+                            (!axiom && dragging.is_none()).then_some(wire),
+                            !axiom
+                                && !complete
+                                && unlocks >= Unlocks::LEMMAS
+                                && dragging.is_none()
+                                && self.wire_has_interaction(wire),
                         ) {
                             builder = builder.child(svg_node);
                         }
@@ -278,11 +264,19 @@ impl super::Case {
                 {
                     let mut builder = g(cx.bump);
                     for node in self.nodes() {
-                        builder = builder.child(node.render(
-                            self,
+                        builder = builder.child(render_node(
                             cx,
-                            !complete,
-                            !axiom && dragging != Some(node),
+                            self.position(node),
+                            bumpalo::collections::String::from_str_in(
+                                self.node_expression(node).text(),
+                                cx.bump,
+                            )
+                            .into_bump_str(),
+                            (!axiom && dragging != Some(node)).then_some(node),
+                            !axiom
+                                && !complete
+                                && dragging.is_none()
+                                && self.node_has_interaction(node),
                         ));
                     }
                     builder.finish()
