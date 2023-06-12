@@ -497,7 +497,7 @@
   }
 
 
-  , "PropExt":
+, "PropExt":
   { "axiom": true
   , "nodes":
     [ ["a", []   , [-1,0]]
@@ -511,7 +511,24 @@
   , "map_position": [21,1]
   , "bezier_vector": [1,0]
   , "prereqs": ["=.6"]
-  , "next_level": null
+  , "next_level": "app.0"
   , "text_box": "Axiom: We take this for granted."
+  }
+, "app.0":
+  { "unlocks": ["theorem-application"]
+  , "nodes":
+    [ ["x", []   , [-1,0]]
+    , ["y", []   , [ 1,0]]
+    , ["⇒", [0,1], [-1.5,3]]
+    , ["⇒", [1,0], [ 0,3]]
+    , ["=", [0,1], [ 1.5,3]]
+    ]
+  , "hypotheses": [2,3]
+  , "conclusion": 4
+  , "map_position": [22.5,1]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["PropExt"]
+  , "next_level": null
+  , "text_box": "New feature! Import the previous level to solve this one."
   }
 }

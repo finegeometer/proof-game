@@ -28,32 +28,31 @@
       gap: 2%
     }
 
-    #col0 {
+    .col {
       display: flex;
       flex-direction: column;
+    }
+
+    .wide {
       flex: 4;
     }
 
-    #col1 {
-      display: flex;
-      flex-direction: column;
+    .narrow {
       flex: 1;
     }
 
-    #game {
+    svg {
       flex: 1;
     }
 
-    #map {
-      flex: 1;
-    }
-
-    #text-box {
+    .text-box {
       text-align: center;
       vertical-align: middle;
     }
 
-    /* #class-tree {} */
+    #class-tree {
+      flex: none
+    }
 
     .button {
       display: flex;
@@ -90,6 +89,15 @@
 
     .button.blue:hover {
       background: #55b;
+    }
+
+    .button.yellow {
+      background: #aa3;
+      border: 2px solid #660;
+    }
+
+    .button.yellow:hover {
+      background: #992
     }
 
     .button.disabled {

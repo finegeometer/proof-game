@@ -72,11 +72,14 @@ pub struct GlobalState {
 
 enum GameState {
     Menu,
-    WorldMap(world_map::State),
+    WorldMap {
+        map_state: world_map::State,
+    },
     Level {
         level: usize,
         next_level: Option<usize>,
         level_state: level::State,
+        theorem_select: Option<(render::PanZoom, world_map::State, Option<usize>)>,
     },
 }
 
@@ -93,11 +96,14 @@ impl GameState {
                     .all(|&prereq| save_data.completed(prereq))
             }),
             level_state: game_data.load(level, save_data.unlocks()),
+            theorem_select: None,
         }
     }
 
     fn map() -> Self {
-        Self::WorldMap(world_map::State::new())
+        Self::WorldMap {
+            map_state: world_map::State::new(),
+        }
     }
 }
 
@@ -107,6 +113,11 @@ enum Msg {
     WorldMap(world_map::Msg),
     GotoLevel(usize),
     GotoMap { recenter: bool },
+
+    // Messages related to selecting theorems from the world map while in a level.
+    SelectTheorem,
+    PreviewTheorem(usize),
+    SelectedTheorem(usize),
 
     LoadedSave(String),
     LoadingSaveFailed(),
@@ -155,21 +166,21 @@ impl Model {
                             .unwrap()
                             .set_onbeforeunload(Some(&self.save_listener));
                     }
-                    if self
-                        .save_data
+                    self.save_data
                         .set_unlocked(self.game_data.level(*level).unlocks)
-                    {
-                        web_sys::window()
-                            .unwrap()
-                            .set_onbeforeunload(Some(&self.save_listener));
-                    }
                 }
                 rerender
             }
-            Msg::WorldMap(msg) => {
-                let GameState::WorldMap(map_state) = &mut self.game_state else {return false};
-                map_state.update(msg, &mut self.global_state)
-            }
+            Msg::WorldMap(msg) => match &mut self.game_state {
+                GameState::WorldMap { map_state } => {
+                    map_state.update(msg, &mut self.global_state.map_panzoom)
+                }
+                GameState::Level {
+                    theorem_select: Some((panzoom, map_state, _)),
+                    ..
+                } => map_state.update(msg, panzoom),
+                _ => false,
+            },
             Msg::GotoLevel(level) => {
                 self.game_state = GameState::level(&self.game_data, level, &self.save_data);
                 #[allow(clippy::collapsible_if)]
@@ -179,6 +190,8 @@ impl Model {
                             .unwrap()
                             .set_onbeforeunload(Some(&self.save_listener));
                     }
+                    self.save_data
+                        .set_unlocked(self.game_data.level(level).unlocks)
                 }
                 true
             }
@@ -197,6 +210,36 @@ impl Model {
                 }
                 GameState::WorldMap { .. } | GameState::Menu => false,
             },
+
+            Msg::SelectTheorem => {
+                let GameState::Level { level, theorem_select, .. } = &mut self.game_state else { return false };
+                if theorem_select.is_some() {
+                    return false;
+                }
+
+                *theorem_select = Some((
+                    render::PanZoom::center(self.game_data.level(*level).map_position, 10.),
+                    world_map::State::new(),
+                    None,
+                ));
+                true
+            }
+            Msg::PreviewTheorem(level) => {
+                let GameState::Level { theorem_select: Some((_,_,preview)), .. } = &mut self.game_state else { return false };
+                if *preview == Some(level) {
+                    return false;
+                }
+                *preview = Some(level);
+                true
+            }
+            Msg::SelectedTheorem(level) => {
+                let GameState::Level { level_state, theorem_select, .. } = &mut self.game_state else { return false };
+                *theorem_select = None;
+                level_state.update(level::Msg::SelectedTheorem(
+                    self.game_data.level(level).spec.clone(),
+                ));
+                true
+            }
 
             Msg::LoadedSave(save_file) => match SaveData::load(&self.game_data, &save_file) {
                 Ok(save_data) => {
@@ -241,29 +284,61 @@ impl<'a> dodrio::Render<'a> for Model {
                 level_state,
                 level,
                 next_level,
+                theorem_select: None,
             } => builder
                 .children(level_state.render(cx, *level, *next_level))
                 .finish(),
-            GameState::WorldMap(map_state) => builder
+            GameState::WorldMap { map_state } => builder
                 .children([
                     div(cx.bump)
-                        .attributes([attr("id", "col0")])
+                        .attributes([attr("class", "col wide")])
                         .children([map_state.render(
                             cx,
                             &self.game_data,
-                            &self.global_state,
+                            &self.global_state.map_panzoom,
                             &self.save_data,
+                            false,
                         )])
                         .finish(),
                     div(cx.bump)
-                        .attributes([attr("id", "col1")])
+                        .attributes([attr("class", "col narrow")])
                         .children(save_load_buttons(cx.bump))
                         .finish(),
                 ])
                 .finish(),
+            GameState::Level {
+                theorem_select: Some((panzoom, map_state, preview)),
+                ..
+            } => {
+                let col0 = div(cx.bump)
+                    .attributes([attr("class", "col wide")])
+                    .children([
+                        map_state.render(cx, &self.game_data, panzoom, &self.save_data, true),
+                        div(cx.bump)
+                            .attributes([attr("class", "background disabled text-box")])
+                            .children([text("Select a theorem to apply.")])
+                            .finish(),
+                    ])
+                    .finish();
+                let mut col1 = div(cx.bump).attributes([attr("class", "col wide")]);
+                if let Some(preview) = preview {
+                    let preview = self.game_data.level(*preview);
+                    let mut svg = svg(cx.bump).attributes([
+                        attr("class", "background"),
+                        attr("preserveAspectRatio", "xMidYMid meet"),
+                        attr("font-size", "0.75"),
+                        preview.panzoom.viewbox(cx.bump),
+                    ]);
+                    for child in preview.spec.render(cx) {
+                        svg = svg.child(child);
+                    }
+                    col1 = col1.child(svg.finish());
+                }
+                builder.children([col0, col1.finish()]).finish()
+            }
             GameState::Menu => builder
                 .children([div(cx.bump)
-                    .attributes([attr("id", "col0")])
+                    .attributes([attr("class", "col wide")])
                     .children([div(cx.bump)
                         .attributes([attr("class", "button green")])
                         .listeners([file::fetch_listener(

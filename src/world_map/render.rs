@@ -8,8 +8,9 @@ impl State {
         &self,
         cx: &mut dodrio::RenderContext<'a>,
         game_data: &GameData,
-        global_state: &crate::GlobalState,
+        panzoom: &PanZoom,
         save_data: &crate::SaveData,
+        is_theorem_select: bool,
     ) -> dodrio::Node<'a> {
         let mut builder = svg(cx.bump)
             .attributes([
@@ -17,7 +18,7 @@ impl State {
                 attr("class", "background"),
                 attr("preserveAspectRatio", "xMidYMid meet"),
                 attr("font-size", "0.75"),
-                global_state.map_panzoom.viewbox(cx.bump),
+                panzoom.viewbox(cx.bump),
             ])
             .listeners([
                 on(
@@ -108,7 +109,7 @@ impl State {
                     "class",
                     bumpalo::format!(in cx.bump, "node{}{}", if game_data.level(level).axiom {" axiom"} else {""}, if save_data.completed(level) {
                         " hoverable known"
-                    } else if prereqs_complete {
+                    } else if !is_theorem_select && prereqs_complete {
                         " hoverable goal"
                     } else {
                         ""
@@ -117,8 +118,23 @@ impl State {
                 ),
             ]);
 
-            if prereqs_complete {
-                circle = circle.on("click", handler(move |_| crate::Msg::GotoLevel(level)));
+            #[allow(clippy::collapsible_else_if)]
+            if is_theorem_select {
+                if save_data.completed(level) {
+                    circle = circle
+                        .on(
+                            "click",
+                            handler(move |_| crate::Msg::SelectedTheorem(level)),
+                        )
+                        .on(
+                            "mouseover",
+                            handler(move |_| crate::Msg::PreviewTheorem(level)),
+                        );
+                }
+            } else {
+                if prereqs_complete {
+                    circle = circle.on("click", handler(move |_| crate::Msg::GotoLevel(level)));
+                }
             }
 
             builder = builder.child(circle.finish());

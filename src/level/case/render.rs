@@ -145,143 +145,80 @@ pub(super) fn render_wire<'a>(
 impl super::Case {
     pub fn render<'a>(
         &self,
-        pan_zoom: PanZoom,
         cx: &mut dodrio::RenderContext<'a>,
         unlocks: Unlocks,
         complete: bool,
         dragging: Option<super::Node>,
         axiom: bool,
-    ) -> dodrio::Node<'a> {
-        svg(cx.bump)
-            .attributes([
-                attr("id", "game"),
-                attr(
-                    "class",
-                    if axiom {
-                        "background disabled"
-                    } else if complete {
-                        "background complete"
-                    } else {
-                        "background"
-                    },
-                ),
-                attr("preserveAspectRatio", "xMidYMid meet"),
-                attr("font-size", "0.75"),
-                pan_zoom.viewbox(cx.bump),
-            ])
-            .listeners([
-                on(
-                    cx.bump,
-                    "mousedown",
-                    handler(move |e| {
-                        let (x, y) =
-                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                        crate::Msg::Level(level::Msg::MouseDown(
-                            x,
-                            y,
-                            level::DragObject::Background,
-                        ))
-                    }),
-                ),
-                on(
-                    cx.bump,
-                    "mouseup",
-                    handler(move |e| {
-                        let (x, y) =
-                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                        crate::Msg::Level(level::Msg::MouseUp(x, y, None))
-                    }),
-                ),
-                on(
-                    cx.bump,
-                    "mousemove",
-                    handler(move |e| {
-                        let (x, y) =
-                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                        crate::Msg::Level(level::Msg::MouseMove(x, y))
-                    }),
-                ),
-                on(
-                    cx.bump,
-                    "wheel",
-                    handler(move |e| {
-                        let e = e.dyn_into::<web_sys::WheelEvent>().unwrap();
-                        let wheel = e.delta_y();
-                        let (x, y) = to_svg_coords(e.into(), "game");
-                        crate::Msg::Level(level::Msg::MouseWheel(x, y, wheel))
-                    }),
-                ),
-            ])
-            .children([
-                // Wires
-                {
-                    let mut builder = g(cx.bump);
-                    for (wire, outputs) in self.wires() {
-                        use bumpalo::collections::Vec;
+    ) -> [dodrio::Node<'a>; 2] {
+        [
+            // Wires
+            {
+                let mut builder = g(cx.bump);
+                for (wire, outputs) in self.wires() {
+                    use bumpalo::collections::Vec;
 
-                        for svg_node in render_wire(
-                            cx,
-                            &Vec::from_iter_in(
-                                self.wire_inputs(wire).map(|node| self.position(node)),
-                                cx.bump,
-                            ),
-                            &Vec::from_iter_in(
-                                outputs.iter().map(|&(node, _)| self.position(node)),
-                                cx.bump,
-                            ),
-                            &Vec::from_iter_in(
-                                outputs.iter().map(|&(node, idx)| {
-                                    [
-                                        -(idx as f64
-                                            - (self.node_expression(node).inputs().len() as f64
-                                                - 1.)
-                                                / 2.),
-                                        1.,
-                                    ]
-                                }),
-                                cx.bump,
-                            ),
-                            if self.proven(wire) {
-                                " known"
-                            } else if self.wire_eq(wire, self.goal()) {
-                                " goal"
-                            } else {
-                                ""
-                            },
-                            (!axiom && dragging.is_none()).then_some(wire),
-                            !axiom
-                                && !complete
-                                && unlocks >= Unlocks::LEMMAS
-                                && dragging.is_none()
-                                && self.wire_has_interaction(wire),
-                        ) {
-                            builder = builder.child(svg_node);
-                        }
+                    for svg_node in render_wire(
+                        cx,
+                        &Vec::from_iter_in(
+                            self.wire_inputs(wire).map(|node| self.position(node)),
+                            cx.bump,
+                        ),
+                        &Vec::from_iter_in(
+                            outputs.iter().map(|&(node, _)| self.position(node)),
+                            cx.bump,
+                        ),
+                        &Vec::from_iter_in(
+                            outputs.iter().map(|&(node, idx)| {
+                                [
+                                    -(idx as f64
+                                        - (self.node_expression(node).inputs().len() as f64 - 1.)
+                                            / 2.),
+                                    1.,
+                                ]
+                            }),
+                            cx.bump,
+                        ),
+                        if self.proven(wire) {
+                            " known"
+                        } else if self.wire_eq(wire, self.goal()) {
+                            " goal"
+                        } else {
+                            ""
+                        },
+                        (!axiom && dragging.is_none()).then_some(wire),
+                        !axiom
+                            && !complete
+                            && unlocks >= Unlocks::LEMMAS
+                            && dragging.is_none()
+                            && self.wire_has_interaction(wire),
+                    ) {
+                        builder = builder.child(svg_node);
                     }
-                    builder.finish()
-                },
-                // Nodes
-                {
-                    let mut builder = g(cx.bump);
-                    for node in self.nodes() {
-                        builder = builder.child(render_node(
-                            cx,
-                            self.position(node),
-                            bumpalo::collections::String::from_str_in(
-                                self.node_expression(node).text(),
-                                cx.bump,
-                            )
-                            .into_bump_str(),
-                            (!axiom && dragging != Some(node)).then_some(node),
-                            !axiom
-                                && !complete
-                                && dragging.is_none()
-                                && self.node_has_interaction(node),
-                        ));
-                    }
-                    builder.finish()
-                },
-            ])
-            .finish()
+                }
+                builder.finish()
+            },
+            // Nodes
+            {
+                let mut builder = g(cx.bump);
+                for node in self.nodes() {
+                    builder = builder.child(render_node(
+                        cx,
+                        self.position(node),
+                        bumpalo::collections::String::from_str_in(
+                            self.node_expression(node).text(),
+                            cx.bump,
+                        )
+                        .into_bump_str(),
+                        (!axiom && dragging != Some(node)).then_some(node),
+                        !axiom
+                            && !complete
+                            && dragging.is_none()
+                            && self.node_has_interaction(node),
+                    ));
+                }
+                builder.finish()
+            },
+        ]
     }
 }

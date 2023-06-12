@@ -112,7 +112,7 @@ impl<'a> LevelJson<'a> {
         Ok(Level {
             name,
             spec: LevelSpec::new(nodes, hypotheses, conclusion)?,
-            pan_zoom: crate::render::PanZoom {
+            panzoom: crate::render::PanZoom {
                 svg_corners: ([x_min - 1., y_min - 1.], [x_max + 1., y_max + 3.]),
             },
             text_box: text_box.map(|s| s.to_owned()),

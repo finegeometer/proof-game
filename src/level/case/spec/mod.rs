@@ -1,5 +1,8 @@
+mod render;
+
 use super::{super::expression::Expression, Case, ValidityReason};
 
+#[derive(Debug, Clone)]
 pub struct LevelSpec {
     /// Invariant: `nodes[n].inputs()[k] < n`.
     nodes: Vec<(Expression<usize>, [f64; 2])>,
@@ -49,12 +52,15 @@ impl LevelSpec {
         })
     }
 
-    pub fn to_case(&self) -> Case {
+    pub fn to_case(&self, offset: [f64; 2]) -> Case {
         let mut case = Case::new();
         let mut wires = Vec::with_capacity(self.nodes.len());
 
         for (expression, position) in &self.nodes {
-            let node = case.make_node(expression.clone().map(|ix| wires[ix]), *position);
+            let node = case.make_node(
+                expression.clone().map(|ix| wires[ix]),
+                [position[0] + offset[0], position[1] + offset[1]],
+            );
             wires.push(case.node_output(node));
         }
 
@@ -65,5 +71,19 @@ impl LevelSpec {
         case.set_goal(wires[self.conclusion]);
 
         case
+    }
+
+    pub fn vars(&self) -> impl Iterator<Item = &str> {
+        self.nodes.iter().filter_map(|(e, _)| {
+            if let Expression::Other(s) = e {
+                Some(s.as_str())
+            } else {
+                None
+            }
+        })
+    }
+
+    pub fn set_node_position(&mut self, node: usize, pos: [f64; 2]) {
+        self.nodes[node].1 = pos;
     }
 }

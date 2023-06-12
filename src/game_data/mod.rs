@@ -15,8 +15,8 @@ pub struct GameData {
 
 pub struct Level {
     name: String,
-    spec: crate::level::LevelSpec,
-    pan_zoom: crate::render::PanZoom,
+    pub spec: crate::level::LevelSpec,
+    pub panzoom: crate::render::PanZoom,
     text_box: Option<String>,
     pub map_position: [f64; 2],
     pub bezier_vector: [f64; 2],
@@ -38,7 +38,7 @@ impl GameData {
     pub fn load(&self, level: usize, global_unlocks: Unlocks) -> crate::level::State {
         let Level {
             spec,
-            pan_zoom,
+            panzoom: pan_zoom,
             text_box,
             axiom,
             ..
@@ -91,35 +91,38 @@ impl SaveData {
         self.unlocks
     }
 
-    /// Returns whether the save data has changed.
-    pub fn set_unlocked(&mut self, unlock: Unlocks) -> bool {
-        #[allow(clippy::neg_cmp_op_on_partial_ord)]
-        let dirty = !(unlock <= self.unlocks);
+    pub fn set_unlocked(&mut self, unlock: Unlocks) {
         self.unlocks |= unlock;
-        dirty
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 #[serde(from = "Vec<&str>", into = "Vec<&str>")]
 pub struct Unlocks(u8);
 
 impl From<Unlocks> for Vec<&'static str> {
     fn from(unlocks: Unlocks) -> Self {
-        [("cases", Unlocks::CASES), ("lemmas", Unlocks::LEMMAS)]
-            .into_iter()
-            .filter_map(|(name, unlock)| (unlocks >= unlock).then_some(name))
-            .collect()
+        [
+            ("cases", Unlocks::CASES),
+            ("lemmas", Unlocks::LEMMAS),
+            ("theorem-application", Unlocks::THEOREM_APPLICATION),
+            ("everything", Unlocks::ALL),
+        ]
+        .into_iter()
+        .filter_map(|(name, unlock)| (unlocks >= unlock).then_some(name))
+        .collect()
     }
 }
 
 impl<'a> From<Vec<&'a str>> for Unlocks {
     fn from(unlocks: Vec<&'a str>) -> Self {
         let mut out = Self::NONE;
-        for unlock in unlocks {
+        for unlock in unlocks.clone() {
             out |= match unlock {
                 "cases" => Unlocks::CASES,
                 "lemmas" => Unlocks::LEMMAS,
+                "theorem-application" => Unlocks::THEOREM_APPLICATION,
+                "everything" => Unlocks::ALL,
                 _ => Unlocks::NONE,
             }
         }
@@ -168,6 +171,8 @@ impl Default for Unlocks {
 
 impl Unlocks {
     pub const NONE: Self = Self(0);
+    pub const ALL: Self = Self(!0);
     pub const CASES: Self = Self(1);
     pub const LEMMAS: Self = Self(2);
+    pub const THEOREM_APPLICATION: Self = Self(4);
 }

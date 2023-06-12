@@ -37,6 +37,7 @@ pub enum Msg {
     MouseUp(f64, f64, Option<Node>),
     MouseWheel(f64, f64, f64),
     GotoCase(CaseId),
+    SelectedTheorem(LevelSpec),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -55,7 +56,7 @@ impl State {
         axiom: bool,
     ) -> Self {
         Self {
-            case_tree: CaseTree::new(spec.to_case()),
+            case_tree: CaseTree::new(spec.to_case([0., 0.])),
             pan_zoom,
             text_box,
             drag: None,
@@ -165,6 +166,8 @@ impl State {
                 self.case_tree.goto_case(id);
                 true
             }
+
+            Msg::SelectedTheorem(spec) => false,
         }
     }
 
