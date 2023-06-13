@@ -48,6 +48,8 @@ features = [
   'MouseEvent',
   'Node',
   'KeyboardEvent',
+  'RequestInit',
+  'RequestCache',
   'Response',
   'SvgElement',
   'SvgGraphicsElement',

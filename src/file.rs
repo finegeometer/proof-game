@@ -86,7 +86,10 @@ pub(crate) fn fetch_listener<'a>(
 
         #[rustfmt::skip]
         wasm_bindgen_futures::spawn_local(async move {
-            let Ok(response) = wasm_bindgen_futures::JsFuture::from(web_sys::window().unwrap().fetch_with_str(path)).await
+            let Ok(response) = wasm_bindgen_futures::JsFuture::from(
+                web_sys::window().unwrap().fetch_with_str_and_init(path, 
+                    web_sys::RequestInit::new().cache(web_sys::RequestCache::NoCache))
+            ).await
             else {return send_msg.send(fail()).await.unwrap()};
             let Ok(response) = response.dyn_into::<web_sys::Response>()
             else {return send_msg.send(fail()).await.unwrap()};
