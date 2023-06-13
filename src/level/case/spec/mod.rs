@@ -1,6 +1,9 @@
 mod render;
 
-use super::{super::expression::Expression, Case, ValidityReason};
+use super::{
+    super::expression::{self, Expression},
+    Case, ValidityReason,
+};
 
 #[derive(Debug, Clone)]
 pub struct LevelSpec {
@@ -75,7 +78,7 @@ impl LevelSpec {
 
     pub fn vars(&self) -> impl Iterator<Item = &str> {
         self.nodes.iter().filter_map(|(e, _)| {
-            if let Expression::Other(s) = e {
+            if let Expression::Variable(s) = e {
                 Some(s.as_str())
             } else {
                 None
@@ -83,7 +86,44 @@ impl LevelSpec {
         })
     }
 
-    pub fn set_node_position(&mut self, node: usize, pos: [f64; 2]) {
-        self.nodes[node].1 = pos;
+    pub fn add_to_case_tree(
+        self,
+        case_tree: &mut super::super::case_tree::CaseTree,
+        var: impl Fn(&str) -> super::Node,
+        offset: [f64; 2],
+    ) {
+        let mut wires = Vec::with_capacity(self.nodes.len());
+
+        case_tree.edit_case([|case: &mut Case| {
+            for (expression, position) in self.nodes {
+                let node = if let Expression::Variable(v) = &expression {
+                    var(v)
+                } else {
+                    case.make_node(
+                        expression.map(|ix| wires[ix]),
+                        [position[0] + offset[0], position[1] + offset[1]],
+                    )
+                };
+                wires.push(case.node_output(node));
+            }
+        }]);
+
+        case_tree.edit_case(
+            self.hypotheses
+                .into_iter()
+                .map(|h| {
+                    let wire = wires[h];
+                    expression::box_closure(move |case: &mut Case| case.set_goal(wire))
+                })
+                .chain(std::iter::once({
+                    let wire = wires[self.conclusion];
+                    expression::box_closure(move |case: &mut Case| {
+                        case.set_proven(
+                            wire,
+                            ValidityReason::new("Application of a previously proven theorem."),
+                        )
+                    })
+                })),
+        );
     }
 }

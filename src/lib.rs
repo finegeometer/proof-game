@@ -78,7 +78,7 @@ enum GameState {
     Level {
         level: usize,
         next_level: Option<usize>,
-        level_state: level::State,
+        level_state: Box<level::State>,
         theorem_select: Option<(render::PanZoom, world_map::State, Option<usize>)>,
     },
 }
@@ -95,7 +95,7 @@ impl GameState {
                     .filter(|&&prereq| prereq != level)
                     .all(|&prereq| save_data.completed(prereq))
             }),
-            level_state: game_data.load(level, save_data.unlocks()),
+            level_state: Box::new(game_data.load(level, save_data.unlocks())),
             theorem_select: None,
         }
     }
@@ -329,7 +329,7 @@ impl<'a> dodrio::Render<'a> for Model {
                         attr("font-size", "0.75"),
                         preview.panzoom.viewbox(cx.bump),
                     ]);
-                    for child in preview.spec.render(cx) {
+                    for child in preview.spec.render(cx, [0., 0.], |_| None) {
                         svg = svg.child(child);
                     }
                     col1 = col1.child(svg.finish());

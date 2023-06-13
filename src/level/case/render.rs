@@ -149,7 +149,9 @@ impl super::Case {
         unlocks: Unlocks,
         complete: bool,
         dragging: Option<super::Node>,
-        axiom: bool,
+        events: bool,
+        force_nodes_hoverable: bool,
+        force_no_hover: bool,
     ) -> [dodrio::Node<'a>; 2] {
         [
             // Wires
@@ -186,8 +188,9 @@ impl super::Case {
                         } else {
                             ""
                         },
-                        (!axiom && dragging.is_none()).then_some(wire),
-                        !axiom
+                        (events && dragging.is_none()).then_some(wire),
+                        !force_no_hover
+                            && events
                             && !complete
                             && unlocks >= Unlocks::LEMMAS
                             && dragging.is_none()
@@ -210,11 +213,13 @@ impl super::Case {
                             cx.bump,
                         )
                         .into_bump_str(),
-                        (!axiom && dragging != Some(node)).then_some(node),
-                        !axiom
-                            && !complete
-                            && dragging.is_none()
-                            && self.node_has_interaction(node),
+                        (events && dragging != Some(node)).then_some(node),
+                        !force_no_hover
+                            && (force_nodes_hoverable
+                                || (events
+                                    && !complete
+                                    && dragging.is_none()
+                                    && self.node_has_interaction(node))),
                     ));
                 }
                 builder.finish()

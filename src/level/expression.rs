@@ -8,7 +8,7 @@ pub enum Expression<T> {
     Or(SmallVec<[T; 2]>),
     Implies([T; 2]),
     Equal([T; 2]),
-    Other(String),
+    Variable(String),
 }
 
 impl<T> Expression<T> {
@@ -18,7 +18,7 @@ impl<T> Expression<T> {
             Expression::Or(_) => "∨",
             Expression::Implies(_) => "⇒",
             Expression::Equal(_) => "=",
-            Expression::Other(x) => x,
+            Expression::Variable(x) => x,
         }
     }
 
@@ -28,7 +28,7 @@ impl<T> Expression<T> {
             Expression::Or(inputs) => inputs,
             Expression::Implies(inputs) => inputs,
             Expression::Equal(inputs) => inputs,
-            Expression::Other(_) => &[],
+            Expression::Variable(_) => &[],
         }
     }
 
@@ -38,7 +38,7 @@ impl<T> Expression<T> {
             Expression::Or(inputs) => inputs,
             Expression::Implies(inputs) => inputs,
             Expression::Equal(inputs) => inputs,
-            Expression::Other(_) => &mut [],
+            Expression::Variable(_) => &mut [],
         }
     }
 
@@ -48,7 +48,7 @@ impl<T> Expression<T> {
             Expression::Or(inputs) => Expression::Or(inputs.into_iter().map(f).collect()),
             Expression::Implies(inputs) => Expression::Implies(inputs.map(f)),
             Expression::Equal(inputs) => Expression::Equal(inputs.map(f)),
-            Expression::Other(s) => Expression::Other(s),
+            Expression::Variable(s) => Expression::Variable(s),
         }
     }
 }
@@ -60,7 +60,7 @@ impl egg::Language for Expression<egg::Id> {
             (Expression::Or(a), Expression::Or(b)) => a.len() == b.len(),
             (Expression::Implies(_), Expression::Implies(_)) => true,
             (Expression::Equal(_), Expression::Equal(_)) => true,
-            (Expression::Other(a), Expression::Other(b)) => a == b,
+            (Expression::Variable(a), Expression::Variable(b)) => a == b,
             (_, _) => false,
         }
     }
@@ -89,7 +89,7 @@ impl Case {
             (Expression::Implies(_), false) => self.wire_eq(self.goal(), output),
             (Expression::Equal([w1, w2]), true) => !self.wire_eq(*w1, *w2),
             (Expression::Equal([w1, w2]), false) => self.wire_eq(*w1, *w2),
-            (Expression::Other(_), _) => false,
+            (Expression::Variable(_), _) => false,
         }
     }
 
@@ -209,8 +209,8 @@ So we might as well merge the wires.",
                     );
                 }]);
             }
-            (Expression::Other(_), true) => {}
-            (Expression::Other(_), false) => {}
+            (Expression::Variable(_), true) => {}
+            (Expression::Variable(_), false) => {}
         }
     }
 
@@ -229,6 +229,6 @@ So we might as well merge the wires.",
     }
 }
 
-fn box_closure(f: impl Fn(&mut Case) + 'static) -> Box<dyn Fn(&mut Case)> {
+pub fn box_closure(f: impl Fn(&mut Case) + 'static) -> Box<dyn Fn(&mut Case)> {
     Box::new(f)
 }

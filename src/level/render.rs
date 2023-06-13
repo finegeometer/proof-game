@@ -1,5 +1,6 @@
 use super::*;
 use crate::game_data::Unlocks;
+use crate::render::g;
 use crate::render::handler;
 use crate::render::to_svg_coords;
 use dodrio::builder::*;
@@ -20,79 +21,126 @@ impl State {
         let mut col1 = div(cx.bump).attributes([attr("class", "col narrow")]);
 
         // Main Screen
-        col0 = col0.child(
-            svg(cx.bump)
-                .attributes([
-                    attr("id", "game"),
-                    attr(
-                        "class",
-                        if self.axiom {
-                            "background disabled"
-                        } else if complete {
-                            "background complete"
-                        } else {
-                            "background"
-                        },
-                    ),
-                    attr("preserveAspectRatio", "xMidYMid meet"),
-                    attr("font-size", "0.75"),
-                    self.pan_zoom.viewbox(cx.bump),
-                ])
-                .listeners([
-                    on(
-                        cx.bump,
-                        "mousedown",
-                        handler(move |e| {
-                            let (x, y) =
-                                to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                            crate::Msg::Level(Msg::MouseDown(x, y, DragObject::Background))
-                        }),
-                    ),
-                    on(
-                        cx.bump,
-                        "mouseup",
-                        handler(move |e| {
-                            let (x, y) =
-                                to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                            crate::Msg::Level(Msg::MouseUp(x, y, None))
-                        }),
-                    ),
-                    on(
-                        cx.bump,
-                        "mousemove",
-                        handler(move |e| {
-                            let (x, y) =
-                                to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                            crate::Msg::Level(Msg::MouseMove(x, y))
-                        }),
-                    ),
-                    on(
-                        cx.bump,
-                        "wheel",
-                        handler(move |e| {
-                            let e = e.dyn_into::<web_sys::WheelEvent>().unwrap();
-                            let wheel = e.delta_y();
-                            let (x, y) = to_svg_coords(e.into(), "game");
-                            crate::Msg::Level(Msg::MouseWheel(x, y, wheel))
-                        }),
-                    ),
-                ])
-                .children(case.render(
-                    cx,
-                    self.unlocks,
-                    complete,
-                    match self.drag {
-                        Some(DragState {
-                            object: DragObject::Node(node),
-                            confirmed_drag: Ok(()),
-                            ..
-                        }) => Some(node),
-                        _ => None,
+        let mut main_screen = svg(cx.bump)
+            .attributes([
+                attr("id", "game"),
+                attr(
+                    "class",
+                    if self.axiom {
+                        "background disabled"
+                    } else if complete {
+                        "background complete"
+                    } else {
+                        "background"
                     },
-                    self.axiom,
-                ))
-                .finish(),
+                ),
+                attr("preserveAspectRatio", "xMidYMid meet"),
+                attr("font-size", "0.75"),
+                self.pan_zoom.viewbox(cx.bump),
+            ])
+            .listeners([
+                on(
+                    cx.bump,
+                    "mousedown",
+                    handler(move |e| {
+                        let (x, y) =
+                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+                        crate::Msg::Level(Msg::MouseDown(x, y, DragObject::Background))
+                    }),
+                ),
+                on(
+                    cx.bump,
+                    "mouseup",
+                    handler(move |e| {
+                        let (x, y) =
+                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+                        crate::Msg::Level(Msg::MouseUp(x, y, None))
+                    }),
+                ),
+                on(
+                    cx.bump,
+                    "mousemove",
+                    handler(move |e| {
+                        let (x, y) =
+                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+                        crate::Msg::Level(Msg::MouseMove(x, y))
+                    }),
+                ),
+                on(
+                    cx.bump,
+                    "wheel",
+                    handler(move |e| {
+                        let e = e.dyn_into::<web_sys::WheelEvent>().unwrap();
+                        let wheel = e.delta_y();
+                        let (x, y) = to_svg_coords(e.into(), "game");
+                        crate::Msg::Level(Msg::MouseWheel(x, y, wheel))
+                    }),
+                ),
+            ]);
+
+        let [wires0, nodes0] = case.render(
+            cx,
+            self.unlocks,
+            complete,
+            match self.drag {
+                Some(DragState {
+                    object: DragObject::Node(node),
+                    confirmed_drag: Ok(()),
+                    ..
+                }) => Some(node),
+                _ => None,
+            },
+            !self.axiom,
+            matches!(
+                self.theorem_application,
+                Some(TheoremApplicationState::AssignVars { .. })
+            ),
+            matches!(
+                self.theorem_application,
+                Some(TheoremApplicationState::ChooseLocation(_))
+            ),
         );
+        main_screen = main_screen.child(wires0).child(nodes0);
+
+        match &self.theorem_application {
+            Some(TheoremApplicationState::ChooseLocation(spec)) => {
+                let [wires1, nodes1] = spec.render(cx, self.last_recorded_mouse_position, |_| None);
+                main_screen = main_screen.child(
+                    g(cx.bump)
+                        .attributes([attr("style", "opacity: 0.5; pointer-events: none;")])
+                        .child(wires1)
+                        .child(nodes1)
+                        .finish(),
+                );
+            }
+            Some(TheoremApplicationState::AssignVars {
+                spec,
+                offset,
+                chosen,
+                current,
+                remaining: _,
+            }) => {
+                let [wires1, nodes1] = spec.render(cx, *offset, |v| {
+                    if v == current {
+                        Some(self.last_recorded_mouse_position)
+                    } else {
+                        chosen
+                            .get(v)
+                            .map(|n| self.case_tree.current_case().0.position(*n))
+                    }
+                });
+                main_screen = main_screen.child(
+                    g(cx.bump)
+                        .attributes([attr("style", "opacity: 0.5; pointer-events: none;")])
+                        .child(wires1)
+                        .child(nodes1)
+                        .finish(),
+                );
+            }
+            None => {}
+        }
+
+        col0 = col0.child(main_screen.finish());
 
         // Text Box
         if let Some(text_box) = &self.text_box {
@@ -153,13 +201,26 @@ impl State {
 
             // Apply Theorem
             if self.unlocks >= Unlocks::THEOREM_APPLICATION {
-                col1 = col1.child(
-                    div(cx.bump)
-                        .attributes([attr("class", "button yellow")])
-                        .on("click", handler(move |_| crate::Msg::SelectTheorem))
-                        .children([text("Apply Theorem")])
-                        .finish(),
-                );
+                if self.theorem_application.is_some() {
+                    col1 = col1.child(
+                        div(cx.bump)
+                            .attributes([attr("class", "button yellow")])
+                            .on(
+                                "click",
+                                handler(move |_| crate::Msg::Level(Msg::CancelApplyTheorem)),
+                            )
+                            .children([text("Cancel Application")])
+                            .finish(),
+                    );
+                } else {
+                    col1 = col1.child(
+                        div(cx.bump)
+                            .attributes([attr("class", "button yellow")])
+                            .on("click", handler(move |_| crate::Msg::SelectTheorem))
+                            .children([text("Apply Theorem")])
+                            .finish(),
+                    );
+                }
             }
         }
 

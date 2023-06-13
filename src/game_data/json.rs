@@ -102,7 +102,7 @@ impl<'a> LevelJson<'a> {
                             inputs.len()
                         )
                     })?),
-                    _ => Expression::Other(op.to_owned()),
+                    _ => Expression::Variable(op.to_owned()),
                 };
 
                 Ok((expression, position))

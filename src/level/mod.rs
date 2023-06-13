@@ -5,6 +5,8 @@ mod case_tree;
 pub mod expression;
 mod render;
 
+use std::collections::HashMap;
+
 pub use case::LevelSpec;
 
 use crate::{game_data::Unlocks, render::PanZoom};
@@ -18,6 +20,19 @@ pub struct State {
     drag: Option<DragState>,
     unlocks: Unlocks,
     axiom: bool,
+    theorem_application: Option<TheoremApplicationState>,
+    last_recorded_mouse_position: [f64; 2],
+}
+
+enum TheoremApplicationState {
+    ChooseLocation(LevelSpec),
+    AssignVars {
+        spec: LevelSpec,
+        offset: [f64; 2],
+        chosen: HashMap<String, Node>,
+        current: String,
+        remaining: std::vec::IntoIter<String>,
+    },
 }
 
 #[derive(Clone, Copy)]
@@ -37,7 +52,9 @@ pub enum Msg {
     MouseUp(f64, f64, Option<Node>),
     MouseWheel(f64, f64, f64),
     GotoCase(CaseId),
+
     SelectedTheorem(LevelSpec),
+    CancelApplyTheorem,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -62,14 +79,18 @@ impl State {
             drag: None,
             unlocks,
             axiom,
+            theorem_application: None,
+            last_recorded_mouse_position: [0., 0.],
         }
     }
 
     pub fn update(&mut self, msg: Msg) -> bool {
         match msg {
             Msg::MouseDown(x, y, object) => {
+                let rerender = self.mouse_move(x, y);
+
                 if self.drag.is_some() {
-                    return false;
+                    return rerender;
                 }
 
                 self.drag = Some(DragState {
@@ -83,69 +104,98 @@ impl State {
             Msg::MouseUp(x, y, dropped_on) => {
                 let mut rerender = self.mouse_move(x, y);
 
-                #[allow(clippy::collapsible_match)]
-                match self.drag {
-                    Some(DragState {
-                        confirmed_drag: Err(_),
-                        object: DragObject::Node(node),
-                        ..
-                    }) => {
-                        let (case, complete) = self.case_tree.current_case();
-                        if !self.axiom && !complete && case.node_has_interaction(node) {
-                            self.case_tree.interact_node(node);
-                            rerender = true;
-                        }
-                    }
-                    Some(DragState {
-                        confirmed_drag: Err(_),
-                        object: DragObject::Wire(wire),
-                        ..
-                    }) => {
-                        let (case, complete) = self.case_tree.current_case();
-                        if !self.axiom
-                            && self.unlocks >= Unlocks::LEMMAS
-                            && !complete
-                            && case.wire_has_interaction(wire)
-                        {
-                            self.case_tree.interact_wire(wire);
-                            rerender = true;
-                        }
-                    }
-                    Some(DragState {
-                        confirmed_drag: Err(_),
-                        object: DragObject::Background,
-                        ..
-                    }) => {}
-                    Some(DragState {
-                        confirmed_drag: Ok(()),
-                        object,
-                        ..
-                    }) => {
-                        if !self.axiom {
-                            if let DragObject::Node(n1) = object {
-                                if let Some(n2) = dropped_on {
-                                    self.case_tree.edit_case([|case: &mut Case| {
-                                        let w1 = case.node_output(n1);
-                                        let w2 = case.node_output(n2);
-                                        if case.wire_equiv(w1, w2) {
-                                            case.connect(
-                                                w1,
-                                                w2,
-                                                ValidityReason::new("I just checked equivalence."),
-                                            );
-                                        }
-                                    }]);
-                                    rerender = true;
-                                }
+                let Some(DragState { confirmed_drag, object, .. }) = self.drag else {return rerender};
+
+                if confirmed_drag.is_ok() {
+                    // This is a drag.
+                    if !self.axiom {
+                        if let DragObject::Node(n1) = object {
+                            if let Some(n2) = dropped_on {
+                                self.case_tree.edit_case([|case: &mut Case| {
+                                    let w1 = case.node_output(n1);
+                                    let w2 = case.node_output(n2);
+                                    if case.wire_equiv(w1, w2) {
+                                        case.connect(
+                                            w1,
+                                            w2,
+                                            ValidityReason::new("I just checked equivalence."),
+                                        );
+                                    }
+                                }]);
+                                rerender = true;
                             }
                         }
                     }
-                    None => {}
+                } else {
+                    match self.theorem_application.take() {
+                        Some(TheoremApplicationState::ChooseLocation(spec)) => {
+                            self.start_processing_var(TheoremApplicationState::AssignVars {
+                                offset: self.last_recorded_mouse_position,
+                                chosen: HashMap::new(),
+                                current: Default::default(),
+                                remaining: spec
+                                    .vars()
+                                    .map(String::from)
+                                    .collect::<Vec<String>>()
+                                    .into_iter(),
+                                spec,
+                            });
+                            rerender = true;
+                        }
+                        Some(TheoremApplicationState::AssignVars {
+                            spec,
+                            offset,
+                            mut chosen,
+                            current,
+                            remaining,
+                        }) => match object {
+                            DragObject::Node(n) => {
+                                chosen.insert(current, n);
+                                self.start_processing_var(TheoremApplicationState::AssignVars {
+                                    spec,
+                                    offset,
+                                    chosen,
+                                    current: Default::default(),
+                                    remaining,
+                                });
+                                rerender = true;
+                            }
+                            DragObject::Wire(_) => {}
+                            DragObject::Background => {}
+                        },
+                        None => {
+                            // This is a click.
+                            match object {
+                                DragObject::Node(node) => {
+                                    let (case, complete) = self.case_tree.current_case();
+                                    if !self.axiom && !complete && case.node_has_interaction(node) {
+                                        self.case_tree.interact_node(node);
+                                        rerender = true;
+                                    }
+                                }
+                                DragObject::Wire(wire) => {
+                                    let (case, complete) = self.case_tree.current_case();
+                                    if !self.axiom
+                                        && self.unlocks >= Unlocks::LEMMAS
+                                        && !complete
+                                        && case.wire_has_interaction(wire)
+                                    {
+                                        self.case_tree.interact_wire(wire);
+                                        rerender = true;
+                                    }
+                                }
+                                DragObject::Background => {}
+                            }
+                        }
+                    }
                 }
+
                 self.drag = None;
                 rerender
             }
             Msg::MouseWheel(x, y, wheel) => {
+                self.mouse_move(x, y);
+
                 self.pan_zoom.zoom(x, y, (wheel * 0.001).exp());
 
                 if let Some(DragState {
@@ -164,11 +214,43 @@ impl State {
             }
             Msg::GotoCase(id) => {
                 self.case_tree.goto_case(id);
+                self.theorem_application = None;
                 true
             }
 
-            Msg::SelectedTheorem(spec) => false,
+            // Theorem application
+            Msg::SelectedTheorem(spec) => {
+                self.theorem_application = Some(TheoremApplicationState::ChooseLocation(spec));
+                true
+            }
+            Msg::CancelApplyTheorem => {
+                self.theorem_application = None;
+                true
+            }
         }
+    }
+
+    fn start_processing_var(&mut self, theorem_application: TheoremApplicationState) {
+        let TheoremApplicationState::AssignVars { spec, offset, chosen, current: _, mut remaining } = theorem_application else {return};
+        for v in remaining.by_ref() {
+            if chosen.contains_key(&v) {
+                continue;
+            } else {
+                self.theorem_application = Some(TheoremApplicationState::AssignVars {
+                    spec,
+                    offset,
+                    chosen,
+                    current: v,
+                    remaining,
+                });
+                return;
+            }
+        }
+
+        // If control reaches here, all variables have been chosen.
+
+        self.theorem_application = None;
+        spec.add_to_case_tree(&mut self.case_tree, move |v| chosen[v], offset)
     }
 
     pub fn complete(&self) -> bool {
@@ -176,11 +258,15 @@ impl State {
     }
 
     fn mouse_move(&mut self, x: f64, y: f64) -> bool {
+        self.last_recorded_mouse_position = [x, y];
+
+        let rerender = self.theorem_application.is_some();
+
         let Some(DragState {
             coord,
             confirmed_drag,
             object,
-        }) = &mut self.drag else {return false};
+        }) = &mut self.drag else {return rerender};
 
         let dx = x - coord.0;
         let dy = y - coord.1;
@@ -195,14 +281,14 @@ impl State {
         }
 
         if confirmed_drag.is_err() {
-            return false;
+            return rerender;
         }
 
         match object {
             DragObject::Node(node) => {
                 self.case_tree.set_node_position(*node, [x, y]);
             }
-            DragObject::Wire(_) => return false,
+            DragObject::Wire(_) => return rerender,
             DragObject::Background => {
                 self.pan_zoom.pan(dx, dy);
 

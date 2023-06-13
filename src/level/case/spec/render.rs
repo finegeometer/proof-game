@@ -7,7 +7,21 @@ use super::{
 };
 
 impl LevelSpec {
-    pub fn render<'a>(&self, cx: &mut dodrio::RenderContext<'a>) -> [dodrio::Node<'a>; 2] {
+    pub fn render<'a>(
+        &self,
+        cx: &mut dodrio::RenderContext<'a>,
+        offset: [f64; 2],
+        mut var_position: impl FnMut(&str) -> Option<[f64; 2]>,
+    ) -> [dodrio::Node<'a>; 2] {
+        let mut correct_position = |expression: &Expression<usize>, position: &[f64; 2]| {
+            if let Expression::Variable(v) = expression {
+                if let Some(pos) = var_position(v) {
+                    return pos;
+                }
+            }
+            [position[0] + offset[0], position[1] + offset[1]]
+        };
+
         [
             // Wires
             {
@@ -16,8 +30,12 @@ impl LevelSpec {
                 #[allow(clippy::type_complexity)]
                 let mut wire_data: Vec<([f64; 2], Vec<[f64; 2]>, Vec<[f64; 2]>)> =
                     Vec::from_iter_in(
-                        self.nodes.iter().map(|(_, position)| {
-                            (*position, Vec::new_in(cx.bump), Vec::new_in(cx.bump))
+                        self.nodes.iter().map(|(expression, position)| {
+                            (
+                                correct_position(expression, position),
+                                Vec::new_in(cx.bump),
+                                Vec::new_in(cx.bump),
+                            )
                         }),
                         cx.bump,
                     );
@@ -26,7 +44,9 @@ impl LevelSpec {
                     let inputs = expression.inputs();
                     let x = (inputs.len() as f64 - 1.) / 2.;
                     for (ix, &input) in inputs.iter().enumerate() {
-                        wire_data[input].1.push(*position);
+                        wire_data[input]
+                            .1
+                            .push(correct_position(expression, position));
                         wire_data[input].2.push([-(ix as f64 - x), 1.]);
                     }
                 }
@@ -60,7 +80,7 @@ impl LevelSpec {
                 for (expression, position) in self.nodes.iter() {
                     builder = builder.child(render_node(
                         cx,
-                        *position,
+                        correct_position(expression, position),
                         bumpalo::collections::String::from_str_in(expression.text(), cx.bump)
                             .into_bump_str(),
                         None,
