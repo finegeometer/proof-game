@@ -1,0 +1,547 @@
+{"∧.0":
+  { "nodes":
+    [ ["a", []   , [-2,0]]
+    , ["b", []   , [ 0,0]]
+    , ["c", []   , [ 2,0]]
+    , ["∧", [0,1], [-1,3]]
+    , ["∧", [1,2], [ 1,3]]
+    , ["∧", [3,4], [ 0,6]]
+    ]
+  , "hypotheses": [0,1,2]
+  , "conclusion": 5
+  , "_comment": "Tree of conjunctions."
+  , "map_position": [0,0]
+  , "bezier_vector": [1,0]
+  , "prereqs": []
+  , "next_level": "∧.1"
+  }
+, "∧.1":
+  { "nodes":
+    [ ["a", []   , [ 0,0]]
+    , ["∧", [0,0], [-2,4]]
+    , ["∧", [1,0], [ 0,4.5]]
+    , ["∧", [2,0], [ 2,5]]
+    ]
+  , "hypotheses": [0]
+  , "conclusion": 3
+  , "map_position": [1.5,0]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∧.0"]
+  , "next_level": "∧.2"
+  }
+, "∧.2":
+  { "nodes":
+    [ ["a", []   , [-2,0]]
+    , ["b", []   , [ 0,0]]
+    , ["c", []   , [ 2,0]]
+    , ["∧", [0,1], [-1,3]]
+    , ["∧", [1,2], [ 1,3]]
+    , ["∧", [3,4], [ 0,6]]
+    ]
+  , "hypotheses": [5]
+  , "conclusion": 1
+  , "_comment" : "Conjunction elimination."
+  , "map_position": [3,0]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∧.1"]
+  , "next_level": "∧.3"
+  }
+, "∧.3":
+  { "nodes":
+    [ ["a", []   , [-1,0]]
+    , ["b", []   , [ 1,0]]
+    , ["∧", [0,1], [-1,3]]
+    , ["∧", [1,0], [ 1,3]]
+    ]
+  , "hypotheses": [2]
+  , "conclusion": 3
+  , "_comment" : "Conjunction commutativity."
+  , "map_position": [4.5,0]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∧.2"]
+  , "next_level": "∧.4"
+  }
+, "∧.4":
+  { "nodes":
+    [ ["a", []   , [-2,0]]
+    , ["b", []   , [ 0,0]]
+    , ["c", []   , [ 2,0]]
+    , ["∧", [0]  , [-2,3]]
+    , ["∧", [1,2], [ 0,3]]
+    , ["∧", []   , [ 2,3]]
+    , ["∧", [3,4,5],[0,6]]
+    ]
+  , "hypotheses": [0,1,2]
+  , "conclusion": 6
+  , "_comment" : "N-ary conjunctions."
+  , "map_position": [6,0]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∧.3"]
+  , "next_level": null
+  }
+
+
+, "⇒.0":
+  { "nodes":
+    [ ["a", []   , [-1,0]]
+    , ["b", []   , [ 1,0]]
+    , ["⇒", [0,1], [ 0,3]]
+    ]
+  , "hypotheses": [0,2]
+  , "conclusion": 1
+  , "_comment" : "Introduce implications."
+  , "map_position": [8.5,0]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∧.4"]
+  , "next_level": "⇒.1"
+  }
+, "⇒.1":
+  { "nodes":
+    [ ["a", []   , [-4,0]]
+    , ["b", []   , [-2,0.5625]]
+    , ["c", []   , [ 0,0.75]]
+    , ["d", []   , [ 2,0.5625]]
+    , ["e", []   , [ 4,0]]
+    , ["⇒", [0,1], [-3,3]]
+    , ["⇒", [1,2], [-1,3]]
+    , ["⇒", [2,3], [ 1,3]]
+    , ["⇒", [3,4], [ 3,3]]
+    ]
+  , "hypotheses": [0,5,6,7,8]
+  , "conclusion": 4
+  , "_comment" : "Implication chain."
+  , "map_position": [10,0]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["⇒.0"]
+  , "next_level": "⇒.2"
+  }
+, "⇒.2":
+  { "nodes":
+    [ ["a", []   , [-2,0]]
+    , ["b", []   , [ 0,0]]
+    , ["c", []   , [ 2,0]]
+    , ["⇒", [0,1], [-2,3]]
+    , ["⇒", [1,2], [ 2,3]]
+    , ["⇒", [0,2], [ 0,3]]
+    ]
+  , "hypotheses": [3,4]
+  , "conclusion": 5
+  , "_comment" : "Implication introduction."
+  , "map_position": [11.5,0]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["⇒.1"]
+  , "next_level": "⇒.3"
+  }
+, "⇒.3":
+  { "nodes":
+    [ ["a", []   , [-2   ,0]]
+    , ["b", []   , [ 0   ,0]]
+    , ["c", []   , [ 2   ,0]]
+    , ["∧", [0,1], [-1   ,3]]
+    , ["⇒", [3,2], [ 1.75,5]]
+    , ["⇒", [1,2], [ 1   ,3]]
+    , ["⇒", [0,5], [-1.75,5]]
+    ]
+  , "hypotheses": [4]
+  , "conclusion": 6
+  , "_comment" : "Currying."
+  , "map_position": [13,0]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["⇒.2"]
+  , "next_level": "⇒.4"
+  }
+, "⇒.4":
+  { "nodes":
+  [ ["a", []   , [0,0]]
+  , ["⇒", [0,0], [0,2]]
+  ]
+  , "hypotheses": []
+  , "conclusion": 1
+  , "_comment" : "Identity."
+  , "map_position": [14.5,0]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["⇒.3"]
+  , "next_level": "⇒.5"
+  }
+, "⇒.5":
+  { "unlocks": ["lemmas"]
+  , "nodes":
+    [ ["∧", []   , [-1,0]]
+    , ["∧", []   , [ 1,0]]
+    , ["⇒", [0,1], [ 0,3]]
+    , ["∧", [2]  , [ 0,6]]
+    ]
+  , "hypotheses": []
+  , "conclusion": 3
+  , "_comment" : "Introduce lemmas."
+  , "text_box" : "Wires are clickable now."
+  , "map_position": [16,0]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["⇒.4"]
+  , "next_level": null
+  }
+
+
+
+, "∨.0":
+  { "nodes":
+    [ ["a", []   , [-1,0]]
+    , ["b", []   , [ 1,0]]
+    , ["∨", [0,1], [ 0,3]]
+    ]
+  , "hypotheses": [0]
+  , "conclusion": 2
+  , "_comment" : "Introduce disjunctions."
+  , "map_position": [8.5,-2]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∧.4"]
+  , "next_level": "∨.1"
+  }
+, "∨.1":
+  { "nodes":
+    [ ["a", []   , [-2,0]]
+    , ["b", []   , [ 0,0]]
+    , ["c", []   , [ 2,0]]
+    , ["∧", [0,1], [-1,3]]
+    , ["∨", [1,2], [ 1,3]]
+    ]
+  , "hypotheses": [3]
+  , "conclusion": 4
+  , "map_position": [10,-2]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∨.0"]
+  , "next_level": "∨.2"
+  }
+, "∨.2":
+  { "unlocks": ["cases"]
+  , "nodes":
+    [ ["a", []   , [-1,0]]
+    , ["b", []   , [ 1,0]]
+    , ["∨", [0,1], [-1,3]]
+    , ["∨", [1,0], [ 1,3]]
+    ]
+  , "hypotheses": [2]
+  , "conclusion": 3
+  , "_comment" : "Disjunction elimination, demonstrated via commutativity."
+  , "text_box" : "New feature: Proof by cases."
+  , "map_position": [11.5,-2]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∨.1"]
+  , "next_level": "∨.3"
+  }
+, "∨.3":
+  { "nodes":
+    [ ["a", []   , [-3,0]]
+    , ["b", []   , [-1,0]]
+    , ["c", []   , [ 1,0]]
+    , ["d", []   , [ 3,0]]
+    , ["∧", [0,1], [-3,3]]
+    , ["∧", [2,3], [ 3,3]]
+    , ["∨", [0,2], [-1,3]]
+    , ["∨", [1,3], [ 1,3]]
+    , ["∨", [4,5], [-1,6]]
+    , ["∧", [6,7], [ 1,6]]
+    ]
+  , "hypotheses": [8]
+  , "conclusion": 9
+  , "_comment" : "A more complicated level, mixing conjunctions and disjunctions."
+  , "map_position": [13,-2]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∨.2"]
+  , "next_level": "∨.4"
+  }
+, "∨.4":
+  { "nodes":
+    [ ["a", []   , [-2,0]]
+    , ["b", []   , [ 0,0]]
+    , ["c", []   , [ 2,0]]
+    , ["⇒", [0,2], [ 0,3]]
+    , ["⇒", [1,2], [ 2,3]]
+    , ["∨", [0,1], [-2,3]]
+    , ["⇒", [5,2], [-1,5.5]]
+    , ["∧", [3,4], [ 1,5.5]]
+    ]
+  , "hypotheses": [7]
+  , "conclusion": 6
+  , "map_position": [14.5,-2]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∨.3", "⇒.3"]
+  , "next_level": "∨.5"
+  }
+, "∨.5":
+  { "nodes":
+    [ ["∨", []   , [-1.25,0]]
+    , ["a", []   , [ 1.25,0]]
+    , ["∨", [0]  , [-2,3]]
+    , ["∨", [0,1], [ 0,3]]
+    , ["∨", [1]  , [ 2,3]]
+    , ["∨", [2,3,4],[0,6]]
+    ]
+  , "hypotheses": [5]
+  , "conclusion": 1
+  , "_comment" : "A tree of n-ary disjunctions."
+  , "map_position": [16.5,-2]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∨.4"]
+  , "next_level": "∨.6"
+  }
+, "∨.6":
+  { "nodes":
+    [ ["∨", []   , [-1,0]]
+    , ["a", []   , [ 1,0]]
+    ]
+  , "hypotheses": [0]
+  , "conclusion": 1
+  , "_comment" : "The empty disjunction: falsity."
+  , "map_position": [18,-2]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∨.5"]
+  , "next_level": null
+  }
+, "∨.7": 
+  { "nodes":
+    [ ["a", []   , [-2,0]]
+    , ["b", []   , [ 0,0]]
+    , ["c", []   , [ 2,0]]
+    , ["⇒", [0,2], [ 0,3]]
+    , ["⇒", [1,2], [ 2,3]]
+    , ["∨", [0,1], [-2,3]]
+    , ["⇒", [5,2], [-1,5.5]]
+    , ["∧", [3,4], [ 1,5.5]]
+    ]
+  , "hypotheses": [6]
+  , "conclusion": 7
+  , "map_position": [18,-0.5]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∨.4","⇒.5"]
+  , "next_level": null
+  }
+
+
+
+, "Merge.0":
+  { "nodes":
+    [ ["a", []   , [-1,0]]
+    , ["a", []   , [ 1,0]]
+    ]
+  , "hypotheses": [0]
+  , "conclusion": 1
+  , "text_box" : "Drag equal nodes together."
+  , "map_position": [8.5,2]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["∧.4"]
+  , "next_level": "Merge.1"
+  }
+, "Merge.1":
+  { "nodes":
+    [ ["a", []   , [-3,0]]
+    , ["b", []   , [-1,0]]
+    , ["a", []   , [ 1,0]]
+    , ["b", []   , [ 3,0]]
+    , ["∧", [0,1], [-2,3]]
+    , ["∧", [2,3], [ 2,3]]
+    ]
+  , "hypotheses": [4]
+  , "conclusion": 5
+  , "_comment" : "You can even merge nested structures."
+  , "map_position": [10,2]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["Merge.0"]
+  , "next_level": "Merge.2"
+  }
+, "Merge.2":
+  { "nodes":
+    [ ["a", []   , [-3,0]]
+    , ["b", []   , [-1,0]]
+    , ["a", []   , [ 1,0]]
+    , ["b", []   , [ 3,0]]
+    , ["∧", [0,1], [-2,3]]
+    , ["∨", [2,3], [ 2,3]]
+    ]
+  , "hypotheses": [4]
+  , "conclusion": 5
+  , "map_position": [11.5,2]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["Merge.1", "∨.1"]
+  , "next_level": "Merge.3"
+  }
+, "Merge.3":
+  { "nodes":
+    [ ["a", []   , [-3,0]]
+    , ["b", []   , [-1,0]]
+    , ["⇒", [0,1], [-2,3]]
+    , ["b", []   , [ 1,0]]
+    , ["c", []   , [ 3,0]]
+    , ["⇒", [3,4], [ 2,3]]
+    , ["a", []   , [-1,6]]
+    , ["c", []   , [ 1,6]]
+    , ["⇒", [6,7], [ 0,9]]
+    ]
+  , "hypotheses": [2,5]
+  , "conclusion": 8
+  , "map_position": [12.75,2.5]
+  , "bezier_vector": [0.5,0.5]
+  , "prereqs": ["Merge.2", "⇒.2"]
+  , "next_level": "=.0"
+  }
+
+
+
+, "=.0":
+  { "nodes":
+    [ ["a", []   , [ 0,0]]
+    , ["=", [0,0], [ 0,3]]
+    ]
+  , "hypotheses": []
+  , "conclusion": 1
+  , "_comment" : "Equality"
+  , "map_position": [10.75,3.5]
+  , "bezier_vector": [0.5,0.5]
+  , "prereqs": ["Merge.3"]
+  , "next_level": "=.1"
+  }
+, "=.1":
+  { "nodes":
+    [ ["a", []   , [-1,0]]
+    , ["a", []   , [ 1,0]]
+    , ["=", [0,1], [ 0,3]]
+    ]
+  , "hypotheses": []
+  , "conclusion": 2
+  , "map_position": [12,4]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["=.0"]
+  , "next_level": "=.2"
+  }
+, "=.2":
+  { "nodes":
+    [ ["a", []   , [-2,0]]
+    , ["b", []   , [ 0,0]]
+    , ["c", []   , [ 2,0]]
+    , ["=", [0,1], [-1,3]]
+    , ["=", [1,2], [ 1,3]]
+    ]
+  , "hypotheses": [0,3,4]
+  , "conclusion": 2
+  , "_comment" : "Equality elimination."
+  , "map_position": [13.5,4]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["=.1"]
+  , "next_level": "=.3"
+  }
+, "=.3":
+  { "nodes":
+    [ ["a", []   , [-2,0]]
+    , ["b", []   , [ 0,0]]
+    , ["c", []   , [ 2,0]]
+    , ["=", [0,1], [-2,3]]
+    , ["=", [1,2], [ 2,3]]
+    , ["=", [0,2], [ 0,3]]
+    ]
+  , "hypotheses": [3,4]
+  , "conclusion": 5
+  , "_comment" : "Transitivity of equality."
+  , "map_position": [14.75,3.5]
+  , "bezier_vector": [0.5,-0.5]
+  , "prereqs": ["=.2"]
+  , "next_level": "=.4"
+  }
+, "=.4":
+  { "nodes":
+    [ ["a", []   , [-3,0]]
+    , ["b", []   , [-1,0]]
+    , ["b", []   , [ 1,0]]
+    , ["a", []   , [ 3,0]]
+    , ["=", [0,1], [-2,3]]
+    , ["=", [2,3], [ 2,3]]
+    ]
+  , "hypotheses": [4]
+  , "conclusion": 5
+  , "_comment" : "Symmetry of equality."
+  , "map_position": [15.75,2.5]
+  , "bezier_vector": [0.5,-0.5]
+  , "prereqs": ["=.3"]
+  , "next_level": "=.5"
+  }
+, "=.5":
+  { "nodes":
+    [ ["a", []   , [-1,0]]
+    , ["b", []   , [ 1,0]]
+    , ["⇒", [0,1], [ 1,2]]
+    , ["=", [0,2], [-1,3]]
+    , ["⇒", [3,2], [ 0,5]]
+    ]
+  , "hypotheses": []
+  , "conclusion": 4
+  , "map_position": [16.75,1.5]
+  , "bezier_vector": [0.5,-0.5]
+  , "prereqs": ["=.4", "⇒.4"]
+  , "next_level": "=.6"
+  }
+, "=.6":
+  { "nodes":
+    [ ["a", []   , [-3,0]]
+    , ["a", []   , [-1,0]]
+    , ["b", []   , [ 1,0]]
+    , ["b", []   , [ 3,0]]
+    , ["⇒", [1,2], [ 0,3]]
+    , ["=", [0,4], [-1,6]]
+    , ["⇒", [5,3], [ 0,9]]
+    ]
+  , "hypotheses": []
+  , "conclusion": 6
+  , "map_position": [18,1]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["=.5", "⇒.5"]
+  , "next_level": null
+  }
+
+
+, "PropExt":
+  { "axiom": true
+  , "nodes":
+    [ ["a", []   , [-1,0]]
+    , ["b", []   , [ 1,0]]
+    , ["⇒", [0,1], [-1.5,3]]
+    , ["⇒", [1,0], [ 0,3]]
+    , ["=", [0,1], [ 1.5,3]]
+    ]
+  , "hypotheses": [2,3]
+  , "conclusion": 4
+  , "map_position": [21,1]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["=.6"]
+  , "next_level": "app.0"
+  , "text_box": "Axiom: We take this for granted."
+  }
+, "app.0":
+  { "unlocks": ["theorem-application"]
+  , "nodes":
+    [ ["x", []   , [-1,0]]
+    , ["y", []   , [ 1,0]]
+    , ["⇒", [0,1], [-1.5,3]]
+    , ["⇒", [1,0], [ 0,3]]
+    , ["=", [0,1], [ 1.5,3]]
+    ]
+  , "hypotheses": [2,3]
+  , "conclusion": 4
+  , "map_position": [22.5,1]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["PropExt"]
+  , "next_level": "app.1"
+  , "text_box": "New feature! Import the axiom to solve this one."
+  }
+, "app.1":
+  { "nodes":
+    [ ["x", []   , [-1,0]]
+    , ["∧", []   , [ 1,0]]
+    , ["=", [0,1], [ 0,3]]
+    ]
+  , "hypotheses": [0]
+  , "conclusion": 2
+  , "map_position": [24,1]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["app.0"]
+  , "next_level": null
+  }
+}

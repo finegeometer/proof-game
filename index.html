@@ -28,32 +28,31 @@
       gap: 2%
     }
 
-    #col0 {
+    .col {
       display: flex;
       flex-direction: column;
+    }
+
+    .wide {
       flex: 4;
     }
 
-    #col1 {
-      display: flex;
-      flex-direction: column;
+    .narrow {
       flex: 1;
     }
 
-    #game {
+    svg {
       flex: 1;
     }
 
-    #map {
-      flex: 1;
-    }
-
-    #text-box {
+    .text-box {
       text-align: center;
       vertical-align: middle;
     }
 
-    /* #class-tree {} */
+    #class-tree {
+      flex: none
+    }
 
     .button {
       display: flex;
@@ -65,58 +64,46 @@
       border-radius: 4vmin;
     }
 
-    .button.disabled {
-      cursor: default;
-    }
-
-    #reset {
+    .button.red {
       background: #c66;
       border: 2px solid #800;
     }
 
-    #reset:hover {
+    .button.red:hover {
       background: #b55;
     }
 
-    #next-level {
+    .button.green {
       background: #3a3;
       border: 2px solid #060;
     }
 
-    #next-level:hover {
+    .button.green:hover {
       background: #292
     }
 
-    #return-to-map {
+    .button.blue {
       background: #66c;
       border: 2px solid #008;
     }
 
-    #return-to-map:hover {
+    .button.blue:hover {
       background: #55b;
     }
 
-    #save-game {
-      background: #66c;
-      border: 2px solid #008;
+    .button.yellow {
+      background: #aa3;
+      border: 2px solid #660;
     }
 
-    #save-game:hover {
-      background: #55b;
+    .button.yellow:hover {
+      background: #992
     }
 
-    #save-game.disabled {
+    .button.disabled {
       background: #788;
       border: 2px solid #223;
-    }
-
-    #load-savegame {
-      background: #66c;
-      border: 2px solid #008;
-    }
-
-    #load-savegame:hover {
-      background: #55b;
+      cursor: default;
     }
 
     #load-savegame-input {
