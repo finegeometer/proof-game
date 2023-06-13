@@ -528,7 +528,20 @@
   , "map_position": [22.5,1]
   , "bezier_vector": [1,0]
   , "prereqs": ["PropExt"]
+  , "next_level": "app.1"
+  , "text_box": "New feature! Import the axiom to solve this one."
+  }
+, "app.1":
+  { "nodes":
+    [ ["x", []   , [-1,0]]
+    , ["∧", []   , [ 1,0]]
+    , ["=", [0,1], [ 0,3]]
+    ]
+  , "hypotheses": [0]
+  , "conclusion": 2
+  , "map_position": [24,1]
+  , "bezier_vector": [1,0]
+  , "prereqs": ["app.0"]
   , "next_level": null
-  , "text_box": "New feature! Import the previous level to solve this one."
   }
 }
