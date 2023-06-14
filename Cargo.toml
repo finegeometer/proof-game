@@ -11,7 +11,7 @@ repository = "https://github.com/finegeometer/proof-game"
 crate-type = ["cdylib"]
 
 [dependencies]
-smallvec = {version = "1.10", features = ["union"]}
+smallvec = {version = "1.10", features = ["union", "serde"]}
 serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
 egg = {version = "0.9", features = ["wasm-bindgen"]}

@@ -1,14 +1,18 @@
+mod json;
+
 use super::case::*;
 use super::*;
 use smallvec::SmallVec;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Deserialize)]
+#[serde(try_from = "json::ExpressionJson<T>")]
 pub enum Expression<T> {
     And(SmallVec<[T; 2]>),
     Or(SmallVec<[T; 2]>),
     Implies([T; 2]),
     Equal([T; 2]),
     Variable(String),
+    Function(String, SmallVec<[T; 2]>),
 }
 
 impl<T> Expression<T> {
@@ -19,6 +23,7 @@ impl<T> Expression<T> {
             Expression::Implies(_) => "⇒",
             Expression::Equal(_) => "=",
             Expression::Variable(x) => x,
+            Expression::Function(f, _) => f,
         }
     }
 
@@ -29,6 +34,7 @@ impl<T> Expression<T> {
             Expression::Implies(inputs) => inputs,
             Expression::Equal(inputs) => inputs,
             Expression::Variable(_) => &[],
+            Expression::Function(_, inputs) => inputs,
         }
     }
 
@@ -39,6 +45,7 @@ impl<T> Expression<T> {
             Expression::Implies(inputs) => inputs,
             Expression::Equal(inputs) => inputs,
             Expression::Variable(_) => &mut [],
+            Expression::Function(_, inputs) => inputs,
         }
     }
 
@@ -49,6 +56,9 @@ impl<T> Expression<T> {
             Expression::Implies(inputs) => Expression::Implies(inputs.map(f)),
             Expression::Equal(inputs) => Expression::Equal(inputs.map(f)),
             Expression::Variable(s) => Expression::Variable(s),
+            Expression::Function(s, inputs) => {
+                Expression::Function(s, inputs.into_iter().map(f).collect())
+            }
         }
     }
 }
@@ -90,6 +100,7 @@ impl Case {
             (Expression::Equal([w1, w2]), true) => !self.wire_eq(*w1, *w2),
             (Expression::Equal([w1, w2]), false) => self.wire_eq(*w1, *w2),
             (Expression::Variable(_), _) => false,
+            (Expression::Function(_, _), _) => false,
         }
     }
 
@@ -209,8 +220,8 @@ So we might as well merge the wires.",
                     );
                 }]);
             }
-            (Expression::Variable(_), true) => {}
-            (Expression::Variable(_), false) => {}
+            (Expression::Variable(_), _) => {}
+            (Expression::Function(_, _), _) => {}
         }
     }
 

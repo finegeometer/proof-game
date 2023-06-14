@@ -31,8 +31,7 @@ impl<'a> TryFrom<GameJson<'a>> for GameData {
 
 #[derive(Deserialize)]
 struct LevelJson<'a> {
-    #[serde(borrow)]
-    nodes: Vec<(&'a str, Vec<usize>, [f64; 2])>,
+    nodes: Vec<(Expression<usize>, [f64; 2])>,
     hypotheses: Vec<usize>,
     conclusion: usize,
     text_box: Option<&'a str>,
@@ -77,37 +76,12 @@ impl<'a> LevelJson<'a> {
         let mut x_max = f64::NEG_INFINITY;
         let mut y_max = f64::NEG_INFINITY;
 
-        let nodes = nodes
-            .into_iter()
-            .map(|(op, inputs, position)| {
-                x_min = x_min.min(position[0]);
-                y_min = y_min.min(position[1]);
-                x_max = x_max.max(position[0]);
-                y_max = y_max.max(position[1]);
-
-                let expression = match op {
-                    "∧" => Expression::And(inputs.into()),
-                    "∨" => Expression::Or(inputs.into()),
-                    "⇒" => {
-                        Expression::Implies(<[usize; 2]>::try_from(inputs).map_err(|inputs| {
-                            anyhow!(
-                                "Wrong number of inputs to `⇒`: expected 2, found {}.",
-                                inputs.len()
-                            )
-                        })?)
-                    }
-                    "=" => Expression::Equal(<[usize; 2]>::try_from(inputs).map_err(|inputs| {
-                        anyhow!(
-                            "Wrong number of inputs to `=`: expected 2, found {}.",
-                            inputs.len()
-                        )
-                    })?),
-                    _ => Expression::Variable(op.to_owned()),
-                };
-
-                Ok((expression, position))
-            })
-            .collect::<Result<_>>()?;
+        for &(_, [x, y]) in &nodes {
+            x_min = x_min.min(x);
+            y_min = y_min.min(y);
+            x_max = x_max.max(x);
+            y_max = y_max.max(y);
+        }
 
         Ok(Level {
             name,
