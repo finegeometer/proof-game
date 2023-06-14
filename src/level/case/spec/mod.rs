@@ -109,21 +109,19 @@ impl LevelSpec {
         }]);
 
         case_tree.edit_case(
-            self.hypotheses
-                .into_iter()
-                .map(|h| {
-                    let wire = wires[h];
-                    expression::box_closure(move |case: &mut Case| case.set_goal(wire))
+            std::iter::once({
+                let wire = wires[self.conclusion];
+                expression::box_closure(move |case: &mut Case| {
+                    case.set_proven(
+                        wire,
+                        ValidityReason::new("Application of a previously proven theorem."),
+                    )
                 })
-                .chain(std::iter::once({
-                    let wire = wires[self.conclusion];
-                    expression::box_closure(move |case: &mut Case| {
-                        case.set_proven(
-                            wire,
-                            ValidityReason::new("Application of a previously proven theorem."),
-                        )
-                    })
-                })),
+            })
+            .chain(self.hypotheses.into_iter().map(|h| {
+                let wire = wires[h];
+                expression::box_closure(move |case: &mut Case| case.set_goal(wire))
+            })),
         );
     }
 }
