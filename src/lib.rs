@@ -324,7 +324,7 @@ impl<'a> dodrio::Render<'a> for Model {
                 if let Some(preview) = preview {
                     let preview = self.game_data.level(*preview);
                     let mut svg = svg(cx.bump).attributes([
-                        attr("class", "background"),
+                        attr("class", "background disabled"),
                         attr("preserveAspectRatio", "xMidYMid meet"),
                         attr("font-size", "0.75"),
                         preview.panzoom.viewbox(cx.bump),
