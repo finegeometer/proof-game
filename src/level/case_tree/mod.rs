@@ -10,12 +10,12 @@ pub struct CaseTree {
     free_list: SmallVec<[usize; 2]>,
 }
 
-// The currently active cases are those where `!complete && children.is_empty()`
 struct CaseNode {
     case: Case,
     complete: bool,
     parent: usize,
-    children: SmallVec<[usize; 2]>,
+    /// `None` for leaf nodes; `Some` for branches.
+    children: Option<SmallVec<[usize; 2]>>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -27,7 +27,7 @@ impl CaseNode {
             complete: case.proven(case.goal()),
             case,
             parent,
-            children: SmallVec::new(),
+            children: None,
         }
     }
 }
@@ -52,6 +52,8 @@ impl CaseTree {
 
             if !self.nodes[node]
                 .children
+                .as_ref()
+                .expect("This node is a parent, so it should have children.")
                 .iter()
                 .all(|&node| self.nodes[node].complete)
             {
@@ -96,13 +98,15 @@ impl CaseTree {
 
         let mut incomplete_child = None;
 
+        let mut children = SmallVec::new();
         for f in [f0, f1].into_iter().chain(fs) {
             let mut case = self.nodes[self.current.0].case.clone();
             f(&mut case);
             let child = self.create_case(case, self.current.0);
-            self.nodes[self.current.0].children.push(child);
+            children.push(child);
             incomplete_child = incomplete_child.or((!self.nodes[child].complete).then_some(child));
         }
+        self.nodes[self.current.0].children = Some(children);
 
         if let Some(child) = incomplete_child {
             self.current.0 = child;
@@ -120,10 +124,13 @@ impl CaseTree {
     }
 
     pub fn revert_to(&mut self, case: CaseId) {
-        let mut work = std::mem::replace(&mut self.nodes[case.0].children, SmallVec::new());
+        let mut work =
+            std::mem::replace(&mut self.nodes[case.0].children, None).unwrap_or_default();
         while let Some(node) = work.pop() {
             self.free_list.push(node);
-            work.append(&mut self.nodes[node].children);
+            if let Some(children) = &mut self.nodes[node].children {
+                work.append(children);
+            }
         }
         self.current = case;
     }

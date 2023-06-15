@@ -19,92 +19,88 @@ impl CaseTree {
             *y_min = y;
         }
 
-        let children = &self.nodes[node].children;
-        let mut xs: SmallVec<[f64; 2]> = SmallVec::with_capacity(children.len());
+        match &self.nodes[node].children {
+            // Leaf
+            None => {
+                let mut clickable = false;
 
-        let mut subtrees = bumpalo::collections::Vec::new_in(cx.bump);
+                let mut circle = circle(cx.bump).attributes([
+                    attr("r", "0.5"),
+                    attr("cx", bumpalo::format!(in cx.bump, "{}", *x).into_bump_str()),
+                    attr("cy", bumpalo::format!(in cx.bump, "{}", y).into_bump_str()),
+                    attr(
+                        "class",
+                        if node == self.current.0 {
+                            "node goal"
+                        } else if self.nodes[node].complete {
+                            "node known"
+                        } else {
+                            clickable = true;
+                            "node hoverable"
+                        },
+                    ),
+                ]);
 
-        let mut contains_current = false;
-        for &node in children {
-            let (subtree, x, subtree_contains_current) =
-                self.subtree(cx, node, x, y - 2., y_min, undo_buttons);
-            xs.push(x);
-            subtrees.push(subtree);
-            contains_current |= subtree_contains_current;
-        }
+                if clickable {
+                    circle = circle.on(
+                        "click",
+                        handler(move |_| {
+                            crate::Msg::Level(crate::level::Msg::GotoCase(CaseId(node)))
+                        }),
+                    )
+                }
 
-        if xs.is_empty() {
-            let mut clickable = false;
-
-            let mut circle = circle(cx.bump).attributes([
-                attr("r", "0.5"),
-                attr("cx", bumpalo::format!(in cx.bump, "{}", *x).into_bump_str()),
-                attr("cy", bumpalo::format!(in cx.bump, "{}", y).into_bump_str()),
-                attr(
-                    "class",
-                    if node == self.current.0 {
-                        "node goal"
-                    } else if self.nodes[node].complete {
-                        "node known"
-                    } else if self.nodes[node].children.is_empty() {
-                        clickable = true;
-                        "node hoverable"
-                    } else {
-                        "node"
-                    },
-                ),
-            ]);
-
-            if clickable {
-                circle = circle.on(
-                    "click",
-                    handler(move |_| crate::Msg::Level(crate::level::Msg::GotoCase(CaseId(node)))),
+                (
+                    g(cx.bump).children([circle.finish()]).finish(),
+                    std::mem::replace(x, *x + 2.),
+                    node == self.current.0,
                 )
             }
+            // Branch
+            Some(children) => {
+                let mut xs: SmallVec<[f64; 2]> = SmallVec::with_capacity(children.len());
 
-            let n = subtrees.len();
-            subtrees.push(circle.finish());
-            subtrees.swap(0, n);
+                let mut subtrees = bumpalo::collections::Vec::new_in(cx.bump);
 
-            if contains_current {
-                undo_buttons.push((node, [*x, y]));
+                let mut contains_current = false;
+                for &node in children {
+                    let (subtree, x, subtree_contains_current) =
+                        self.subtree(cx, node, x, y - 2., y_min, undo_buttons);
+                    xs.push(x);
+                    subtrees.push(subtree);
+                    contains_current |= subtree_contains_current;
+                }
+
+                let x0 = xs.iter().copied().sum::<f64>() / (xs.len() as f64);
+
+                let mut d = bumpalo::collections::String::new_in(cx.bump);
+                for x in xs {
+                    bezier::path([x0, y], [0., -0.5], [0., -0.5], [x, y - 2.], &mut d)
+                }
+                let d = d.into_bump_str();
+
+                let n = subtrees.len();
+                subtrees.push(
+                    path(cx.bump)
+                        .attributes([attr("class", "wire border"), attr("d", d)])
+                        .finish(),
+                );
+                subtrees.swap(0, n);
+
+                let n = subtrees.len();
+                subtrees.push(
+                    path(cx.bump)
+                        .attributes([attr("class", "wire"), attr("d", d)])
+                        .finish(),
+                );
+                subtrees.swap(1, n);
+
+                if contains_current {
+                    undo_buttons.push((node, [x0, y]));
+                }
+
+                (g(cx.bump).children(subtrees).finish(), x0, contains_current)
             }
-
-            (
-                g(cx.bump).children(subtrees).finish(),
-                std::mem::replace(x, *x + 2.),
-                node == self.current.0,
-            )
-        } else {
-            let x0 = xs.iter().copied().sum::<f64>() / (xs.len() as f64);
-
-            let mut d = bumpalo::collections::String::new_in(cx.bump);
-            for x in xs {
-                bezier::path([x0, y], [0., -0.5], [0., -0.5], [x, y - 2.], &mut d)
-            }
-            let d = d.into_bump_str();
-
-            let n = subtrees.len();
-            subtrees.push(
-                path(cx.bump)
-                    .attributes([attr("class", "wire border"), attr("d", d)])
-                    .finish(),
-            );
-            subtrees.swap(0, n);
-
-            let n = subtrees.len();
-            subtrees.push(
-                path(cx.bump)
-                    .attributes([attr("class", "wire"), attr("d", d)])
-                    .finish(),
-            );
-            subtrees.swap(1, n);
-
-            if contains_current {
-                undo_buttons.push((node, [x0, y]));
-            }
-
-            (g(cx.bump).children(subtrees).finish(), x0, contains_current)
         }
     }
 
