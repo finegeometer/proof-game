@@ -90,6 +90,10 @@ impl State {
         }
     }
 
+    fn interactable(&self) -> bool {
+        !self.axiom && !self.case_tree.case(self.case_tree.current).1
+    }
+
     pub fn update(&mut self, msg: Msg) -> bool {
         match msg {
             Msg::MouseDown(x, y, object) => {
@@ -114,7 +118,7 @@ impl State {
 
                 if confirmed_drag.is_ok() {
                     // This is a drag.
-                    if !self.axiom {
+                    if self.interactable() {
                         if let DragObject::Node(n1) = object {
                             if let Some(n2) = dropped_on {
                                 let mut case = self.case_tree.current_case_mut();
@@ -133,73 +137,73 @@ impl State {
                     }
                 } else {
                     // This is a click.
-                    match self.mode.take() {
-                        Some(Mode::ChooseTheoremLocation(spec)) => {
-                            self.start_processing_var(Mode::AssignTheoremVars {
-                                offset: self.last_recorded_mouse_position,
-                                chosen: HashMap::new(),
-                                current: Default::default(),
-                                remaining: spec
-                                    .vars()
-                                    .map(String::from)
-                                    .collect::<Vec<String>>()
-                                    .into_iter(),
-                                spec,
-                            });
-                            rerender = true;
-                        }
-                        Some(Mode::AssignTheoremVars {
-                            spec,
-                            offset,
-                            mut chosen,
-                            current,
-                            remaining,
-                        }) => match object {
-                            DragObject::Node(n) => {
-                                chosen.insert(current, n);
+                    if self.interactable() {
+                        match self.mode.take() {
+                            Some(Mode::ChooseTheoremLocation(spec)) => {
                                 self.start_processing_var(Mode::AssignTheoremVars {
-                                    spec,
-                                    offset,
-                                    chosen,
+                                    offset: self.last_recorded_mouse_position,
+                                    chosen: HashMap::new(),
                                     current: Default::default(),
-                                    remaining,
+                                    remaining: spec
+                                        .vars()
+                                        .map(String::from)
+                                        .collect::<Vec<String>>()
+                                        .into_iter(),
+                                    spec,
                                 });
                                 rerender = true;
                             }
-                            DragObject::Wire(_) | DragObject::Background => {
-                                self.mode = Some(Mode::AssignTheoremVars {
-                                    spec,
-                                    offset,
-                                    chosen,
-                                    current,
-                                    remaining,
-                                })
+                            Some(Mode::AssignTheoremVars {
+                                spec,
+                                offset,
+                                mut chosen,
+                                current,
+                                remaining,
+                            }) => match object {
+                                DragObject::Node(n) => {
+                                    chosen.insert(current, n);
+                                    self.start_processing_var(Mode::AssignTheoremVars {
+                                        spec,
+                                        offset,
+                                        chosen,
+                                        current: Default::default(),
+                                        remaining,
+                                    });
+                                    rerender = true;
+                                }
+                                DragObject::Wire(_) | DragObject::Background => {
+                                    self.mode = Some(Mode::AssignTheoremVars {
+                                        spec,
+                                        offset,
+                                        chosen,
+                                        current,
+                                        remaining,
+                                    })
+                                }
+                            },
+                            Some(Mode::SelectUndo { preview }) => {
+                                self.mode = Some(Mode::SelectUndo { preview })
                             }
-                        },
-                        Some(Mode::SelectUndo { preview }) => {
-                            self.mode = Some(Mode::SelectUndo { preview })
+                            None => match object {
+                                DragObject::Node(node) => {
+                                    let case = self.case_tree.case(self.case_tree.current).0;
+                                    if case.node_has_interaction(node) {
+                                        self.case_tree.interact_node(node);
+                                        rerender = true;
+                                    }
+                                }
+                                DragObject::Wire(wire) => {
+                                    let case = self.case_tree.case(self.case_tree.current).0;
+                                    if self.unlocks >= Unlocks::LEMMAS
+                                        && case.wire_has_interaction(wire)
+                                    {
+                                        self.case_tree.interact_wire(wire);
+                                        rerender = true;
+                                    }
+                                }
+                                DragObject::Background => {}
+                            },
                         }
-                        None => match object {
-                            DragObject::Node(node) => {
-                                let (case, complete) = self.case_tree.case(self.case_tree.current);
-                                if !self.axiom && !complete && case.node_has_interaction(node) {
-                                    self.case_tree.interact_node(node);
-                                    rerender = true;
-                                }
-                            }
-                            DragObject::Wire(wire) => {
-                                let (case, complete) = self.case_tree.case(self.case_tree.current);
-                                if !self.axiom
-                                    && self.unlocks >= Unlocks::LEMMAS
-                                    && !complete
-                                    && case.wire_has_interaction(wire)
-                                {
-                                    self.case_tree.interact_wire(wire);
-                                    rerender = true;
-                                }
-                            }
-                            DragObject::Background => {}
-                        },
                     }
                 }
 

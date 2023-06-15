@@ -26,7 +26,7 @@ impl State {
                 attr(
                     "class",
                     if self.axiom {
-                        "background disabled"
+                        "background axiom"
                     } else if complete {
                         "background complete"
                     } else {
@@ -88,9 +88,9 @@ impl State {
                 }) => Some(node),
                 _ => None,
             },
-            !complete && !self.axiom,
+            true,
             matches!(self.mode, Some(Mode::AssignTheoremVars { .. })),
-            matches!(self.mode, Some(Mode::ChooseTheoremLocation(_))),
+            matches!(self.mode, Some(Mode::ChooseTheoremLocation(_))) || !self.interactable(),
         );
         main_screen = main_screen.child(wires0).child(nodes0);
 
@@ -186,7 +186,7 @@ impl State {
         if let Some(text_box) = &self.text_box {
             col0 = col0.child(
                 div(cx.bump)
-                    .attributes([attr("class", "background disabled text-box")])
+                    .attributes([attr("class", "background text-box")])
                     .children([text(
                         bumpalo::collections::String::from_str_in(text_box, cx.bump)
                             .into_bump_str(),
@@ -197,10 +197,11 @@ impl State {
 
         // Case Tree
         if self.unlocks >= Unlocks::CASES {
-            col1 = col1.child(
-                self.case_tree
-                    .render(cx, matches!(self.mode, Some(Mode::SelectUndo { .. }))),
-            );
+            col1 = col1.child(self.case_tree.render(
+                cx,
+                matches!(self.mode, Some(Mode::SelectUndo { .. })),
+                self.axiom,
+            ));
         }
 
         if self.unlocks >= Unlocks::LEMMAS {
@@ -265,7 +266,9 @@ impl State {
                     .children([text("Reset")])
                     .finish(),
             );
+        }
 
+        if self.interactable() {
             // Apply Theorem
             if self.unlocks >= Unlocks::THEOREM_APPLICATION {
                 if matches!(

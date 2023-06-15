@@ -138,6 +138,7 @@ impl CaseTree {
         &self,
         cx: &mut dodrio::RenderContext<'a>,
         render_undo_buttons: bool,
+        axiom: bool,
     ) -> dodrio::Node<'a> {
         let mut x = 0.;
         let mut y_min = 0.;
@@ -203,7 +204,9 @@ impl CaseTree {
             attr("id", "class-tree"),
             attr(
                 "class",
-                if self.all_complete() {
+                if axiom {
+                    "background axiom"
+                } else if self.all_complete() {
                     "background complete"
                 } else {
                     "background"
