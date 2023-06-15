@@ -58,7 +58,7 @@ impl CaseTree {
             }
             // Branch
             Some(children) => {
-                let mut xs: SmallVec<[f64; 2]> = SmallVec::with_capacity(children.len());
+                let mut xs: SmallVec<[(f64, bool); 2]> = SmallVec::with_capacity(children.len());
 
                 let mut subtrees = bumpalo::collections::Vec::new_in(cx.bump);
 
@@ -66,23 +66,35 @@ impl CaseTree {
                 for &node in children {
                     let (subtree, x, subtree_contains_current) =
                         self.subtree(cx, node, x, y - 2., y_min, undo_buttons);
-                    xs.push(x);
+                    xs.push((x, self.nodes[node].complete));
                     subtrees.push(subtree);
                     contains_current |= subtree_contains_current;
                 }
 
-                let x0 = xs.iter().copied().sum::<f64>() / (xs.len() as f64);
+                let x0 = xs.iter().map(|&(x, _)| x).sum::<f64>() / (xs.len() as f64);
 
-                let mut d = bumpalo::collections::String::new_in(cx.bump);
-                for x in xs {
-                    bezier::path([x0, y], [0., -0.5], [0., -0.5], [x, y - 2.], &mut d)
+                let mut d_complete = bumpalo::collections::String::new_in(cx.bump);
+                let mut d_incomplete = bumpalo::collections::String::new_in(cx.bump);
+                for (x, complete) in xs {
+                    bezier::path(
+                        [x0, y],
+                        [0., -0.5],
+                        [0., -0.5],
+                        [x, y - 2.],
+                        if complete {
+                            &mut d_complete
+                        } else {
+                            &mut d_incomplete
+                        },
+                    )
                 }
-                let d = d.into_bump_str();
+                let d_complete = d_complete.into_bump_str();
+                let d_incomplete = d_incomplete.into_bump_str();
 
                 let n = subtrees.len();
                 subtrees.push(
                     path(cx.bump)
-                        .attributes([attr("class", "wire border"), attr("d", d)])
+                        .attributes([attr("class", "wire known border"), attr("d", d_complete)])
                         .finish(),
                 );
                 subtrees.swap(0, n);
@@ -90,10 +102,26 @@ impl CaseTree {
                 let n = subtrees.len();
                 subtrees.push(
                     path(cx.bump)
-                        .attributes([attr("class", "wire"), attr("d", d)])
+                        .attributes([attr("class", "wire border"), attr("d", d_incomplete)])
                         .finish(),
                 );
                 subtrees.swap(1, n);
+
+                let n = subtrees.len();
+                subtrees.push(
+                    path(cx.bump)
+                        .attributes([attr("class", "wire known"), attr("d", d_complete)])
+                        .finish(),
+                );
+                subtrees.swap(2, n);
+
+                let n = subtrees.len();
+                subtrees.push(
+                    path(cx.bump)
+                        .attributes([attr("class", "wire"), attr("d", d_incomplete)])
+                        .finish(),
+                );
+                subtrees.swap(3, n);
 
                 if contains_current {
                     undo_buttons.push((node, [x0, y]));
