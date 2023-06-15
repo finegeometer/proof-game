@@ -1,9 +1,6 @@
 mod render;
 
-use super::{
-    super::expression::{self, Expression},
-    Case, ValidityReason,
-};
+use super::{super::expression::Expression, Case, ValidityReason};
 
 #[derive(Debug, Clone)]
 pub struct LevelSpec {
@@ -94,34 +91,40 @@ impl LevelSpec {
     ) {
         let mut wires = Vec::with_capacity(self.nodes.len());
 
-        case_tree.edit_case([|case: &mut Case| {
-            for (expression, position) in self.nodes {
-                let node = if let Expression::Variable(v) = &expression {
-                    var(v)
-                } else {
-                    case.make_node(
-                        expression.map(|ix| wires[ix]),
-                        [position[0] + offset[0], position[1] + offset[1]],
-                    )
-                };
-                wires.push(case.node_output(node));
-            }
-        }]);
+        let mut case = case_tree.case(case_tree.current).0.clone();
 
-        case_tree.edit_case(
-            std::iter::once({
-                let wire = wires[self.conclusion];
-                expression::box_closure(move |case: &mut Case| {
-                    case.set_proven(
-                        wire,
-                        ValidityReason::new("Application of a previously proven theorem."),
-                    )
-                })
+        // Create Nodes
+        for (expression, position) in self.nodes {
+            let node = if let Expression::Variable(v) = &expression {
+                var(v)
+            } else {
+                case.make_node(
+                    expression.map(|ix| wires[ix]),
+                    [position[0] + offset[0], position[1] + offset[1]],
+                )
+            };
+            wires.push(case.node_output(node));
+        }
+
+        // Hypotheses
+        let mut subcases = self
+            .hypotheses
+            .into_iter()
+            .map(|h| {
+                let mut case = case.clone();
+                case.set_goal(wires[h]);
+                case
             })
-            .chain(self.hypotheses.into_iter().map(|h| {
-                let wire = wires[h];
-                expression::box_closure(move |case: &mut Case| case.set_goal(wire))
-            })),
+            .collect::<Vec<_>>();
+
+        // Conclusion
+        case.set_proven(
+            wires[self.conclusion],
+            ValidityReason::new("Application of a previously proven theorem."),
         );
+        subcases.push(case);
+
+        // Case Split
+        case_tree.case_split(subcases);
     }
 }

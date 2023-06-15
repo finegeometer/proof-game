@@ -19,7 +19,7 @@ impl CaseTree {
             *y_min = y;
         }
 
-        match &self.nodes[node].children {
+        match self.nodes[node].children.as_ref().map(SmallVec::as_slice) {
             // Leaf
             None => {
                 let mut clickable = false;
@@ -56,6 +56,8 @@ impl CaseTree {
                     node == self.current.0,
                 )
             }
+            // Empty Branch
+            Some(&[]) => (g(cx.bump).finish(), std::mem::replace(x, *x + 2.), true),
             // Branch
             Some(children) => {
                 let mut xs: SmallVec<[(f64, bool); 2]> = SmallVec::with_capacity(children.len());

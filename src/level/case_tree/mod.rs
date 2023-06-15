@@ -1,5 +1,7 @@
 mod render;
 
+use std::ops::{Deref, DerefMut};
+
 use super::case::*;
 
 use smallvec::SmallVec;
@@ -67,6 +69,10 @@ impl CaseTree {
         (case, *complete)
     }
 
+    pub fn current_case_mut(&mut self) -> CaseRefMut {
+        CaseRefMut(self, self.current)
+    }
+
     fn create_case(&mut self, case: Case, parent: usize) -> usize {
         if let Some(node) = self.free_list.pop() {
             self.nodes[node] = CaseNode::new(case, parent);
@@ -78,31 +84,12 @@ impl CaseTree {
         }
     }
 
-    /// Edit the current case, possibly splitting it into several in the process.
-    pub fn edit_case(&mut self, fs: impl IntoIterator<Item = impl FnOnce(&mut Case)>) {
-        let mut fs = fs.into_iter();
-
-        let Some(f0) = fs.next() else {
-                self.mark_complete(self.current.0);
-                return;
-            };
-
-        let Some(f1) = fs.next() else {
-                let case = &mut self.nodes[self.current.0].case;
-                f0(case);
-                if case.proven(case.goal()) {
-                    self.mark_complete(self.current.0);
-                }
-                return;
-            };
-
+    pub fn case_split(&mut self, subcases: impl IntoIterator<Item = Case>) {
         let mut incomplete_child = None;
 
         let mut children = SmallVec::new();
-        for f in [f0, f1].into_iter().chain(fs) {
-            let mut case = self.nodes[self.current.0].case.clone();
-            f(&mut case);
-            let child = self.create_case(case, self.current.0);
+        for subcase in subcases {
+            let child = self.create_case(subcase, self.current.0);
             children.push(child);
             incomplete_child = incomplete_child.or((!self.nodes[child].complete).then_some(child));
         }
@@ -133,5 +120,29 @@ impl CaseTree {
             }
         }
         self.current = case;
+    }
+}
+
+pub struct CaseRefMut<'a>(&'a mut CaseTree, CaseId);
+
+impl Deref for CaseRefMut<'_> {
+    type Target = Case;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0.nodes[self.1 .0].case
+    }
+}
+
+impl DerefMut for CaseRefMut<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0.nodes[self.1 .0].case
+    }
+}
+
+impl Drop for CaseRefMut<'_> {
+    fn drop(&mut self) {
+        if self.proven(self.goal()) {
+            self.0.mark_complete(self.1 .0)
+        }
     }
 }

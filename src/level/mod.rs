@@ -117,17 +117,16 @@ impl State {
                     if !self.axiom {
                         if let DragObject::Node(n1) = object {
                             if let Some(n2) = dropped_on {
-                                self.case_tree.edit_case([|case: &mut Case| {
-                                    let w1 = case.node_output(n1);
-                                    let w2 = case.node_output(n2);
-                                    if case.wire_equiv(w1, w2) {
-                                        case.connect(
-                                            w1,
-                                            w2,
-                                            ValidityReason::new("I just checked equivalence."),
-                                        );
-                                    }
-                                }]);
+                                let mut case = self.case_tree.current_case_mut();
+                                let w1 = case.node_output(n1);
+                                let w2 = case.node_output(n2);
+                                if case.wire_equiv(w1, w2) {
+                                    case.connect(
+                                        w1,
+                                        w2,
+                                        ValidityReason::new("I just checked equivalence."),
+                                    );
+                                }
                                 rerender = true;
                             }
                         }

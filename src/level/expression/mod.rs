@@ -119,33 +119,28 @@ impl CaseTree {
         ) {
             (Expression::And(inputs), true) => {
                 for wire in inputs.clone() {
-                    self.edit_case([|case: &mut Case| {
-                        case.set_proven(
-                            wire,
-                            ValidityReason::new(
-                                r"
-If a conjunction holds, so do each of the individual propositions.",
-                            ),
-                        )
-                    }]);
-                }
-            }
-            (Expression::And(_), false) => {
-                self.edit_case([|case: &mut Case| {
-                    case.set_proven(
-                        output,
+                    self.current_case_mut().set_proven(
+                        wire,
                         ValidityReason::new(
                             r"
+If a conjunction holds, so do each of the individual propositions.",
+                        ),
+                    );
+                }
+            }
+            (Expression::And(_), false) => self.current_case_mut().set_proven(
+                output,
+                ValidityReason::new(
+                    r"
 If a collection of propositions holds, so does their conjunction.
 This was checked in `node_has_interaction`.",
-                        ),
-                    )
-                }]);
-            }
+                ),
+            ),
             (Expression::Or(inputs), true) => {
-                let inputs = inputs.clone();
-                self.edit_case(inputs.iter().map(|&wire| {
-                    move |case: &mut Case| {
+                let subcases = inputs
+                    .iter()
+                    .map(|&wire| {
+                        let mut case = self.case(self.current).0.clone();
                         case.set_proven(
                             wire,
                             ValidityReason::new(
@@ -154,71 +149,66 @@ If a disjunction holds, we can split into several cases.
 In each case, one of the individual propositions holds.",
                             ),
                         );
-                    }
-                }));
+                        case
+                    })
+                    .collect::<Vec<_>>();
+                self.case_split(subcases)
             }
-            (Expression::Or(_), false) => {
-                self.edit_case([|case: &mut Case| {
-                    case.set_proven(
-                        output,
-                        ValidityReason::new(
-                            r"
+            (Expression::Or(_), false) => self.current_case_mut().set_proven(
+                output,
+                ValidityReason::new(
+                    r"
 A disjunction holds if any of the individual propositions hold.
 This was checked in `node_has_interaction`.",
-                        ),
-                    )
-                }]);
-            }
+                ),
+            ),
             (Expression::Implies([_, conclusion]), true) => {
                 let conclusion = *conclusion;
-                self.edit_case([|case: &mut Case| {
-                    case.set_proven(
-                        conclusion,
-                        ValidityReason::new(
-                            r"
+                self.current_case_mut().set_proven(
+                    conclusion,
+                    ValidityReason::new(
+                        r"
 If an implication holds, and its hypothesis holds, then the conclusion holds.
 The hypothesis was checked in `node_has_interaction`.",
-                        ),
-                    )
-                }]);
+                    ),
+                )
             }
             (Expression::Implies([hypothesis, conclusion]), false) => {
                 let hypothesis = *hypothesis;
                 let conclusion = *conclusion;
-                self.edit_case([|case: &mut Case| {
-                    case.set_proven(
-                        hypothesis,
-                        ValidityReason::new(
-                            r"
+                let mut case = self.case(self.current).0.clone();
+
+                case.set_proven(
+                    hypothesis,
+                    ValidityReason::new(
+                        r"
 To prove an implication, one assumes the hypothesis, and tries to prove the conclusion.
 It was checked in `node_has_interaction` that the implication is the goal.",
-                        ),
-                    );
-                    case.set_goal(conclusion);
-                }]);
+                    ),
+                );
+
+                case.set_goal(conclusion);
+
+                self.case_split([case]);
             }
             (Expression::Equal([w1, w2]), true) => {
                 let w1 = *w1;
                 let w2 = *w2;
-                self.edit_case([|case: &mut Case| {
-                    case.connect(
-                        w1,
-                        w2,
-                        ValidityReason::new(
-                            r"
+                self.current_case_mut().connect(
+                    w1,
+                    w2,
+                    ValidityReason::new(
+                        r"
 If two expressions are equal, we may treat them as equivalent in all respects.
 So we might as well merge the wires.",
-                        ),
-                    )
-                }]);
+                    ),
+                )
             }
             (Expression::Equal(_), false) => {
-                self.edit_case([|case: &mut Case| {
-                    case.set_proven(
-                        output,
-                        ValidityReason::new("The inputs are literally the same."),
-                    );
-                }]);
+                self.current_case_mut().set_proven(
+                    output,
+                    ValidityReason::new("The inputs are literally the same."),
+                );
             }
             (Expression::Variable(_), _) => {}
             (Expression::Function(_, _), _) => {}
@@ -226,20 +216,17 @@ So we might as well merge the wires.",
     }
 
     pub fn interact_wire(&mut self, wire: Wire) {
-        self.edit_case([
-            box_closure(move |case: &mut Case| {
-                case.set_goal(wire);
-            }),
-            box_closure(move |case: &mut Case| {
-                case.set_proven(
-                    wire,
-                    ValidityReason::new("In the next case, you were required to prove this."),
-                );
-            }),
-        ]);
-    }
-}
+        let mut subcases = [
+            self.case(self.current).0.clone(),
+            self.case(self.current).0.clone(),
+        ];
 
-pub fn box_closure(f: impl Fn(&mut Case) + 'static) -> Box<dyn Fn(&mut Case)> {
-    Box::new(f)
+        subcases[0].set_goal(wire);
+        subcases[1].set_proven(
+            wire,
+            ValidityReason::new("In the next case, you were required to prove this."),
+        );
+
+        self.case_split(subcases);
+    }
 }
