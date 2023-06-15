@@ -20,18 +20,21 @@ pub struct State {
     drag: Option<DragState>,
     unlocks: Unlocks,
     axiom: bool,
-    theorem_application: Option<TheoremApplicationState>,
+    mode: Option<Mode>,
     last_recorded_mouse_position: [f64; 2],
 }
 
-enum TheoremApplicationState {
-    ChooseLocation(LevelSpec),
-    AssignVars {
+enum Mode {
+    ChooseTheoremLocation(LevelSpec),
+    AssignTheoremVars {
         spec: LevelSpec,
         offset: [f64; 2],
         chosen: HashMap<String, Node>,
         current: String,
         remaining: std::vec::IntoIter<String>,
+    },
+    SelectUndo {
+        preview: CaseId,
     },
 }
 
@@ -54,7 +57,10 @@ pub enum Msg {
     GotoCase(CaseId),
 
     SelectedTheorem(LevelSpec),
-    CancelApplyTheorem,
+    Cancel,
+
+    RevertPreview(CaseId),
+    RevertTo(CaseId),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -79,7 +85,7 @@ impl State {
             drag: None,
             unlocks,
             axiom,
-            theorem_application: None,
+            mode: None,
             last_recorded_mouse_position: [0., 0.],
         }
     }
@@ -127,9 +133,10 @@ impl State {
                         }
                     }
                 } else {
-                    match self.theorem_application.take() {
-                        Some(TheoremApplicationState::ChooseLocation(spec)) => {
-                            self.start_processing_var(TheoremApplicationState::AssignVars {
+                    // This is a click.
+                    match self.mode.take() {
+                        Some(Mode::ChooseTheoremLocation(spec)) => {
+                            self.start_processing_var(Mode::AssignTheoremVars {
                                 offset: self.last_recorded_mouse_position,
                                 chosen: HashMap::new(),
                                 current: Default::default(),
@@ -142,7 +149,7 @@ impl State {
                             });
                             rerender = true;
                         }
-                        Some(TheoremApplicationState::AssignVars {
+                        Some(Mode::AssignTheoremVars {
                             spec,
                             offset,
                             mut chosen,
@@ -151,7 +158,7 @@ impl State {
                         }) => match object {
                             DragObject::Node(n) => {
                                 chosen.insert(current, n);
-                                self.start_processing_var(TheoremApplicationState::AssignVars {
+                                self.start_processing_var(Mode::AssignTheoremVars {
                                     spec,
                                     offset,
                                     chosen,
@@ -160,33 +167,40 @@ impl State {
                                 });
                                 rerender = true;
                             }
-                            DragObject::Wire(_) => {}
+                            DragObject::Wire(_) | DragObject::Background => {
+                                self.mode = Some(Mode::AssignTheoremVars {
+                                    spec,
+                                    offset,
+                                    chosen,
+                                    current,
+                                    remaining,
+                                })
+                            }
+                        },
+                        Some(Mode::SelectUndo { preview }) => {
+                            self.mode = Some(Mode::SelectUndo { preview })
+                        }
+                        None => match object {
+                            DragObject::Node(node) => {
+                                let (case, complete) = self.case_tree.case(self.case_tree.current);
+                                if !self.axiom && !complete && case.node_has_interaction(node) {
+                                    self.case_tree.interact_node(node);
+                                    rerender = true;
+                                }
+                            }
+                            DragObject::Wire(wire) => {
+                                let (case, complete) = self.case_tree.case(self.case_tree.current);
+                                if !self.axiom
+                                    && self.unlocks >= Unlocks::LEMMAS
+                                    && !complete
+                                    && case.wire_has_interaction(wire)
+                                {
+                                    self.case_tree.interact_wire(wire);
+                                    rerender = true;
+                                }
+                            }
                             DragObject::Background => {}
                         },
-                        None => {
-                            // This is a click.
-                            match object {
-                                DragObject::Node(node) => {
-                                    let (case, complete) = self.case_tree.current_case();
-                                    if !self.axiom && !complete && case.node_has_interaction(node) {
-                                        self.case_tree.interact_node(node);
-                                        rerender = true;
-                                    }
-                                }
-                                DragObject::Wire(wire) => {
-                                    let (case, complete) = self.case_tree.current_case();
-                                    if !self.axiom
-                                        && self.unlocks >= Unlocks::LEMMAS
-                                        && !complete
-                                        && case.wire_has_interaction(wire)
-                                    {
-                                        self.case_tree.interact_wire(wire);
-                                        rerender = true;
-                                    }
-                                }
-                                DragObject::Background => {}
-                            }
-                        }
                     }
                 }
 
@@ -213,30 +227,39 @@ impl State {
                 true
             }
             Msg::GotoCase(id) => {
-                self.case_tree.goto_case(id);
-                self.theorem_application = None;
+                self.case_tree.current = id;
+                self.mode = None;
                 true
             }
 
             // Theorem application
             Msg::SelectedTheorem(spec) => {
-                self.theorem_application = Some(TheoremApplicationState::ChooseLocation(spec));
+                self.mode = Some(Mode::ChooseTheoremLocation(spec));
                 true
             }
-            Msg::CancelApplyTheorem => {
-                self.theorem_application = None;
+            Msg::RevertPreview(preview) => {
+                self.mode = Some(Mode::SelectUndo { preview });
+                true
+            }
+            Msg::RevertTo(case) => {
+                self.mode = None;
+                self.case_tree.revert_to(case);
+                true
+            }
+            Msg::Cancel => {
+                self.mode = None;
                 true
             }
         }
     }
 
-    fn start_processing_var(&mut self, theorem_application: TheoremApplicationState) {
-        let TheoremApplicationState::AssignVars { spec, offset, chosen, current: _, mut remaining } = theorem_application else {return};
+    fn start_processing_var(&mut self, theorem_application: Mode) {
+        let Mode::AssignTheoremVars { spec, offset, chosen, current: _, mut remaining } = theorem_application else {return};
         for v in remaining.by_ref() {
             if chosen.contains_key(&v) {
                 continue;
             } else {
-                self.theorem_application = Some(TheoremApplicationState::AssignVars {
+                self.mode = Some(Mode::AssignTheoremVars {
                     spec,
                     offset,
                     chosen,
@@ -249,7 +272,7 @@ impl State {
 
         // If control reaches here, all variables have been chosen.
 
-        self.theorem_application = None;
+        self.mode = None;
         spec.add_to_case_tree(&mut self.case_tree, move |v| chosen[v], offset)
     }
 
@@ -260,7 +283,7 @@ impl State {
     fn mouse_move(&mut self, x: f64, y: f64) -> bool {
         self.last_recorded_mouse_position = [x, y];
 
-        let rerender = self.theorem_application.is_some();
+        let rerender = self.mode.is_some();
 
         let Some(DragState {
             coord,

@@ -111,7 +111,7 @@ impl Case {
 
 impl CaseTree {
     pub fn interact_node(&mut self, node: Node) {
-        let initial_case = self.current_case().0;
+        let initial_case = self.case(self.current).0;
         let output = initial_case.node_output(node);
         match (
             initial_case.node_expression(node),

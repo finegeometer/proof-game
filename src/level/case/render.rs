@@ -147,7 +147,6 @@ impl super::Case {
         &self,
         cx: &mut dodrio::RenderContext<'a>,
         unlocks: Unlocks,
-        complete: bool,
         dragging: Option<super::Node>,
         events: bool,
         force_nodes_hoverable: bool,
@@ -191,7 +190,6 @@ impl super::Case {
                         (events && dragging.is_none()).then_some(wire),
                         !force_no_hover
                             && events
-                            && !complete
                             && unlocks >= Unlocks::LEMMAS
                             && dragging.is_none()
                             && self.wire_has_interaction(wire),
@@ -217,7 +215,6 @@ impl super::Case {
                         !force_no_hover
                             && (force_nodes_hoverable
                                 || (events
-                                    && !complete
                                     && dragging.is_none()
                                     && self.node_has_interaction(node))),
                     ));

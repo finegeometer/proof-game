@@ -9,18 +9,17 @@ use dodrio::bumpalo;
 use wasm_bindgen::JsCast;
 
 impl State {
-    pub fn render<'a>(
+    fn main_screen<'a>(
         &self,
         cx: &mut dodrio::RenderContext<'a>,
-        current_level: usize,
-        next_level: Option<usize>,
-    ) -> [dodrio::Node<'a>; 2] {
-        let (case, complete) = self.case_tree.current_case();
+    ) -> dodrio::builder::ElementBuilder<
+        'a,
+        [dodrio::Listener<'a>; 4],
+        [dodrio::Attribute<'a>; 5],
+        dodrio::bumpalo::collections::Vec<'a, dodrio::Node<'a>>,
+    > {
+        let (case, complete) = self.case_tree.case(self.case_tree.current);
 
-        let mut col0 = div(cx.bump).attributes([attr("class", "col wide")]);
-        let mut col1 = div(cx.bump).attributes([attr("class", "col narrow")]);
-
-        // Main Screen
         let mut main_screen = svg(cx.bump)
             .attributes([
                 attr("id", "game"),
@@ -81,7 +80,6 @@ impl State {
         let [wires0, nodes0] = case.render(
             cx,
             self.unlocks,
-            complete,
             match self.drag {
                 Some(DragState {
                     object: DragObject::Node(node),
@@ -90,30 +88,70 @@ impl State {
                 }) => Some(node),
                 _ => None,
             },
-            !self.axiom,
-            matches!(
-                self.theorem_application,
-                Some(TheoremApplicationState::AssignVars { .. })
-            ),
-            matches!(
-                self.theorem_application,
-                Some(TheoremApplicationState::ChooseLocation(_))
-            ),
+            !complete && !self.axiom,
+            matches!(self.mode, Some(Mode::AssignTheoremVars { .. })),
+            matches!(self.mode, Some(Mode::ChooseTheoremLocation(_))),
         );
         main_screen = main_screen.child(wires0).child(nodes0);
 
-        match &self.theorem_application {
-            Some(TheoremApplicationState::ChooseLocation(spec)) => {
+        main_screen
+    }
+
+    fn preview<'a>(&self, cx: &mut dodrio::RenderContext<'a>, case: &Case) -> dodrio::Node<'a> {
+        let [wires0, nodes0] = case.render(
+            cx,
+            self.unlocks,
+            match self.drag {
+                Some(DragState {
+                    object: DragObject::Node(node),
+                    confirmed_drag: Ok(()),
+                    ..
+                }) => Some(node),
+                _ => None,
+            },
+            false,
+            false,
+            false,
+        );
+        svg(cx.bump)
+            .attributes([
+                attr("id", "game"),
+                attr("class", "background disabled"),
+                attr("preserveAspectRatio", "xMidYMid meet"),
+                attr("font-size", "0.75"),
+                self.pan_zoom.viewbox(cx.bump),
+            ])
+            .child(wires0)
+            .child(nodes0)
+            .finish()
+    }
+
+    pub fn render<'a>(
+        &self,
+        cx: &mut dodrio::RenderContext<'a>,
+        current_level: usize,
+        next_level: Option<usize>,
+    ) -> [dodrio::Node<'a>; 2] {
+        let mut col0 = div(cx.bump).attributes([attr("class", "col wide")]);
+        let mut col1 = div(cx.bump).attributes([attr("class", "col narrow")]);
+
+        // Main Screen
+        let main_screen = match &self.mode {
+            None => self.main_screen(cx).finish(),
+            Some(Mode::ChooseTheoremLocation(spec)) => {
                 let [wires1, nodes1] = spec.render(cx, self.last_recorded_mouse_position, |_| None);
-                main_screen = main_screen.child(
-                    g(cx.bump)
-                        .attributes([attr("style", "opacity: 0.5; pointer-events: none;")])
-                        .child(wires1)
-                        .child(nodes1)
-                        .finish(),
-                );
+
+                self.main_screen(cx)
+                    .child(
+                        g(cx.bump)
+                            .attributes([attr("style", "opacity: 0.5; pointer-events: none;")])
+                            .child(wires1)
+                            .child(nodes1)
+                            .finish(),
+                    )
+                    .finish()
             }
-            Some(TheoremApplicationState::AssignVars {
+            Some(Mode::AssignTheoremVars {
                 spec,
                 offset,
                 chosen,
@@ -126,21 +164,23 @@ impl State {
                     } else {
                         chosen
                             .get(v)
-                            .map(|n| self.case_tree.current_case().0.position(*n))
+                            .map(|n| self.case_tree.case(self.case_tree.current).0.position(*n))
                     }
                 });
-                main_screen = main_screen.child(
-                    g(cx.bump)
-                        .attributes([attr("style", "opacity: 0.5; pointer-events: none;")])
-                        .child(wires1)
-                        .child(nodes1)
-                        .finish(),
-                );
-            }
-            None => {}
-        }
 
-        col0 = col0.child(main_screen.finish());
+                self.main_screen(cx)
+                    .child(
+                        g(cx.bump)
+                            .attributes([attr("style", "opacity: 0.5; pointer-events: none;")])
+                            .child(wires1)
+                            .child(nodes1)
+                            .finish(),
+                    )
+                    .finish()
+            }
+            Some(Mode::SelectUndo { preview }) => self.preview(cx, self.case_tree.case(*preview).0),
+        };
+        col0 = col0.child(main_screen);
 
         // Text Box
         if let Some(text_box) = &self.text_box {
@@ -157,7 +197,34 @@ impl State {
 
         // Case Tree
         if self.unlocks >= Unlocks::CASES {
-            col1 = col1.child(self.case_tree.render(cx));
+            col1 = col1.child(
+                self.case_tree
+                    .render(cx, matches!(self.mode, Some(Mode::SelectUndo { .. }))),
+            );
+        }
+
+        if self.unlocks >= Unlocks::LEMMAS {
+            if matches!(self.mode, Some(Mode::SelectUndo { .. })) {
+                col1 = col1.child(
+                    div(cx.bump)
+                        .attributes([attr("class", "button red")])
+                        .on("click", handler(move |_| crate::Msg::Level(Msg::Cancel)))
+                        .children([text("Cancel revert.")])
+                        .finish(),
+                )
+            } else {
+                let current = self.case_tree.current;
+                col1 = col1.child(
+                    div(cx.bump)
+                        .attributes([attr("class", "button red")])
+                        .on(
+                            "click",
+                            handler(move |_| crate::Msg::Level(Msg::RevertPreview(current))),
+                        )
+                        .children([text("Revert to ...")])
+                        .finish(),
+                );
+            }
         }
 
         // Blank Space
@@ -201,14 +268,14 @@ impl State {
 
             // Apply Theorem
             if self.unlocks >= Unlocks::THEOREM_APPLICATION {
-                if self.theorem_application.is_some() {
+                if matches!(
+                    self.mode,
+                    Some(Mode::ChooseTheoremLocation { .. } | Mode::AssignTheoremVars { .. })
+                ) {
                     col1 = col1.child(
                         div(cx.bump)
                             .attributes([attr("class", "button yellow")])
-                            .on(
-                                "click",
-                                handler(move |_| crate::Msg::Level(Msg::CancelApplyTheorem)),
-                            )
+                            .on("click", handler(move |_| crate::Msg::Level(Msg::Cancel)))
                             .children([text("Cancel Application")])
                             .finish(),
                     );
