@@ -4,14 +4,12 @@
 use game_data::{GameData, SaveData};
 use wasm_bindgen::JsCast;
 
+mod book;
 mod file;
-
 mod game_data;
-
 mod level;
-mod world_map;
-
 mod render;
+mod world_map;
 
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn run() {
@@ -56,14 +54,19 @@ pub fn run() {
 }
 
 struct Model {
+    // static
+    book: book::Book,
     send_msg: async_channel::Sender<Msg>,
+    save_listener: js_sys::Function,
 
+    // semi-static
     game_data: GameData,
     save_data: game_data::SaveData,
+
+    // dynamic
     game_state: GameState,
     global_state: GlobalState,
-
-    save_listener: js_sys::Function,
+    show_book: bool,
 }
 
 pub struct GlobalState {
@@ -109,8 +112,12 @@ impl GameState {
 
 #[derive(Debug)]
 enum Msg {
+    Book(book::Msg),
     Level(level::Msg),
     WorldMap(world_map::Msg),
+
+    ShowBook(bool),
+
     GotoLevel(usize),
     GotoMap { recenter: bool },
 
@@ -142,21 +149,27 @@ impl Model {
         let save_listener: js_sys::Function = save_listener.into_js_value().unchecked_into();
 
         Self {
+            book: book::Book::new(),
             send_msg,
+            save_listener,
 
             game_data: Default::default(),
             save_data: Default::default(),
+
             game_state: GameState::Menu,
             global_state: GlobalState {
                 map_panzoom: render::PanZoom::center([0.; 2], 10.),
             },
-
-            save_listener,
+            show_book: false,
         }
     }
 
     fn update(&mut self, msg: Msg) -> bool {
         match msg {
+            Msg::Book(msg) => {
+                self.book.update(msg);
+                true
+            }
             Msg::Level(msg) => {
                 let GameState::Level { level_state, level, .. } = &mut self.game_state else {return false};
                 let rerender = level_state.update(msg);
@@ -181,6 +194,9 @@ impl Model {
                 } => map_state.update(msg, panzoom),
                 _ => false,
             },
+
+            Msg::ShowBook(show) => show != std::mem::replace(&mut self.show_book, show),
+
             Msg::GotoLevel(level) => {
                 self.game_state = GameState::level(&self.game_data, level, &self.save_data);
                 #[allow(clippy::collapsible_if)]
@@ -273,11 +289,15 @@ impl<'a> dodrio::Render<'a> for Model {
     fn render(&self, cx: &mut dodrio::RenderContext<'a>) -> dodrio::Node<'a> {
         use dodrio::builder::*;
 
-        let builder = div(cx.bump).attributes([attr("id", "top")]).listeners([on(
+        let mut builder = div(cx.bump).attributes([attr("id", "top")]).listeners([on(
             cx.bump,
             "contextmenu",
             |_, _, e| e.prevent_default(),
         )]);
+
+        if self.show_book {
+            builder = builder.child(self.book.render(cx));
+        }
 
         match &self.game_state {
             GameState::Level {
@@ -285,27 +305,32 @@ impl<'a> dodrio::Render<'a> for Model {
                 level,
                 next_level,
                 theorem_select: None,
-            } => builder
-                .children(level_state.render(cx, *level, *next_level))
-                .finish(),
-            GameState::WorldMap { map_state } => builder
-                .children([
-                    div(cx.bump)
-                        .attributes([attr("class", "col wide")])
-                        .children([map_state.render(
-                            cx,
-                            &self.game_data,
-                            &self.global_state.map_panzoom,
-                            &self.save_data,
-                            false,
-                        )])
-                        .finish(),
-                    div(cx.bump)
-                        .attributes([attr("class", "col narrow")])
-                        .children(save_load_buttons(cx.bump))
-                        .finish(),
-                ])
-                .finish(),
+            } => {
+                for child in level_state.render(cx, *level, *next_level) {
+                    builder = builder.child(child);
+                }
+            }
+            GameState::WorldMap { map_state } => {
+                builder = builder
+                    .child(
+                        div(cx.bump)
+                            .attributes([attr("class", "col wide")])
+                            .children([map_state.render(
+                                cx,
+                                &self.game_data,
+                                &self.global_state.map_panzoom,
+                                &self.save_data,
+                                false,
+                            )])
+                            .finish(),
+                    )
+                    .child(
+                        div(cx.bump)
+                            .attributes([attr("class", "col narrow")])
+                            .children(save_load_buttons(cx.bump))
+                            .finish(),
+                    )
+            }
             GameState::Level {
                 theorem_select: Some((panzoom, map_state, preview)),
                 ..
@@ -334,24 +359,28 @@ impl<'a> dodrio::Render<'a> for Model {
                     }
                     col1 = col1.child(svg.finish());
                 }
-                builder.children([col0, col1.finish()]).finish()
+                builder = builder.child(col0).child(col1.finish())
             }
-            GameState::Menu => builder
-                .children([div(cx.bump)
-                    .attributes([attr("class", "col wide")])
-                    .children([div(cx.bump)
-                        .attributes([attr("class", "button green")])
-                        .listeners([file::fetch_listener(
-                            cx.bump,
-                            "levels.json",
-                            Msg::LoadedLevels,
-                            || panic!("Failed to load levels."),
-                        )])
-                        .children([text("Start!")])
-                        .finish()])
-                    .finish()])
-                .finish(),
-        }
+            GameState::Menu => {
+                builder = builder.child(
+                    div(cx.bump)
+                        .attributes([attr("class", "col wide")])
+                        .children([div(cx.bump)
+                            .attributes([attr("class", "button green")])
+                            .listeners([file::fetch_listener(
+                                cx.bump,
+                                "levels.json",
+                                Msg::LoadedLevels,
+                                || panic!("Failed to load levels."),
+                            )])
+                            .children([text("Start!")])
+                            .finish()])
+                        .finish(),
+                );
+            }
+        };
+
+        builder.finish()
     }
 }
 
