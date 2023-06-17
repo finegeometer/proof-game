@@ -47,13 +47,7 @@ pub(super) fn render_node<'a>(
         .children([
             circle.finish(),
             text_(cx.bump)
-                .attributes([
-                    attr("text-anchor", "middle"),
-                    attr("dominant-baseline", "middle"),
-                    attr("pointer-events", "none"),
-                    attr("x", x),
-                    attr("y", y),
-                ])
+                .attributes([attr("class", "node-text"), attr("x", x), attr("y", y)])
                 .children([text(label)])
                 .finish(),
         ])

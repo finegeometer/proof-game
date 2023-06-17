@@ -15,7 +15,7 @@ impl State {
     ) -> dodrio::builder::ElementBuilder<
         'a,
         [dodrio::Listener<'a>; 4],
-        [dodrio::Attribute<'a>; 5],
+        [dodrio::Attribute<'a>; 4],
         dodrio::bumpalo::collections::Vec<'a, dodrio::Node<'a>>,
     > {
         let (case, complete) = self.case_tree.case(self.case_tree.current);
@@ -34,7 +34,6 @@ impl State {
                     },
                 ),
                 attr("preserveAspectRatio", "xMidYMid meet"),
-                attr("font-size", "0.75"),
                 self.pan_zoom.viewbox(cx.bump),
             ])
             .listeners([
@@ -118,7 +117,6 @@ impl State {
                 attr("id", "game"),
                 attr("class", "background disabled"),
                 attr("preserveAspectRatio", "xMidYMid meet"),
-                attr("font-size", "0.75"),
                 self.pan_zoom.viewbox(cx.bump),
             ])
             .child(wires0)

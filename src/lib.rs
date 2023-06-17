@@ -4,7 +4,6 @@
 use game_data::{GameData, SaveData};
 use wasm_bindgen::JsCast;
 
-mod book;
 mod file;
 mod game_data;
 mod level;
@@ -17,13 +16,15 @@ pub fn run() {
 
     let (send_msg, recv_msg) = async_channel::unbounded();
 
-    let body = web_sys::window()
-        .unwrap()
-        .document()
-        .unwrap()
-        .body()
-        .unwrap();
-    let vdom = dodrio::Vdom::new(&body, Model::new(send_msg));
+    let vdom = dodrio::Vdom::new(
+        &web_sys::window()
+            .unwrap()
+            .document()
+            .unwrap()
+            .get_element_by_id("vdom")
+            .unwrap(),
+        Model::new(send_msg),
+    );
 
     wasm_bindgen_futures::spawn_local(async move {
         let vdom = vdom.weak();
@@ -55,7 +56,6 @@ pub fn run() {
 
 struct Model {
     // static
-    book: book::Book,
     send_msg: async_channel::Sender<Msg>,
     save_listener: js_sys::Function,
 
@@ -66,7 +66,6 @@ struct Model {
     // dynamic
     game_state: GameState,
     global_state: GlobalState,
-    show_book: bool,
 }
 
 pub struct GlobalState {
@@ -112,11 +111,8 @@ impl GameState {
 
 #[derive(Debug)]
 enum Msg {
-    Book(book::Msg),
     Level(level::Msg),
     WorldMap(world_map::Msg),
-
-    ShowBook(bool),
 
     GotoLevel(usize),
     GotoMap { recenter: bool },
@@ -149,7 +145,6 @@ impl Model {
         let save_listener: js_sys::Function = save_listener.into_js_value().unchecked_into();
 
         Self {
-            book: book::Book::new(),
             send_msg,
             save_listener,
 
@@ -160,16 +155,11 @@ impl Model {
             global_state: GlobalState {
                 map_panzoom: render::PanZoom::center([0.; 2], 10.),
             },
-            show_book: false,
         }
     }
 
     fn update(&mut self, msg: Msg) -> bool {
         match msg {
-            Msg::Book(msg) => {
-                self.book.update(msg);
-                true
-            }
             Msg::Level(msg) => {
                 let GameState::Level { level_state, level, .. } = &mut self.game_state else {return false};
                 let rerender = level_state.update(msg);
@@ -194,8 +184,6 @@ impl Model {
                 } => map_state.update(msg, panzoom),
                 _ => false,
             },
-
-            Msg::ShowBook(show) => show != std::mem::replace(&mut self.show_book, show),
 
             Msg::GotoLevel(level) => {
                 self.game_state = GameState::level(&self.game_data, level, &self.save_data);
@@ -294,10 +282,6 @@ impl<'a> dodrio::Render<'a> for Model {
             "contextmenu",
             |_, _, e| e.prevent_default(),
         )]);
-
-        if self.show_book {
-            builder = builder.child(self.book.render(cx));
-        }
 
         match &self.game_state {
             GameState::Level {
