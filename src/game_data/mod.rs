@@ -17,7 +17,7 @@ pub struct Level {
     name: String,
     pub spec: crate::level::LevelSpec,
     pub panzoom: crate::render::PanZoom,
-    text_box: Option<String>,
+    text_box: Option<(String, String)>,
     pub map_position: [f64; 2],
     pub bezier_vector: [f64; 2],
     pub prereqs: Vec<usize>,

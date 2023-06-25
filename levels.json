@@ -174,7 +174,7 @@
   , "hypotheses": []
   , "conclusion": 3
   , "_comment" : "Introduce lemmas."
-  , "text_box" : "Wires are clickable now."
+  , "text_box" : ["Wires are clickable now.", "#"]
   , "map_position": [16,0]
   , "bezier_vector": [1,0]
   , "prereqs": ["⇒.4"]
@@ -223,7 +223,7 @@
   , "hypotheses": [2]
   , "conclusion": 3
   , "_comment" : "Disjunction elimination, demonstrated via commutativity."
-  , "text_box" : "New feature: Proof by cases."
+  , "text_box" : ["New feature: Proof by cases.", "#book-disjunction"]
   , "map_position": [11.5,-2]
   , "bezier_vector": [1,0]
   , "prereqs": ["∨.1"]
@@ -326,7 +326,7 @@
     ]
   , "hypotheses": [0]
   , "conclusion": 1
-  , "text_box" : "Drag equal nodes together."
+  , "text_box" : ["Drag equal nodes together.", "#"]
   , "map_position": [8.5,2]
   , "bezier_vector": [1,0]
   , "prereqs": ["∧.4"]
@@ -512,7 +512,7 @@
   , "bezier_vector": [0.96,0.4]
   , "prereqs": ["=.6"]
   , "next_level": "app.0"
-  , "text_box": "Axiom: We take this for granted."
+  , "text_box": ["Axiom: We take this for granted.", "#"]
   }
 , "app.0":
   { "unlocks": ["theorem-application"]
@@ -529,7 +529,7 @@
   , "bezier_vector": [1,0]
   , "prereqs": ["PropExt"]
   , "next_level": "app.1"
-  , "text_box": "New feature! Import the axiom to solve this one."
+  , "text_box": ["New feature! Import the axiom to solve this one.", "#"]
   }
 , "app.1":
   { "nodes":
@@ -575,7 +575,7 @@
   , "bezier_vector": [0.4,-0.96]
   , "prereqs": ["app.2"]
   , "next_level": "app.4"
-  , "text_box": "You'll need the axiom twice."
+  , "text_box": ["You'll need the axiom twice.", "#"]
   }
 , "app.4":
   { "nodes":
@@ -595,7 +595,7 @@
   , "bezier_vector": [0,-1]
   , "prereqs": ["app.3", "∨.7"]
   , "next_level": "¬.definition"
-  , "text_box": "Tip: You can import actual levels as well."
+  , "text_box": ["Tip: You can import actual levels as well.", "#"]
   }
 
 
@@ -700,7 +700,7 @@
   , "bezier_vector": [0,0]
   , "next_level": "a⇒b=¬a∨b"
   , "prereqs": ["¬¬Elim"]
-  , "text_box": "The Law of Excluded Middle."
+  , "text_box": ["The Law of Excluded Middle.", "#"]
   }
 , "a⇒b=¬a∨b":
   { "nodes":

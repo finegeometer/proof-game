@@ -371,28 +371,28 @@ impl<'a> dodrio::Render<'a> for Model {
 fn save_load_buttons(bump: &dodrio::bumpalo::Bump) -> [dodrio::Node; 3] {
     use dodrio::builder::*;
     [
-        div(bump)
-            .attributes([
-                attr("id", "save-game"),
-                attr(
-                    "class",
-                    if web_sys::window().unwrap().onbeforeunload().is_none() {
-                        "button blue disabled"
-                    } else {
-                        "button blue"
+        if web_sys::window().unwrap().onbeforeunload().is_none() {
+            div(bump)
+                .attributes([
+                    attr("id", "save-game"),
+                    attr("class", "button blue disabled"),
+                ])
+                .children([text("Save Game")])
+                .finish()
+        } else {
+            div(bump)
+                .attributes([attr("id", "save-game"), attr("class", "button blue")])
+                .listeners([file::save_listener(
+                    bump,
+                    |model| {
+                        web_sys::window().unwrap().set_onbeforeunload(None);
+                        model.save_data.save(&model.game_data)
                     },
-                ),
-            ])
-            .listeners([file::save_listener(
-                bump,
-                |model| {
-                    web_sys::window().unwrap().set_onbeforeunload(None);
-                    model.save_data.save(&model.game_data)
-                },
-                "savefile.json",
-            )])
-            .children([text("Save Game")])
-            .finish(),
+                    "savefile.json",
+                )])
+                .children([text("Save Game")])
+                .finish()
+        },
         div(bump)
             .attributes([attr("id", "load-savegame"), attr("class", "button blue")])
             .listeners([on(bump, "click", |_, _, _| {

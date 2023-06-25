@@ -48,6 +48,9 @@
     }
 
     .text-box {
+      border-radius: 4vmin;
+      background: #eff;
+      border: 2px solid #100;
       text-align: center;
       vertical-align: middle;
     }
@@ -108,7 +111,8 @@
       background: #992
     }
 
-    .button.disabled {
+    /* Duplicate selector to make this more specific than colored buttons. */
+    .button.disabled.disabled {
       background: #788;
       border: 2px solid #223;
       cursor: default;
@@ -125,7 +129,6 @@
     }
 
     .background {
-      /* position: fixed; */
       border-radius: 4vmin;
       background: #cdd;
       border: 2px solid #011;

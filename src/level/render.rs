@@ -181,14 +181,26 @@ impl State {
         col0 = col0.child(main_screen);
 
         // Text Box
-        if let Some(text_box) = &self.text_box {
+        if let Some((text_box, link)) = &self.text_box {
             col0 = col0.child(
                 div(cx.bump)
-                    .attributes([attr("class", "background text-box")])
-                    .children([text(
-                        bumpalo::collections::String::from_str_in(text_box, cx.bump)
-                            .into_bump_str(),
-                    )])
+                    .attributes([attr("class", "text-box")])
+                    .children([
+                        text(
+                            bumpalo::collections::String::from_str_in(text_box, cx.bump)
+                                .into_bump_str(),
+                        ),
+                        text(" ("),
+                        a(cx.bump)
+                            .attributes([attr(
+                                "href",
+                                bumpalo::collections::String::from_str_in(link, cx.bump)
+                                    .into_bump_str(),
+                            )])
+                            .children([text("More info")])
+                            .finish(),
+                        text(")"),
+                    ])
                     .finish(),
             );
         }
@@ -208,7 +220,7 @@ impl State {
                     div(cx.bump)
                         .attributes([attr("class", "button red")])
                         .on("click", handler(move |_| crate::Msg::Level(Msg::Cancel)))
-                        .children([text("Cancel revert.")])
+                        .children([text("Cancel undo.")])
                         .finish(),
                 )
             } else {
@@ -220,7 +232,7 @@ impl State {
                             "click",
                             handler(move |_| crate::Msg::Level(Msg::RevertPreview(current))),
                         )
-                        .children([text("Revert to ...")])
+                        .children([text("Undo")])
                         .finish(),
                 );
             }

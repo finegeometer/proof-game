@@ -34,7 +34,8 @@ struct LevelJson<'a> {
     nodes: Vec<(Expression<usize>, [f64; 2])>,
     hypotheses: Vec<usize>,
     conclusion: usize,
-    text_box: Option<&'a str>,
+    #[serde(borrow)]
+    text_box: Option<(&'a str, &'a str)>,
     map_position: [f64; 2],
     bezier_vector: [f64; 2],
     prereqs: Vec<&'a str>,
@@ -89,7 +90,7 @@ impl<'a> LevelJson<'a> {
             panzoom: crate::render::PanZoom {
                 svg_corners: ([x_min - 1., y_min - 1.], [x_max + 1., y_max + 3.]),
             },
-            text_box: text_box.map(|s| s.to_owned()),
+            text_box: text_box.map(|(msg, link)| (msg.to_owned(), link.to_owned())),
             map_position,
             bezier_vector,
             prereqs: prereqs
