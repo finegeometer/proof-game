@@ -30,13 +30,14 @@ impl CaseTree {
                     attr("cy", bumpalo::format!(in cx.bump, "{}", y).into_bump_str()),
                     attr(
                         "class",
-                        if node == self.current.0 {
-                            "node goal"
-                        } else if self.nodes[node].complete {
-                            "node known"
-                        } else {
-                            clickable = true;
-                            "node hoverable"
+                        match (node == self.current.0, self.nodes[node].complete) {
+                            (true, true) => "node goal known",
+                            (true, false) => "node goal",
+                            (false, true) => "node known",
+                            (false, false) => {
+                                clickable = true;
+                                "node hoverable"
+                            }
                         },
                     ),
                 ]);

@@ -174,12 +174,11 @@ impl super::Case {
                             }),
                             cx.bump,
                         ),
-                        if self.proven(wire) {
-                            " known"
-                        } else if self.wire_eq(wire, self.goal()) {
-                            " goal"
-                        } else {
-                            ""
+                        match (self.proven(wire), self.wire_eq(wire, self.goal())) {
+                            (true, true) => " known goal",
+                            (true, false) => " known",
+                            (false, true) => " goal",
+                            (false, false) => "",
                         },
                         (events && dragging.is_none()).then_some(wire),
                         !force_no_hover
