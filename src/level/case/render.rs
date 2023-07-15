@@ -64,11 +64,13 @@ pub(super) fn render_wire<'a>(
     events: Option<super::Wire>,
     hoverable: bool,
 ) -> [dodrio::Node<'a>; 2] {
-    const WIRE_STIFFNESS: f64 = 0.75;
+    const R: f64 = 0.4;
+    const WIRE_STIFFNESS: f64 = 0.5;
     let mut outputs = outputs;
     let mut output_vectors = output_vectors;
 
-    let input_avg = bezier::average(inputs);
+    let mut input_avg = bezier::average(inputs);
+    input_avg[1] += R;
     let input_vector = [0., WIRE_STIFFNESS];
 
     debug_assert_eq!(outputs.len(), output_vectors.len());
@@ -80,7 +82,14 @@ pub(super) fn render_wire<'a>(
         output_vectors = &[[0., WIRE_STIFFNESS]]
     }
 
-    let output_avg = bezier::average(outputs);
+    let mut outputs = outputs.to_owned();
+    for ([x, y], [vx, vy]) in outputs.iter_mut().zip(output_vectors) {
+        let r = (vx * vx + vy * vy).sqrt();
+        *x -= R * vx / r;
+        *y -= R * vy / r;
+    }
+
+    let output_avg = bezier::average(&outputs);
     let output_vector_avg = bezier::average(output_vectors);
 
     let (mid, mid_vector) = bezier::split(
@@ -94,7 +103,8 @@ pub(super) fn render_wire<'a>(
     );
 
     let mut d = bumpalo::collections::String::new_in(cx.bump);
-    for &input in inputs {
+    for &(mut input) in inputs {
+        input[1] += R;
         bezier::path(input, input_vector, mid_vector, mid, &mut d);
     }
     for (&output, &[x, y]) in outputs.iter().zip(output_vectors) {
