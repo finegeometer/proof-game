@@ -206,6 +206,25 @@ impl super::Case {
             {
                 let mut builder = g(cx.bump);
                 for node in self.nodes() {
+                    if dragging != Some(node) {
+                        builder = builder.child(render_node(
+                            cx,
+                            self.position(node),
+                            bumpalo::collections::String::from_str_in(
+                                self.node_expression(node).text(),
+                                cx.bump,
+                            )
+                            .into_bump_str(),
+                            events.then_some(node),
+                            !force_no_hover
+                                && (force_nodes_hoverable
+                                    || (events
+                                        && dragging.is_none()
+                                        && self.node_has_interaction(node))),
+                        ));
+                    }
+                }
+                if let Some(node) = dragging {
                     builder = builder.child(render_node(
                         cx,
                         self.position(node),
@@ -214,12 +233,8 @@ impl super::Case {
                             cx.bump,
                         )
                         .into_bump_str(),
-                        (events && dragging != Some(node)).then_some(node),
-                        !force_no_hover
-                            && (force_nodes_hoverable
-                                || (events
-                                    && dragging.is_none()
-                                    && self.node_has_interaction(node))),
+                        None,
+                        !force_no_hover && force_nodes_hoverable,
                     ));
                 }
                 builder.finish()
