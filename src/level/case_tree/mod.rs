@@ -93,12 +93,16 @@ impl CaseTree {
             children.push(child);
             incomplete_child = incomplete_child.or((!self.nodes[child].complete).then_some(child));
         }
+        let first_child = children.first().copied();
         self.nodes[self.current.0].children = Some(children);
 
         if let Some(child) = incomplete_child {
             self.current.0 = child;
         } else {
-            self.mark_complete(self.current.0)
+            self.mark_complete(self.current.0);
+            if let Some(child) = first_child {
+                self.current.0 = child;
+            }
         }
     }
 
@@ -111,8 +115,7 @@ impl CaseTree {
     }
 
     pub fn revert_to(&mut self, case: CaseId) {
-        let mut work =
-            std::mem::replace(&mut self.nodes[case.0].children, None).unwrap_or_default();
+        let mut work = self.nodes[case.0].children.take().unwrap_or_default();
         while let Some(node) = work.pop() {
             self.free_list.push(node);
             if let Some(children) = &mut self.nodes[node].children {
