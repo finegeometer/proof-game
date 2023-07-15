@@ -11,8 +11,18 @@ pub enum Expression<T> {
     Or(SmallVec<[T; 2]>),
     Implies([T; 2]),
     Equal([T; 2]),
-    Variable(String),
-    Function(String, SmallVec<[T; 2]>),
+    Variable(Var),
+    Function(String, Type, SmallVec<[T; 2]>),
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Var(pub String, pub Type);
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Type {
+    #[default]
+    TruthValue,
+    RealNumber,
 }
 
 impl<T> Expression<T> {
@@ -22,19 +32,39 @@ impl<T> Expression<T> {
             Expression::Or(_) => "∨",
             Expression::Implies(_) => "⇒",
             Expression::Equal(_) => "=",
-            Expression::Variable(x) => x,
-            Expression::Function(f, _) => f,
+            Expression::Variable(Var(x, _)) => x,
+            Expression::Function(f, _, _) => f,
+        }
+    }
+
+    pub fn ty(&self) -> Type {
+        match self {
+            Expression::And(_)
+            | Expression::Or(_)
+            | Expression::Implies(_)
+            | Expression::Equal(_) => Type::TruthValue,
+            Expression::Variable(Var(_, ty)) | Expression::Function(_, ty, _) => *ty,
+        }
+    }
+
+    pub fn tycheck(&self, ty: impl Fn(&T) -> Type) -> bool {
+        match self {
+            Expression::And(inputs) | Expression::Or(inputs) => {
+                inputs.iter().all(|x| ty(x) == Type::TruthValue)
+            }
+            Expression::Implies([a, b]) => ty(a) == Type::TruthValue && ty(b) == Type::TruthValue,
+            Expression::Equal([a, b]) => ty(a) == ty(b),
+            Expression::Variable(_) => true,
+            Expression::Function(_, _, _) => true,
         }
     }
 
     pub fn inputs(&self) -> &[T] {
         match self {
-            Expression::And(inputs) => inputs,
-            Expression::Or(inputs) => inputs,
-            Expression::Implies(inputs) => inputs,
-            Expression::Equal(inputs) => inputs,
+            Expression::And(inputs) | Expression::Or(inputs) => inputs,
+            Expression::Implies(inputs) | Expression::Equal(inputs) => inputs,
             Expression::Variable(_) => &[],
-            Expression::Function(_, inputs) => inputs,
+            Expression::Function(_, _, inputs) => inputs,
         }
     }
 
@@ -45,7 +75,7 @@ impl<T> Expression<T> {
             Expression::Implies(inputs) => inputs,
             Expression::Equal(inputs) => inputs,
             Expression::Variable(_) => &mut [],
-            Expression::Function(_, inputs) => inputs,
+            Expression::Function(_, _, inputs) => inputs,
         }
     }
 
@@ -55,9 +85,9 @@ impl<T> Expression<T> {
             Expression::Or(inputs) => Expression::Or(inputs.into_iter().map(f).collect()),
             Expression::Implies(inputs) => Expression::Implies(inputs.map(f)),
             Expression::Equal(inputs) => Expression::Equal(inputs.map(f)),
-            Expression::Variable(s) => Expression::Variable(s),
-            Expression::Function(s, inputs) => {
-                Expression::Function(s, inputs.into_iter().map(f).collect())
+            Expression::Variable(v) => Expression::Variable(v),
+            Expression::Function(s, ty, inputs) => {
+                Expression::Function(s, ty, inputs.into_iter().map(f).collect())
             }
         }
     }
@@ -71,6 +101,9 @@ impl egg::Language for Expression<egg::Id> {
             (Expression::Implies(_), Expression::Implies(_)) => true,
             (Expression::Equal(_), Expression::Equal(_)) => true,
             (Expression::Variable(a), Expression::Variable(b)) => a == b,
+            (Expression::Function(f1, t1, args1), Expression::Function(f2, t2, args2)) => {
+                f1 == f2 && t1 == t2 && args1.len() == args2.len()
+            }
             (_, _) => false,
         }
     }
@@ -100,12 +133,12 @@ impl Case {
             (Expression::Equal([w1, w2]), true) => !self.wire_eq(*w1, *w2),
             (Expression::Equal([w1, w2]), false) => self.wire_eq(*w1, *w2),
             (Expression::Variable(_), _) => false,
-            (Expression::Function(_, _), _) => false,
+            (Expression::Function(_, _, _), _) => false,
         }
     }
 
     pub fn wire_has_interaction(&self, wire: Wire) -> bool {
-        !(self.proven(wire) || self.wire_eq(wire, self.goal()))
+        self.ty(wire) == Type::TruthValue && !self.proven(wire) && !self.wire_eq(wire, self.goal())
     }
 }
 
@@ -211,7 +244,7 @@ So we might as well merge the wires.",
                 );
             }
             (Expression::Variable(_), _) => {}
-            (Expression::Function(_, _), _) => {}
+            (Expression::Function(_, _, _), _) => {}
         }
     }
 

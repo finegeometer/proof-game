@@ -11,7 +11,7 @@ impl LevelSpec {
         &self,
         cx: &mut dodrio::RenderContext<'a>,
         offset: [f64; 2],
-        mut var_position: impl FnMut(&str) -> Option<[f64; 2]>,
+        mut var_position: impl FnMut(&crate::level::expression::Var) -> Option<[f64; 2]>,
     ) -> [dodrio::Node<'a>; 2] {
         let mut correct_position = |expression: &Expression<usize>, position: &[f64; 2]| {
             if let Expression::Variable(v) = expression {
@@ -28,42 +28,53 @@ impl LevelSpec {
                 use bumpalo::collections::Vec;
 
                 #[allow(clippy::type_complexity)]
-                let mut wire_data: Vec<([f64; 2], Vec<[f64; 2]>, Vec<[f64; 2]>)> =
-                    Vec::from_iter_in(
-                        self.nodes.iter().map(|(expression, position)| {
-                            (
-                                correct_position(expression, position),
-                                Vec::new_in(cx.bump),
-                                Vec::new_in(cx.bump),
-                            )
-                        }),
-                        cx.bump,
-                    );
+                let mut wire_data: Vec<(
+                    super::super::Type,
+                    [f64; 2],
+                    Vec<[f64; 2]>,
+                    Vec<[f64; 2]>,
+                )> = Vec::from_iter_in(
+                    self.nodes.iter().map(|(expression, position)| {
+                        (
+                            expression.ty(),
+                            correct_position(expression, position),
+                            Vec::new_in(cx.bump),
+                            Vec::new_in(cx.bump),
+                        )
+                    }),
+                    cx.bump,
+                );
 
                 for (expression, position) in self.nodes.iter() {
                     let inputs = expression.inputs();
                     let x = (inputs.len() as f64 - 1.) / 2.;
                     for (ix, &input) in inputs.iter().enumerate() {
                         wire_data[input]
-                            .1
+                            .2
                             .push(correct_position(expression, position));
-                        wire_data[input].2.push([-(ix as f64 - x), 1.]);
+                        wire_data[input].3.push([-(ix as f64 - x), 1.]);
                     }
                 }
 
                 let mut builder = g(cx.bump);
-                for (node, (input, outputs, output_vectors)) in wire_data.into_iter().enumerate() {
+                for (node, (ty, input, outputs, output_vectors)) in
+                    wire_data.into_iter().enumerate()
+                {
                     for svg_node in render_wire(
                         cx,
                         &[input],
                         &outputs,
                         &output_vectors,
-                        if self.hypotheses.contains(&node) {
-                            " known"
-                        } else if self.conclusion == node {
-                            " goal"
-                        } else {
-                            ""
+                        match ty {
+                            super::super::Type::TruthValue => {
+                                match (self.hypotheses.contains(&node), self.conclusion == node) {
+                                    (true, true) => " known goal",
+                                    (true, false) => " known",
+                                    (false, true) => " goal",
+                                    (false, false) => "",
+                                }
+                            }
+                            super::super::Type::RealNumber => " number",
                         },
                         None,
                         false,

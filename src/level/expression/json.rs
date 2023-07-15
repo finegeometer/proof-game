@@ -14,7 +14,9 @@ impl<'a, T> TryFrom<ExpressionJson<'a, T>> for Expression<T> {
 
     fn try_from(json: ExpressionJson<'a, T>) -> Result<Self> {
         Ok(match json {
-            ExpressionJson::Variable(v) => Expression::Variable(v.to_owned()),
+            ExpressionJson::Variable(v) => {
+                Expression::Variable(Var(v.to_owned(), Type::TruthValue))
+            }
             ExpressionJson::Other("∧", inputs) => Expression::And(inputs),
             ExpressionJson::Other("∨", inputs) => Expression::Or(inputs),
             ExpressionJson::Other("⇒", inputs) => {
@@ -33,7 +35,9 @@ impl<'a, T> TryFrom<ExpressionJson<'a, T>> for Expression<T> {
                     )
                 })?)
             }
-            ExpressionJson::Other(f, inputs) => Expression::Function(f.to_owned(), inputs),
+            ExpressionJson::Other(f, inputs) => {
+                Expression::Function(f.to_owned(), Type::TruthValue, inputs)
+            }
         })
     }
 }

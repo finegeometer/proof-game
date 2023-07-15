@@ -29,9 +29,9 @@ enum Mode {
     AssignTheoremVars {
         spec: LevelSpec,
         offset: [f64; 2],
-        chosen: HashMap<String, Node>,
-        current: String,
-        remaining: std::vec::IntoIter<String>,
+        chosen: HashMap<expression::Var, Node>,
+        current: expression::Var,
+        remaining: std::vec::IntoIter<expression::Var>,
     },
     SelectUndo {
         preview: CaseId,
@@ -146,8 +146,7 @@ impl State {
                                     current: Default::default(),
                                     remaining: spec
                                         .vars()
-                                        .map(String::from)
-                                        .collect::<Vec<String>>()
+                                        .collect::<Vec<expression::Var>>()
                                         .into_iter(),
                                     spec,
                                 });
@@ -161,15 +160,18 @@ impl State {
                                 remaining,
                             }) => match object {
                                 DragObject::Node(n) => {
-                                    chosen.insert(current, n);
-                                    self.start_processing_var(Mode::AssignTheoremVars {
-                                        spec,
-                                        offset,
-                                        chosen,
-                                        current: Default::default(),
-                                        remaining,
-                                    });
-                                    rerender = true;
+                                    let case = self.case_tree.case(self.case_tree.current).0;
+                                    if current.1 == case.ty(case.node_output(n)) {
+                                        chosen.insert(current, n);
+                                        self.start_processing_var(Mode::AssignTheoremVars {
+                                            spec,
+                                            offset,
+                                            chosen,
+                                            current: Default::default(),
+                                            remaining,
+                                        });
+                                        rerender = true;
+                                    }
                                 }
                                 DragObject::Wire(_) | DragObject::Background => {
                                     self.mode = Some(Mode::AssignTheoremVars {

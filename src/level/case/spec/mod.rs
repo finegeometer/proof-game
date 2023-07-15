@@ -1,6 +1,9 @@
 mod render;
 
-use super::{super::expression::Expression, Case, ValidityReason};
+use super::{
+    super::expression::{Expression, Var},
+    Case, ValidityReason,
+};
 
 #[derive(Debug, Clone)]
 pub struct LevelSpec {
@@ -20,6 +23,9 @@ impl LevelSpec {
         conclusion: usize,
     ) -> anyhow::Result<Self> {
         for (n, (expression, _)) in nodes.iter().enumerate() {
+            if !expression.tycheck(|node| nodes[*node].0.ty()) {
+                anyhow::bail!("Node {} fails typechecking.", n)
+            }
             for ix in expression.inputs() {
                 match ix.cmp(&n) {
                     std::cmp::Ordering::Less => {}
@@ -32,11 +38,17 @@ impl LevelSpec {
         }
 
         for &ix in &hypotheses {
+            if nodes[ix].0.ty() != super::Type::TruthValue {
+                anyhow::bail!("Hypothesis {} is not a truth value.", ix);
+            }
             if ix >= nodes.len() {
                 anyhow::bail!("Hypothesis index too large. ({} >= {})", ix, nodes.len())
             }
         }
 
+        if nodes[conclusion].0.ty() != super::Type::TruthValue {
+            anyhow::bail!("Conclusion is not a truth value.");
+        }
         if conclusion >= nodes.len() {
             anyhow::bail!(
                 "Conclusion index too large. ({} >= {})",
@@ -73,10 +85,10 @@ impl LevelSpec {
         case
     }
 
-    pub fn vars(&self) -> impl Iterator<Item = &str> {
+    pub fn vars(&self) -> impl '_ + Iterator<Item = Var> {
         self.nodes.iter().filter_map(|(e, _)| {
-            if let Expression::Variable(s) = e {
-                Some(s.as_str())
+            if let Expression::Variable(v) = e {
+                Some(v.clone())
             } else {
                 None
             }
@@ -86,7 +98,7 @@ impl LevelSpec {
     pub fn add_to_case_tree(
         self,
         case_tree: &mut super::super::case_tree::CaseTree,
-        var: impl Fn(&str) -> super::Node,
+        var: impl Fn(&Var) -> super::Node,
         offset: [f64; 2],
     ) {
         let mut wires = Vec::with_capacity(self.nodes.len());

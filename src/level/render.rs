@@ -78,7 +78,6 @@ impl State {
 
         let [wires0, nodes0] = case.render(
             cx,
-            self.unlocks,
             match self.drag {
                 Some(DragState {
                     object: DragObject::Node(node),
@@ -88,8 +87,20 @@ impl State {
                 _ => None,
             },
             true,
-            matches!(self.mode, Some(Mode::AssignTheoremVars { .. })),
-            matches!(self.mode, Some(Mode::ChooseTheoremLocation(_))) || !self.interactable(),
+            |node| match &self.mode {
+                Some(Mode::AssignTheoremVars { current, .. }) => {
+                    current.1 == case.ty(case.node_output(node))
+                }
+                Some(Mode::ChooseTheoremLocation(_)) => false,
+                Some(Mode::SelectUndo { .. }) => false,
+                None => self.interactable() && case.node_has_interaction(node),
+            },
+            |wire| {
+                self.unlocks >= Unlocks::LEMMAS
+                    && self.mode.is_none()
+                    && self.interactable()
+                    && case.wire_has_interaction(wire)
+            },
         );
         main_screen = main_screen.child(wires0).child(nodes0);
 
@@ -99,7 +110,6 @@ impl State {
     fn preview<'a>(&self, cx: &mut dodrio::RenderContext<'a>, case: &Case) -> dodrio::Node<'a> {
         let [wires0, nodes0] = case.render(
             cx,
-            self.unlocks,
             match self.drag {
                 Some(DragState {
                     object: DragObject::Node(node),
@@ -109,8 +119,8 @@ impl State {
                 _ => None,
             },
             false,
-            false,
-            false,
+            |_| false,
+            |_| false,
         );
         svg(cx.bump)
             .attributes([

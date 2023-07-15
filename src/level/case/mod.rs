@@ -6,7 +6,7 @@ pub use spec::LevelSpec;
 
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
-use super::expression::Expression;
+use super::expression::{Expression, Type};
 use union_find::UnionFind;
 
 /// This is a safety feature.
@@ -67,6 +67,10 @@ impl Case {
             egg: RefCell::new(egg::EGraph::new(())),
             node_to_egg: Vec::new(),
         }
+    }
+
+    pub fn ty(&self, w: Wire) -> Type {
+        self.node_expression(w.0).ty()
     }
 
     pub fn set_goal(&mut self, goal: Wire) {

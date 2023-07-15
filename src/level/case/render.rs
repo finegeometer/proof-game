@@ -1,4 +1,4 @@
-use crate::{game_data::Unlocks, level, render::*};
+use crate::{level, render::*};
 use dodrio::{builder::*, bumpalo};
 use wasm_bindgen::JsCast;
 
@@ -150,11 +150,10 @@ impl super::Case {
     pub fn render<'a>(
         &self,
         cx: &mut dodrio::RenderContext<'a>,
-        unlocks: Unlocks,
         dragging: Option<super::Node>,
         events: bool,
-        force_nodes_hoverable: bool,
-        force_no_hover: bool,
+        node_hoverable: impl Fn(super::Node) -> bool,
+        wire_hoverable: impl Fn(super::Wire) -> bool,
     ) -> [dodrio::Node<'a>; 2] {
         [
             // Wires
@@ -184,18 +183,19 @@ impl super::Case {
                             }),
                             cx.bump,
                         ),
-                        match (self.proven(wire), self.wire_eq(wire, self.goal())) {
-                            (true, true) => " known goal",
-                            (true, false) => " known",
-                            (false, true) => " goal",
-                            (false, false) => "",
+                        match self.ty(wire) {
+                            super::Type::TruthValue => {
+                                match (self.proven(wire), self.wire_eq(wire, self.goal())) {
+                                    (true, true) => " known goal",
+                                    (true, false) => " known",
+                                    (false, true) => " goal",
+                                    (false, false) => "",
+                                }
+                            }
+                            super::Type::RealNumber => " number",
                         },
                         (events && dragging.is_none()).then_some(wire),
-                        !force_no_hover
-                            && events
-                            && unlocks >= Unlocks::LEMMAS
-                            && dragging.is_none()
-                            && self.wire_has_interaction(wire),
+                        dragging.is_none() && wire_hoverable(wire),
                     ) {
                         builder = builder.child(svg_node);
                     }
@@ -216,11 +216,7 @@ impl super::Case {
                             )
                             .into_bump_str(),
                             events.then_some(node),
-                            !force_no_hover
-                                && (force_nodes_hoverable
-                                    || (events
-                                        && dragging.is_none()
-                                        && self.node_has_interaction(node))),
+                            dragging.is_none() && node_hoverable(node),
                         ));
                     }
                 }
@@ -234,7 +230,7 @@ impl super::Case {
                         )
                         .into_bump_str(),
                         None,
-                        !force_no_hover && force_nodes_hoverable,
+                        false,
                     ));
                 }
                 builder.finish()
