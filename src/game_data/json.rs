@@ -11,20 +11,25 @@ use smallvec::SmallVec;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Deserialize)]
-#[serde(transparent)]
-pub(super) struct GameJson<'a>(#[serde(borrow)] HashMap<&'a str, LevelJson<'a>>);
+pub(super) struct GameJson<'a> {
+    #[serde(borrow)]
+    functions: HashMap<&'a str, Type>,
+    #[serde(borrow)]
+    levels: HashMap<&'a str, LevelJson<'a>>,
+}
 
 impl<'a> TryFrom<GameJson<'a>> for GameData {
     type Error = Error;
 
     fn try_from(json: GameJson<'a>) -> Result<Self> {
-        let indices: HashMap<&'a str, usize> = json.0.keys().copied().zip(0..).collect();
+        let indices: HashMap<&'a str, usize> = json.levels.keys().copied().zip(0..).collect();
+        let function_types = &json.functions;
 
         let levels = json
-            .0
+            .levels
             .into_iter()
             .map(|(name, json)| {
-                json.parse(&indices, name.to_owned())
+                json.parse(&indices, name.to_owned(), function_types)
                     .with_context(|| format!("Failed to parse level {name}"))
             })
             .collect::<Result<_, _>>()?;
@@ -64,7 +69,12 @@ where
 }
 
 impl<'a> LevelJson<'a> {
-    fn parse(self, indices: &HashMap<&'a str, usize>, name: String) -> Result<Level> {
+    fn parse(
+        self,
+        indices: &HashMap<&'a str, usize>,
+        name: String,
+        function_types: &HashMap<&'a str, Type>,
+    ) -> Result<Level> {
         let Self {
             variables,
             nodes,
@@ -96,7 +106,7 @@ impl<'a> LevelJson<'a> {
             spec: LevelSpec::new(
                 nodes
                     .into_iter()
-                    .map(|(expr, pos)| Ok((expr.parse(&variables)?, pos)))
+                    .map(|(expr, pos)| Ok((expr.parse(&variables, function_types)?, pos)))
                     .collect::<Result<_>>()?,
                 hypotheses,
                 conclusion,
@@ -138,11 +148,15 @@ pub(super) enum ExpressionJson<'a, T> {
 }
 
 impl<'a, T> ExpressionJson<'a, T> {
-    fn parse(self, variables: &HashMap<&'a str, Type>) -> Result<Expression<T>> {
+    fn parse(
+        self,
+        variable_types: &HashMap<&'a str, Type>,
+        function_types: &HashMap<&'a str, Type>,
+    ) -> Result<Expression<T>> {
         Ok(match self {
             ExpressionJson::Variable(v) => Expression::Variable(Var(
                 v.to_owned(),
-                *variables
+                *variable_types
                     .get(v)
                     .ok_or(anyhow!("Variable {}'s type is not stated.", v))?,
             )),
@@ -164,9 +178,13 @@ impl<'a, T> ExpressionJson<'a, T> {
                     )
                 })?)
             }
-            ExpressionJson::Other(f, inputs) => {
-                Expression::Function(f.to_owned(), Type::TruthValue, inputs)
-            }
+            ExpressionJson::Other(f, inputs) => Expression::Function(
+                f.to_owned(),
+                *function_types
+                    .get(f)
+                    .ok_or(anyhow!("Function {}'s return type is not stated.", f))?,
+                inputs,
+            ),
         })
     }
 }
