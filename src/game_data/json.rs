@@ -1,9 +1,13 @@
-use crate::level::{expression::Expression, LevelSpec};
+use crate::level::{
+    expression::{Expression, Type, Var},
+    LevelSpec,
+};
 
 use super::*;
 use ::serde::Deserialize;
 use anyhow::*;
 use serde::{Deserializer, Serialize};
+use smallvec::SmallVec;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Deserialize)]
@@ -31,7 +35,9 @@ impl<'a> TryFrom<GameJson<'a>> for GameData {
 
 #[derive(Deserialize)]
 struct LevelJson<'a> {
-    nodes: Vec<(Expression<usize>, [f64; 2])>,
+    #[serde(borrow)]
+    variables: HashMap<&'a str, Type>,
+    nodes: Vec<(ExpressionJson<'a, usize>, [f64; 2])>,
     hypotheses: Vec<usize>,
     conclusion: usize,
     #[serde(borrow)]
@@ -60,6 +66,7 @@ where
 impl<'a> LevelJson<'a> {
     fn parse(self, indices: &HashMap<&'a str, usize>, name: String) -> Result<Level> {
         let Self {
+            variables,
             nodes,
             hypotheses,
             conclusion,
@@ -86,7 +93,14 @@ impl<'a> LevelJson<'a> {
 
         Ok(Level {
             name,
-            spec: LevelSpec::new(nodes, hypotheses, conclusion)?,
+            spec: LevelSpec::new(
+                nodes
+                    .into_iter()
+                    .map(|(expr, pos)| Ok((expr.parse(&variables)?, pos)))
+                    .collect::<Result<_>>()?,
+                hypotheses,
+                conclusion,
+            )?,
             panzoom: crate::render::PanZoom {
                 svg_corners: ([x_min - 1., y_min - 1.], [x_max + 1., y_max + 3.]),
             },
@@ -112,6 +126,47 @@ impl<'a> LevelJson<'a> {
             },
             unlocks,
             axiom,
+        })
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+pub(super) enum ExpressionJson<'a, T> {
+    Variable(&'a str),
+    Other(&'a str, SmallVec<[T; 2]>),
+}
+
+impl<'a, T> ExpressionJson<'a, T> {
+    fn parse(self, variables: &HashMap<&'a str, Type>) -> Result<Expression<T>> {
+        Ok(match self {
+            ExpressionJson::Variable(v) => Expression::Variable(Var(
+                v.to_owned(),
+                *variables
+                    .get(v)
+                    .ok_or(anyhow!("Variable {}'s type is not stated.", v))?,
+            )),
+            ExpressionJson::Other("∧", inputs) => Expression::And(inputs),
+            ExpressionJson::Other("∨", inputs) => Expression::Or(inputs),
+            ExpressionJson::Other("⇒", inputs) => {
+                Expression::Implies(inputs.into_inner().map_err(|inputs| {
+                    anyhow!(
+                        "Wrong number of inputs to `⇒`: expected 2, found {}.",
+                        inputs.len()
+                    )
+                })?)
+            }
+            ExpressionJson::Other("=", inputs) => {
+                Expression::Equal(inputs.into_inner().map_err(|inputs| {
+                    anyhow!(
+                        "Wrong number of inputs to `=`: expected 2, found {}.",
+                        inputs.len()
+                    )
+                })?)
+            }
+            ExpressionJson::Other(f, inputs) => {
+                Expression::Function(f.to_owned(), Type::TruthValue, inputs)
+            }
         })
     }
 }

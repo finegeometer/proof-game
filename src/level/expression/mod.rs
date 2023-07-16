@@ -1,11 +1,8 @@
-mod json;
-
 use super::case::*;
 use super::*;
 use smallvec::SmallVec;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Deserialize)]
-#[serde(try_from = "json::ExpressionJson<T>")]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Expression<T> {
     And(SmallVec<[T; 2]>),
     Or(SmallVec<[T; 2]>),
@@ -18,10 +15,12 @@ pub enum Expression<T> {
 #[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Var(pub String, pub Type);
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Deserialize)]
 pub enum Type {
     #[default]
+    #[serde(rename = "Ω")]
     TruthValue,
+    #[serde(rename = "ℝ")]
     RealNumber,
 }
 
