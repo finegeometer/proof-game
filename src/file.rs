@@ -7,7 +7,7 @@ pub(crate) fn save_listener<'a>(
     save: impl 'static + Fn(&mut crate::Model) -> String,
     filename: &'static str,
 ) -> dodrio::Listener<'a> {
-    dodrio::builder::on(bump, "click", move |root, _, _| {
+    dodrio::builder::on(bump, "click", move |root, vdom, _| {
         let a: web_sys::HtmlAnchorElement = web_sys::window()
             .unwrap()
             .document()
@@ -26,6 +26,8 @@ pub(crate) fn save_listener<'a>(
         a.set_href(&web_sys::Url::create_object_url_with_blob(&blob).unwrap());
         a.set_download(filename);
         a.click();
+
+        vdom.schedule_render();
     })
 }
 
