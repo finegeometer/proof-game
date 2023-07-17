@@ -2,10 +2,14 @@
   { "+": "ℝ"
   , "0": "ℝ"
   , "-": "ℝ"
+  , "−": "ℝ"
   , "×": "ℝ"
   , "1": "ℝ"
   , "⅟": "ℝ"
   , "÷": "ℝ"
+  , "√": "ℝ"
+  , "<": "Ω"
+  , "≠": "Ω"
   }
 , "levels":
   { "Intro.0":
@@ -31,7 +35,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 2
-    , "map_position": [2,0]
+    , "map_position": [1.5,0]
     , "bezier_vector": [1,0]
     , "text_box": ["Drag equal nodes together.", "#"]
     , "prereqs": ["Intro.0"]
@@ -48,7 +52,7 @@
     , "hypotheses": [2]
     , "conclusion": 3
     , "_comment" : "Symmetry of equality."
-    , "map_position": [4,-1]
+    , "map_position": [3,-0.5]
     , "bezier_vector": [1,0]
     , "prereqs": ["Intro.1"]
     , "next_level": "Intro.3"
@@ -66,7 +70,7 @@
     , "hypotheses": [3,4]
     , "conclusion": 5
     , "_comment" : "Transitivity of equality."
-    , "map_position": [4,1]
+    , "map_position": [3,0.5]
     , "bezier_vector": [1,0]
     , "prereqs": ["Intro.1"]
     , "next_level": "Intro.4"
@@ -84,11 +88,14 @@
       ]
     , "hypotheses": [4]
     , "conclusion": 6
-    , "map_position": [6,0]
+    , "map_position": [4.5,0]
     , "bezier_vector": [1,0]
     , "prereqs": ["Intro.2", "Intro.3"]
     , "next_level": "+-id"
     }
+
+
+
 
   , "+-id":
     { "axiom": true
@@ -101,7 +108,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 3
-    , "map_position": [8,0]
+    , "map_position": [9,0]
     , "bezier_vector": [1,0]
     , "text_box": ["Axiom: We take this for granted.", "#"]
     , "prereqs": ["Intro.4"]
@@ -119,7 +126,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 4
-    , "map_position": [10,0]
+    , "map_position": [10.5,0]
     , "bezier_vector": [1,0]
     , "text_box": ["New feature! Import the axiom to solve this one.", "#"]
     , "prereqs": ["+-id"]
@@ -153,7 +160,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 4
-    , "map_position": [14,0]
+    , "map_position": [13.5,-1.5]
     , "bezier_vector": [1,0]
     , "text_box": ["Another axiom.", "#"]
     , "prereqs": ["+.1"]
@@ -169,10 +176,10 @@
       ]
     , "hypotheses": []
     , "conclusion": 3
-    , "map_position": [16,0]
+    , "map_position": [15,-2.25]
     , "bezier_vector": [1,0]
     , "prereqs": ["+-comm"]
-    , "next_level": "+-assoc"
+    , "next_level": "+.7"
     }
   , "+-assoc":
     { "axiom": true
@@ -189,9 +196,9 @@
       ]
     , "hypotheses": []
     , "conclusion": 7
-    , "map_position": [18,0]
+    , "map_position": [13.5,0]
     , "bezier_vector": [1,0]
-    , "prereqs": ["+.2"]
+    , "prereqs": ["+.1"]
     , "next_level": "+.3"
     }
   , "+.3":
@@ -211,9 +218,9 @@
       ]
     , "hypotheses": []
     , "conclusion": 10
-    , "map_position": [20,0]
+    , "map_position": [15,-0.75]
     , "bezier_vector": [1,0]
-    , "prereqs": ["+-assoc"]
+    , "prereqs": ["+-assoc", "+-comm"]
     , "next_level": "+.4"
     }
   , "+.4":
@@ -233,10 +240,10 @@
       ]
     , "hypotheses": []
     , "conclusion": 10
-    , "map_position": [22,0]
+    , "map_position": [18,-0.75]
     , "bezier_vector": [1,0]
     , "prereqs": ["+.3"]
-    , "next_level": "+-inv"
+    , "next_level": "−-def"
     }
   , "+-inv":
     { "axiom": true
@@ -250,9 +257,9 @@
       ]
     , "hypotheses": []
     , "conclusion": 4
-    , "map_position": [24,0]
+    , "map_position": [13.5,1.5]
     , "bezier_vector": [1,0]
-    , "prereqs": ["+.4"]
+    , "prereqs": ["+.1"]
     , "next_level": "+.5"
     }
   , "+.5":
@@ -267,9 +274,9 @@
       ]
     , "hypotheses": []
     , "conclusion": 5
-    , "map_position": [26,0]
+    , "map_position": [15,0.75]
     , "bezier_vector": [1,0]
-    , "prereqs": ["+-inv"]
+    , "prereqs": ["+-inv", "+-assoc"]
     , "next_level": "+.6"
     }
   , "+.6":
@@ -285,7 +292,7 @@
       ]
     , "hypotheses": [6]
     , "conclusion": 3
-    , "map_position": [28,0]
+    , "map_position": [16.5,0.75]
     , "bezier_vector": [1,0]
     , "prereqs": ["+.5"]
     , "next_level": "+.7"
@@ -301,11 +308,68 @@
       ]
     , "hypotheses": []
     , "conclusion": 4
-    , "map_position": [30,0]
+    , "map_position": [18,0.75]
     , "bezier_vector": [1,0]
-    , "prereqs": ["+.6"]
+    , "prereqs": ["+.6", "+.2"]
+    , "next_level": "−-def"
+    }
+
+
+
+
+  , "−-def":
+    { "axiom": true
+    , "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ ["a",         [-1,0]]
+      , ["b",         [ 1,0]]
+      , [["-",[1  ]], [ 1,2.5]]
+      , [["+",[0,2]], [ 1,5]]
+      , [["−",[0,1]], [-1,3.5]]
+      , [["=",[4,3]], [ 0,7]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 5
+    , "map_position": [22.5,0]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["+.7", "+.4"]
+    , "next_level": "−.0"
+    }
+  , "−.0":
+    { "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ ["a",         [-1,0]]
+      , ["b",         [ 1,0]]
+      , [["-",[1  ]], [ 1,2.5]]
+      , [["−",[0,2]], [ 1,5]]
+      , [["+",[0,1]], [-1,3.5]]
+      , [["=",[4,3]], [ 0,7]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 5
+    , "map_position": [24,0]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["−-def"]
+    , "next_level": "−.1"
+    }
+  , "−.1":
+    { "variables": {"a": "ℝ"}
+    , "nodes":
+      [ ["a",         [-1,0]]
+      , [["−",[0,0]], [-1,2.5]]
+      , [["0",[   ]], [ 1,2.5]]
+      , [["=",[1,2]], [ 0,5]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 3
+    , "map_position": [25.5,0]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["−.0"]
     , "next_level": null
     }
+
+
+
 
   }
 }
