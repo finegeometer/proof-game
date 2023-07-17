@@ -21,7 +21,7 @@ pub struct Level {
     pub map_position: [f64; 2],
     pub bezier_vector: [f64; 2],
     pub prereqs: Vec<usize>,
-    pub next_level: Option<usize>,
+    pub next_level: Vec<usize>,
     pub unlocks: Unlocks,
     pub axiom: bool,
 }

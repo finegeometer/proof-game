@@ -89,14 +89,20 @@ impl GameState {
     fn level(game_data: &GameData, level: usize, save_data: &SaveData) -> Self {
         Self::Level {
             level,
-            next_level: game_data.level(level).next_level.filter(|&next_level| {
-                game_data
-                    .level(next_level)
-                    .prereqs
-                    .iter()
-                    .filter(|&&prereq| prereq != level)
-                    .all(|&prereq| save_data.completed(prereq))
-            }),
+            next_level: game_data
+                .level(level)
+                .next_level
+                .iter()
+                .copied()
+                .find(|&next_level| {
+                    !save_data.completed(next_level)
+                        && game_data
+                            .level(next_level)
+                            .prereqs
+                            .iter()
+                            .filter(|&&prereq| prereq != level)
+                            .all(|&prereq| save_data.completed(prereq))
+                }),
             level_state: Box::new(game_data.load(level, save_data.unlocks())),
             theorem_select: None,
         }

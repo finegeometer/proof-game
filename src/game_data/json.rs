@@ -6,7 +6,7 @@ use crate::level::{
 use super::*;
 use ::serde::Deserialize;
 use anyhow::*;
-use serde::{Deserializer, Serialize};
+use serde::Serialize;
 use smallvec::SmallVec;
 use std::collections::{HashMap, HashSet};
 
@@ -50,22 +50,11 @@ struct LevelJson<'a> {
     map_position: [f64; 2],
     bezier_vector: [f64; 2],
     prereqs: Vec<&'a str>,
-    #[serde(default, deserialize_with = "deserialize_some")]
-    next_level: Option<Option<&'a str>>,
+    next_level: Vec<&'a str>,
     #[serde(default)]
     unlocks: Unlocks,
     #[serde(default)]
     axiom: bool,
-}
-
-// https://github.com/serde-rs/serde/issues/984
-// Any value that is present is considered Some value, including null.
-fn deserialize_some<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
-where
-    T: Deserialize<'de>,
-    D: Deserializer<'de>,
-{
-    Deserialize::deserialize(deserializer).map(Some)
 }
 
 impl<'a> LevelJson<'a> {
@@ -126,14 +115,15 @@ impl<'a> LevelJson<'a> {
                         .ok_or_else(|| anyhow!("Unknown level {} in prereqs.", x))
                 })
                 .collect::<Result<_, _>>()?,
-            next_level: match next_level.ok_or_else(|| anyhow!("Missing next_level field."))? {
-                Some(x) => Some(
-                    *indices
+            next_level: next_level
+                .into_iter()
+                .map(|x| {
+                    indices
                         .get(x)
-                        .ok_or_else(|| anyhow!("Unknown level {} in next_level.", x))?,
-                ),
-                None => None,
-            },
+                        .copied()
+                        .ok_or_else(|| anyhow!("Unknown level {} in next_level.", x))
+                })
+                .collect::<Result<_>>()?,
             unlocks,
             axiom,
         })
