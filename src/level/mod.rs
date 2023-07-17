@@ -52,7 +52,7 @@ struct DragState {
 pub enum Msg {
     MouseDown(f64, f64, DragObject),
     MouseMove(f64, f64),
-    MouseUp(f64, f64, Option<Node>),
+    MouseUp(f64, f64, Option<DropObject>),
     MouseWheel(f64, f64, f64),
     GotoCase(CaseId),
 
@@ -68,6 +68,12 @@ pub enum DragObject {
     Node(Node),
     Wire(Wire),
     Background,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum DropObject {
+    Node(Node),
+    TrashCan,
 }
 
 impl State {
@@ -120,18 +126,24 @@ impl State {
                     // This is a drag.
                     if self.interactable() {
                         if let DragObject::Node(n1) = object {
-                            if let Some(n2) = dropped_on {
-                                let mut case = self.case_tree.current_case_mut();
-                                let w1 = case.node_output(n1);
-                                let w2 = case.node_output(n2);
-                                if case.wire_equiv(w1, w2) {
-                                    case.connect(
-                                        w1,
-                                        w2,
-                                        ValidityReason::new("I just checked equivalence."),
-                                    );
+                            match dropped_on {
+                                Some(DropObject::Node(n2)) => {
+                                    let mut case = self.case_tree.current_case_mut();
+                                    let w1 = case.node_output(n1);
+                                    let w2 = case.node_output(n2);
+                                    if case.wire_equiv(w1, w2) {
+                                        case.connect(
+                                            w1,
+                                            w2,
+                                            ValidityReason::new("I just checked equivalence."),
+                                        );
+                                    }
+                                    rerender = true;
                                 }
-                                rerender = true;
+                                Some(DropObject::TrashCan) => {
+                                    self.case_tree.current_case_mut().set_deleted(n1);
+                                }
+                                None => {}
                             }
                         }
                     }

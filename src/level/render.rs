@@ -103,7 +103,6 @@ impl State {
             },
         );
         main_screen = main_screen.child(wires0).child(nodes0);
-
         main_screen
     }
 
@@ -188,7 +187,25 @@ impl State {
             }
             Some(Mode::SelectUndo { preview }) => self.preview(cx, self.case_tree.case(*preview).0),
         };
-        col0 = col0.child(main_screen);
+        col0 = col0.child(
+            div(cx.bump)
+                .attr("style", "display: flex; min-height: 0; position: relative;")
+                .child(main_screen)
+                .child(
+                    div(cx.bump)
+                        .attributes([attr("class", "trash-can")])
+                        .listeners([on(
+                            cx.bump,
+                            "mouseup",
+                            handler(|_| {
+                                crate::Msg::Level(Msg::MouseUp(0., 0., Some(DropObject::TrashCan)))
+                            }),
+                        )])
+                        .child(text("🗑"))
+                        .finish(),
+                )
+                .finish(),
+        );
 
         // Text Box
         if let Some((text_box, link)) = &self.text_box {
@@ -222,9 +239,7 @@ impl State {
                 matches!(self.mode, Some(Mode::SelectUndo { .. })),
                 self.axiom,
             ));
-        }
 
-        if self.unlocks >= Unlocks::LEMMAS {
             if matches!(self.mode, Some(Mode::SelectUndo { .. })) {
                 col1 = col1.child(
                     div(cx.bump)

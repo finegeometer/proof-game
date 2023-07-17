@@ -56,6 +56,7 @@ struct Data {
     position: [f64; 2],
     /// A boolean can be proven true, or unproven. (A non-boolean is always treated as unproven.)
     proven: bool,
+    deleted: bool,
 }
 
 impl Case {
@@ -88,6 +89,7 @@ impl Case {
             expression: expression.clone(),
             position,
             proven: false,
+            deleted: false,
         });
         self.node_to_egg.push(
             self.egg
@@ -106,7 +108,9 @@ impl Case {
     }
 
     pub fn wire_inputs(&self, w: Wire) -> impl Iterator<Item = Node> + '_ {
-        self.connections.iter_class(w.0)
+        self.connections
+            .iter_class(w.0)
+            .filter(|n| !self.nodes[n.0].deleted)
     }
 
     pub fn wire_eq(&self, w1: Wire, w2: Wire) -> bool {
@@ -160,6 +164,10 @@ impl Case {
         }
     }
 
+    pub fn set_deleted(&mut self, node: Node) {
+        self.nodes[node.0].deleted = true;
+    }
+
     pub fn position(&self, n: Node) -> [f64; 2] {
         self.nodes[n.0].position
     }
@@ -168,8 +176,10 @@ impl Case {
         self.nodes[n.0].position = position;
     }
 
-    pub fn nodes(&self) -> impl Iterator<Item = Node> {
-        (0..self.nodes.len()).map(Node)
+    pub fn nodes(&self) -> impl '_ + Iterator<Item = Node> {
+        (0..self.nodes.len())
+            .map(Node)
+            .filter(|n| !self.nodes[n.0].deleted)
     }
 
     pub fn wires(&self) -> impl Iterator<Item = (Wire, Vec<(Node, usize)>)> {

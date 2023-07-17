@@ -38,7 +38,7 @@ pub(super) fn render_node<'a>(
                 handler(move |e| {
                     let (x, y) =
                         to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                    crate::Msg::Level(level::Msg::MouseUp(x, y, Some(node)))
+                    crate::Msg::Level(level::Msg::MouseUp(x, y, Some(level::DropObject::Node(node))))
                 }),
             );
     }
