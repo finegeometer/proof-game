@@ -195,6 +195,28 @@
     , "next_level": "+.3"
     }
   , "+.3":
+    { "variables": {"a": "ℝ", "b": "ℝ", "c": "ℝ"}
+    , "nodes":
+      [ ["a"        , [-5,0]]
+      , ["b"        , [-3,0]]
+      , ["c"        , [-1,0]]
+      , [["+",[0,1]], [-4,3]]
+      , [["+",[3,2]], [-3,6]]
+      , ["a"        , [ 1,0]]
+      , ["c"        , [ 3,0]]
+      , ["b"        , [ 5,0]]
+      , [["+",[5,6]], [ 2,3]]
+      , [["+",[8,7]], [ 3,6]]
+      , [["=",[4,9]], [ 0,9]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 10
+    , "map_position": [20,0]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["+-assoc"]
+    , "next_level": "+.4"
+    }
+  , "+.4":
     { "variables": {"a": "ℝ", "b": "ℝ", "c": "ℝ", "d": "ℝ"}
     , "nodes":
       [ ["a"        , [-3,0]]
@@ -211,9 +233,9 @@
       ]
     , "hypotheses": []
     , "conclusion": 10
-    , "map_position": [20,0]
+    , "map_position": [22,0]
     , "bezier_vector": [1,0]
-    , "prereqs": ["+-assoc"]
+    , "prereqs": ["+.3"]
     , "next_level": null
     }
 
