@@ -170,10 +170,12 @@ impl State {
                                 mut chosen,
                                 current,
                                 remaining,
-                            }) => match object {
-                                DragObject::Node(n) => {
-                                    let case = self.case_tree.case(self.case_tree.current).0;
-                                    if current.1 == case.ty(case.node_output(n)) {
+                            }) => {
+                                let case = self.case_tree.case(self.case_tree.current).0;
+                                match object {
+                                    DragObject::Node(n)
+                                        if current.1 == case.ty(case.node_output(n)) =>
+                                    {
                                         chosen.insert(current, n);
                                         self.start_processing_var(Mode::AssignTheoremVars {
                                             spec,
@@ -184,17 +186,19 @@ impl State {
                                         });
                                         rerender = true;
                                     }
+                                    DragObject::Node(_)
+                                    | DragObject::Wire(_)
+                                    | DragObject::Background => {
+                                        self.mode = Some(Mode::AssignTheoremVars {
+                                            spec,
+                                            offset,
+                                            chosen,
+                                            current,
+                                            remaining,
+                                        })
+                                    }
                                 }
-                                DragObject::Wire(_) | DragObject::Background => {
-                                    self.mode = Some(Mode::AssignTheoremVars {
-                                        spec,
-                                        offset,
-                                        chosen,
-                                        current,
-                                        remaining,
-                                    })
-                                }
-                            },
+                            }
                             Some(Mode::SelectUndo { preview }) => {
                                 self.mode = Some(Mode::SelectUndo { preview })
                             }
