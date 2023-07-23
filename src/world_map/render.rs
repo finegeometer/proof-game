@@ -124,7 +124,7 @@ impl State {
                     circle = circle
                         .on(
                             "click",
-                            handler(move |_| crate::Msg::SelectedTheorem(level)),
+                            handler(move |_| crate::Msg::SelectedTheorem(Some(level))),
                         )
                         .on(
                             "mouseover",

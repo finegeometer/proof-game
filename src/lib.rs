@@ -81,7 +81,8 @@ enum GameState {
         level: usize,
         next_level: Option<usize>,
         level_state: Box<level::State>,
-        theorem_select: Option<(render::PanZoom, world_map::State, Option<usize>)>,
+        theorem_select: Option<(world_map::State, Option<usize>)>,
+        theorem_select_panzoom: render::PanZoom,
     },
 }
 
@@ -105,6 +106,10 @@ impl GameState {
                 }),
             level_state: Box::new(game_data.load(level, save_data.unlocks())),
             theorem_select: None,
+            theorem_select_panzoom: render::PanZoom::center(
+                game_data.level(level).map_position,
+                10.,
+            ),
         }
     }
 
@@ -126,7 +131,7 @@ enum Msg {
     // Messages related to selecting theorems from the world map while in a level.
     SelectTheorem,
     PreviewTheorem(usize),
-    SelectedTheorem(usize),
+    SelectedTheorem(Option<usize>),
 
     LoadedSave(String),
     LoadingSaveFailed(),
@@ -185,9 +190,10 @@ impl Model {
                     map_state.update(msg, &mut self.global_state.map_panzoom)
                 }
                 GameState::Level {
-                    theorem_select: Some((panzoom, map_state, _)),
+                    theorem_select: Some((map_state, _)),
+                    theorem_select_panzoom,
                     ..
-                } => map_state.update(msg, panzoom),
+                } => map_state.update(msg, theorem_select_panzoom),
                 _ => false,
             },
 
@@ -222,20 +228,16 @@ impl Model {
             },
 
             Msg::SelectTheorem => {
-                let GameState::Level { level, theorem_select, .. } = &mut self.game_state else { return false };
+                let GameState::Level { theorem_select, .. } = &mut self.game_state else { return false };
                 if theorem_select.is_some() {
                     return false;
                 }
 
-                *theorem_select = Some((
-                    render::PanZoom::center(self.game_data.level(*level).map_position, 10.),
-                    world_map::State::new(),
-                    None,
-                ));
+                *theorem_select = Some((world_map::State::new(), None));
                 true
             }
             Msg::PreviewTheorem(level) => {
-                let GameState::Level { theorem_select: Some((_,_,preview)), .. } = &mut self.game_state else { return false };
+                let GameState::Level { theorem_select: Some((_,preview)), .. } = &mut self.game_state else { return false };
                 if *preview == Some(level) {
                     return false;
                 }
@@ -245,9 +247,11 @@ impl Model {
             Msg::SelectedTheorem(level) => {
                 let GameState::Level { level_state, theorem_select, .. } = &mut self.game_state else { return false };
                 *theorem_select = None;
-                level_state.update(level::Msg::SelectedTheorem(
-                    self.game_data.level(level).spec.clone(),
-                ));
+                if let Some(level) = level {
+                    level_state.update(level::Msg::SelectedTheorem(
+                        self.game_data.level(level).spec.clone(),
+                    ));
+                }
                 true
             }
 
@@ -295,6 +299,7 @@ impl<'a> dodrio::Render<'a> for Model {
                 level,
                 next_level,
                 theorem_select: None,
+                theorem_select_panzoom: _,
             } => {
                 for child in level_state.render(cx, *level, *next_level) {
                     builder = builder.child(child);
@@ -322,13 +327,20 @@ impl<'a> dodrio::Render<'a> for Model {
                     )
             }
             GameState::Level {
-                theorem_select: Some((panzoom, map_state, preview)),
+                theorem_select: Some((map_state, preview)),
+                theorem_select_panzoom,
                 ..
             } => {
                 let col0 = div(cx.bump)
                     .attributes([attr("class", "col wide")])
                     .children([
-                        map_state.render(cx, &self.game_data, panzoom, &self.save_data, true),
+                        map_state.render(
+                            cx,
+                            &self.game_data,
+                            theorem_select_panzoom,
+                            &self.save_data,
+                            true,
+                        ),
                         div(cx.bump)
                             .attributes([attr("class", "background disabled text-box")])
                             .children([text("Select a theorem to apply.")])
@@ -349,6 +361,16 @@ impl<'a> dodrio::Render<'a> for Model {
                     }
                     col1 = col1.child(svg.finish());
                 }
+                col1 = col1.child(
+                    div(cx.bump)
+                        .attributes([attr("class", "button yellow")])
+                        .on(
+                            "click",
+                            render::handler(move |_| Msg::SelectedTheorem(None)),
+                        )
+                        .children([text("Cancel Application")])
+                        .finish(),
+                );
                 builder = builder.child(col0).child(col1.finish())
             }
             GameState::Menu => {

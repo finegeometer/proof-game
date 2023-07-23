@@ -22,8 +22,6 @@ impl CaseTree {
         match self.nodes[node].children.as_ref().map(SmallVec::as_slice) {
             // Leaf
             None => {
-                let mut clickable = false;
-
                 let mut circle = circle(cx.bump).attributes([
                     attr("r", "0.5"),
                     attr("cx", bumpalo::format!(in cx.bump, "{}", *x).into_bump_str()),
@@ -33,16 +31,13 @@ impl CaseTree {
                         match (node == self.current.0, self.nodes[node].complete) {
                             (true, true) => "node goal known",
                             (true, false) => "node goal",
-                            (false, true) => "node known",
-                            (false, false) => {
-                                clickable = true;
-                                "node hoverable"
-                            }
+                            (false, true) => "node known hoverable",
+                            (false, false) => "node hoverable",
                         },
                     ),
                 ]);
 
-                if clickable {
+                if node != self.current.0 {
                     circle = circle.on(
                         "click",
                         handler(move |_| {

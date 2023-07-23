@@ -189,11 +189,12 @@ impl State {
             }
             Some(Mode::SelectUndo { preview }) => self.preview(cx, self.case_tree.case(*preview).0),
         };
-        col0 = col0.child(
-            div(cx.bump)
+        col0 = col0.child({
+            let mut tmp = div(cx.bump)
                 .attr("style", "display: flex; min-height: 0; position: relative;")
-                .child(main_screen)
-                .child(
+                .child(main_screen);
+            if !self.axiom {
+                tmp = tmp.child({
                     div(cx.bump)
                         .attributes([attr("class", "trash-can")])
                         .listeners([on(
@@ -204,10 +205,11 @@ impl State {
                             }),
                         )])
                         .child(text("🗑"))
-                        .finish(),
-                )
-                .finish(),
-        );
+                        .finish()
+                });
+            }
+            tmp.finish()
+        });
 
         // Text Box
         if let Some((text_box, link)) = &self.text_box {
@@ -246,6 +248,15 @@ impl State {
                 col1 = col1.child(
                     div(cx.bump)
                         .attributes([attr("class", "button red")])
+                        .on(
+                            "mouseover",
+                            handler({
+                                let current = self.case_tree.current;
+                                move |_| {
+                                    crate::Msg::Level(crate::level::Msg::RevertPreview(current))
+                                }
+                            }),
+                        )
                         .on("click", handler(move |_| crate::Msg::Level(Msg::Cancel)))
                         .children([text("Cancel undo.")])
                         .finish(),
