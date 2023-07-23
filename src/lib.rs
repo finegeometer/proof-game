@@ -315,7 +315,7 @@ impl<'a> dodrio::Render<'a> for Model {
                                 &self.game_data,
                                 &self.global_state.map_panzoom,
                                 &self.save_data,
-                                false,
+                                None,
                             )])
                             .finish(),
                     )
@@ -339,7 +339,7 @@ impl<'a> dodrio::Render<'a> for Model {
                             &self.game_data,
                             theorem_select_panzoom,
                             &self.save_data,
-                            true,
+                            Some(*preview),
                         ),
                         div(cx.bump)
                             .attributes([attr("class", "background disabled text-box")])

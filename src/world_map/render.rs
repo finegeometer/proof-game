@@ -10,7 +10,7 @@ impl State {
         game_data: &GameData,
         panzoom: &PanZoom,
         save_data: &crate::SaveData,
-        is_theorem_select: bool,
+        is_theorem_select: Option<Option<usize>>,
     ) -> dodrio::Node<'a> {
         let mut builder = svg(cx.bump)
             .attributes([
@@ -108,8 +108,13 @@ impl State {
                 attr(
                     "class",
                     bumpalo::format!(in cx.bump, "node{}{}", if game_data.level(level).axiom {" axiom"} else {""}, if save_data.completed(level) {
-                        " hoverable known"
-                    } else if !is_theorem_select && prereqs_complete {
+                        if Some(Some(level)) == is_theorem_select {
+                            " hoverable known goal"
+                        } else {
+                            
+                            " hoverable known"
+                        }
+                    } else if is_theorem_select.is_none() && prereqs_complete {
                         " hoverable goal"
                     } else {
                         ""
@@ -119,7 +124,7 @@ impl State {
             ]);
 
             #[allow(clippy::collapsible_else_if)]
-            if is_theorem_select {
+            if is_theorem_select.is_some() {
                 if save_data.completed(level) {
                     circle = circle
                         .on(

@@ -96,6 +96,7 @@ impl LevelSpec {
                             .into_bump_str(),
                         None,
                         false,
+                        expression.ty(),
                     ));
                 }
                 builder.finish()

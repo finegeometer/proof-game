@@ -1,4 +1,7 @@
-use crate::{level, render::*};
+use crate::{
+    level::{self, expression::Type},
+    render::*,
+};
 use dodrio::{builder::*, bumpalo};
 use wasm_bindgen::JsCast;
 
@@ -8,6 +11,7 @@ pub(super) fn render_node<'a>(
     label: &'a str,
     events: Option<super::Node>,
     hoverable: bool,
+    ty: Type,
 ) -> dodrio::Node<'a> {
     let [x, y] = pos;
     let x = bumpalo::format!(in cx.bump, "{}", x).into_bump_str();
@@ -17,7 +21,15 @@ pub(super) fn render_node<'a>(
         attr("r", "0.5"),
         attr("cx", x),
         attr("cy", y),
-        attr("class", if hoverable { "node hoverable" } else { "node" }),
+        attr(
+            "class",
+            match (ty, hoverable) {
+                (Type::TruthValue, true) => "node hoverable",
+                (Type::TruthValue, false) => "node",
+                (Type::RealNumber, true) => "node number hoverable",
+                (Type::RealNumber, false) => "node number",
+            },
+        ),
         attr(
             "pointer-events",
             if events.is_some() { "auto" } else { "none" },
@@ -38,7 +50,11 @@ pub(super) fn render_node<'a>(
                 handler(move |e| {
                     let (x, y) =
                         to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                    crate::Msg::Level(level::Msg::MouseUp(x, y, Some(level::DropObject::Node(node))))
+                    crate::Msg::Level(level::Msg::MouseUp(
+                        x,
+                        y,
+                        Some(level::DropObject::Node(node)),
+                    ))
                 }),
             );
     }
@@ -159,7 +175,14 @@ impl super::Case {
             // Wires
             {
                 let mut builder = g(cx.bump);
-                for (wire, outputs) in self.wires() {
+
+                let (wires_dragged, wires_static) =
+                    self.wires().partition::<Vec<_>, _>(|(w, outputs)| {
+                        self.wire_inputs(*w)
+                            .chain(outputs.iter().map(|(n, _)| *n))
+                            .any(|n| Some(n) == dragging)
+                    });
+                for (wire, outputs) in wires_static.into_iter().chain(wires_dragged) {
                     use bumpalo::collections::Vec;
 
                     for svg_node in render_wire(
@@ -217,6 +240,7 @@ impl super::Case {
                             .into_bump_str(),
                             events.then_some(node),
                             dragging.is_none() && node_hoverable(node),
+                            self.ty(self.node_output(node)),
                         ));
                     }
                 }
@@ -231,6 +255,7 @@ impl super::Case {
                         .into_bump_str(),
                         None,
                         false,
+                        self.ty(self.node_output(node)),
                     ));
                 }
                 builder.finish()
