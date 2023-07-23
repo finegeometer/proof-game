@@ -69,6 +69,13 @@ impl CaseTree {
         (case, *complete)
     }
 
+    pub fn current_case_contradiction(&self) -> bool {
+        self.nodes[self.current.0]
+            .children
+            .as_ref()
+            .is_some_and(|children| children.is_empty())
+    }
+
     pub fn current_case_mut(&mut self) -> CaseRefMut {
         CaseRefMut(self, self.current)
     }

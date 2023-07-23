@@ -27,6 +27,8 @@ impl State {
                     "class",
                     if self.axiom {
                         "background axiom"
+                    } else if self.case_tree.current_case_contradiction() {
+                        "background disabled"
                     } else if complete {
                         "background complete"
                     } else {
