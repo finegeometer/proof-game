@@ -169,7 +169,10 @@
       stroke-width: 0.04;
     }
 
-    /* .node.number {} */
+    .node.number {
+      fill: #89d;
+      stroke: #67b;
+    }
 
     .node.hoverable:hover {
       fill: #89a;
@@ -290,7 +293,8 @@
 
 
 
-    .node.axiom {
+    /* Duplicate selector for greater specificity. */
+    .node.axiom.axiom {
       stroke: #00f;
       stroke-width: 0.06;
     }
