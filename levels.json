@@ -1147,7 +1147,7 @@
     , "conclusion": 5
     , "map_position": [37.5,5]
     , "bezier_vector": [1,0]
-    , "prereqs": ["≠.0", "≠.1", "≠.2"]
+    , "prereqs": ["≠.0", "≠.1", "≠.2", "¬.4"]
     , "next_level": ["≠.3"]
     }
   , "≠.3":
@@ -1186,7 +1186,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 4
-    , "map_position": [25.5,10]
+    , "map_position": [28.5,10]
     , "bezier_vector": [1,0]
     , "prereqs": ["∨.5"]
     , "next_level": ["¬.0"]
@@ -1200,7 +1200,7 @@
       ]
     , "hypotheses": [0,2]
     , "conclusion": 1
-    , "map_position": [27,10]
+    , "map_position": [30,10]
     , "bezier_vector": [1,0]
     , "prereqs": ["¬-def"]
     , "next_level": ["¬.1"]
@@ -1214,7 +1214,7 @@
       ]
     , "hypotheses": [0]
     , "conclusion": 2
-    , "map_position": [28.5,10]
+    , "map_position": [31.5,10]
     , "bezier_vector": [1,0]
     , "prereqs": ["¬.0"]
     , "next_level": ["¬.2"]
@@ -1229,7 +1229,7 @@
       ]
     , "hypotheses": [3]
     , "conclusion": 1
-    , "map_position": [30,10]
+    , "map_position": [33,10]
     , "bezier_vector": [1,0]
     , "prereqs": ["¬.1"]
     , "next_level": ["¬.3"]
@@ -1248,7 +1248,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 7
-    , "map_position": [31.5,10]
+    , "map_position": [34.5,10]
     , "bezier_vector": [1,0]
     , "prereqs": ["¬.2", "⇒.8"]
     , "next_level": ["¬.4"]
@@ -1266,8 +1266,8 @@
       ]
     , "hypotheses": [5]
     , "conclusion": 6
-    , "map_position": [33,10]
-    , "bezier_vector": [0,0]
+    , "map_position": [36,10]
+    , "bezier_vector": [1,0]
     , "prereqs": ["¬.3"]
     , "next_level": []
     }
