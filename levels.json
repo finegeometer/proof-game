@@ -96,8 +96,6 @@
     }
 
 
-
-
   , "+-id":
     { "axiom": true
     , "variables": {"a": "ℝ"}
@@ -316,8 +314,6 @@
     }
 
 
-
-
   , "−-def":
     { "axiom": true
     , "variables": {"a": "ℝ", "b": "ℝ"}
@@ -368,8 +364,6 @@
     , "prereqs": ["−.0"]
     , "next_level": []
     }
-
-
 
 
    , "×-id":
@@ -593,11 +587,29 @@
     , "map_position": [37.5,0]
     , "bezier_vector": [1,0]
     , "prereqs": ["×.3", "×.5"]
-    , "next_level": []
+    , "next_level": ["×-inv"]
     }
 
 
-
+  , "×-inv":
+    { "axiom": true
+    , "variables": {"a": "ℝ"}
+    , "nodes":
+      [ [["0",[   ]], [-2  ,0]]
+      , ["a"        , [ 0  ,0]]
+      , [["≠",[0,1]], [-1  ,3]]
+      , [["⅟",[1  ]], [ 1  ,3]]
+      , [["×",[1,3]], [ 0  ,5.5]]
+      , [["1",[   ]], [ 2  ,5.5]]
+      , [["=",[4,5]], [ 1  ,8]]
+      ]
+    , "hypotheses": [2]
+    , "conclusion": 6
+    , "map_position": [40.5,0]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["×.6", "≠.3"]
+    , "next_level": []
+    }
 
 
 
@@ -616,7 +628,7 @@
     , "hypotheses": [0,2]
     , "conclusion": 1
     , "_comment" : "Introduce implications."
-    , "map_position": [6,5]
+    , "map_position": [1.5,5]
     , "bezier_vector": [1,0]
     , "prereqs": []
     , "next_level": ["⇒.1"]
@@ -637,7 +649,7 @@
     , "hypotheses": [0,5,6,7,8]
     , "conclusion": 4
     , "_comment" : "Implication chain."
-    , "map_position": [7.5,5]
+    , "map_position": [3,5]
     , "bezier_vector": [1,0]
     , "prereqs": ["⇒.0"]
     , "next_level": ["⇒.2"]
@@ -655,7 +667,7 @@
     , "hypotheses": [3,4]
     , "conclusion": 5
     , "_comment" : "Implication introduction."
-    , "map_position": [9,5]
+    , "map_position": [4.5,5]
     , "bezier_vector": [1,0]
     , "prereqs": ["⇒.1"]
     , "next_level": ["⇒.3"]
@@ -671,44 +683,9 @@
       ]
     , "hypotheses": []
     , "conclusion": 4
-    , "map_position": [10.5,5]
+    , "map_position": [6,5]
     , "bezier_vector": [1,0]
     , "prereqs": ["Intro.4", "⇒.2"]
-    , "next_level": ["⇒.4"]
-    }
-  , "⇒.4":
-    { "variables": {"a": "Ω", "b": "Ω"}
-    , "unlocks": ["lemmas"]
-    , "nodes":
-      [ ["a",         [-1,0]]
-      , [["⇒",[0,0]], [-1,2.5]]
-      , ["b",         [ 1,0]]
-      , [["⇒",[1,2]], [ 0,5]]
-      ]
-    , "hypotheses": [3]
-    , "conclusion": 2
-    , "text_box" : ["Wires are clickable now.", "#"]
-    , "map_position": [12,5]
-    , "bezier_vector": [1,0]
-    , "prereqs": ["⇒.3", "+.1"]
-    , "next_level": ["⇒.5"]
-    }
-  , "⇒.5":
-    { "variables": {"a": "Ω", "b": "Ω"}
-    , "nodes":
-      [ ["a",         [-3,0]]
-      , ["a",         [-1,0]]
-      , ["b",         [ 1,0]]
-      , ["b",         [ 3,0]]
-      , [["⇒",[1,2]], [ 0,3]]
-      , [["=",[0,4]], [-1,6]]
-      , [["⇒",[5,3]], [ 0,9]]
-      ]
-    , "hypotheses": []
-    , "conclusion": 6
-    , "map_position": [13.5,5]
-    , "bezier_vector": [1,0]
-    , "prereqs": ["⇒.4"]
     , "next_level": ["PropExt"]
     }
   , "PropExt":
@@ -723,12 +700,12 @@
       ]
     , "hypotheses": [2,3]
     , "conclusion": 4
-    , "map_position": [15,5]
+    , "map_position": [7.5,5]
     , "bezier_vector": [1,0]
-    , "prereqs": ["⇒.5"]
-    , "next_level": ["⇒.6"]
+    , "prereqs": ["⇒.3"]
+    , "next_level": ["⇒.4"]
     }
-  , "⇒.6":
+  , "⇒.4":
     { "variables": {"a": "Ω", "b": "Ω"}
     , "nodes":
       [ ["a",         [-1,0]]
@@ -737,12 +714,11 @@
       ]
     , "hypotheses": [0,1]
     , "conclusion": 2
-    , "map_position": [16.5,5]
+    , "map_position": [9,5]
     , "bezier_vector": [1,0]
     , "prereqs": ["PropExt"]
     , "next_level": []
     }
-
 
 
   , "∧.0":
@@ -758,9 +734,9 @@
     , "hypotheses": [0,1,2]
     , "conclusion": 5
     , "_comment": "Conjunction introduction."
-    , "map_position": [18,4]
+    , "map_position": [10.5,4]
     , "bezier_vector": [1,0]
-    , "prereqs": ["⇒.6"]
+    , "prereqs": ["⇒.4"]
     , "next_level": ["∧.1"]
     }
   , "∧.1":
@@ -776,7 +752,7 @@
     , "hypotheses": [5]
     , "conclusion": 1
     , "_comment" : "Conjunction elimination."
-    , "map_position": [19.5,4]
+    , "map_position": [12,4]
     , "bezier_vector": [1,0]
     , "prereqs": ["∧.0"]
     , "next_level": ["∧.2"]
@@ -791,7 +767,7 @@
       ]
     , "hypotheses": [2]
     , "conclusion": 3
-    , "map_position": [21,4]
+    , "map_position": [13.5,4]
     , "bezier_vector": [1,0]
     , "prereqs": ["∧.1"]
     , "next_level": ["∧.3"]
@@ -810,7 +786,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 7
-    , "map_position": [22.5,4]
+    , "map_position": [15,4]
     , "bezier_vector": [1,0]
     , "prereqs": ["∧.2"]
     , "next_level": ["∧.4"]
@@ -828,7 +804,7 @@
     , "hypotheses": [1]
     , "conclusion": 5
     , "_comment" : "n-ary disjunctions"
-    , "map_position": [24,4]
+    , "map_position": [16.5,4]
     , "bezier_vector": [1,0]
     , "prereqs": ["∧.3"]
     , "next_level": ["∧.5"]
@@ -840,12 +816,11 @@
       ]
     , "hypotheses": []
     , "conclusion": 0
-    , "map_position": [25.5,4]
+    , "map_position": [18,4]
     , "bezier_vector": [1,0]
     , "prereqs": ["∧.4"]
     , "next_level": ["⇒.7"]
     }
-
 
 
   , "∨.0":
@@ -861,9 +836,9 @@
     , "hypotheses": [1]
     , "conclusion": 5
     , "_comment": "Disjunction introduction."
-    , "map_position": [18,6]
+    , "map_position": [10.5,6]
     , "bezier_vector": [1,0]
-    , "prereqs": ["⇒.6"]
+    , "prereqs": ["⇒.4"]
     , "next_level": ["∨.1"]
     }
   , "∨.1":
@@ -879,7 +854,7 @@
     , "hypotheses": [5]
     , "conclusion": 1
     , "_comment" : "Disjunction elimination."
-    , "map_position": [19.5,6]
+    , "map_position": [12,6]
     , "bezier_vector": [1,0]
     , "prereqs": ["∨.0"]
     , "next_level": ["∨.2"]
@@ -894,7 +869,7 @@
       ]
     , "hypotheses": [2]
     , "conclusion": 3
-    , "map_position": [21,6]
+    , "map_position": [13.5,6]
     , "bezier_vector": [1,0]
     , "prereqs": ["∨.1"]
     , "next_level": ["∨.3"]
@@ -913,7 +888,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 7
-    , "map_position": [22.5,6]
+    , "map_position": [15,6]
     , "bezier_vector": [1,0]
     , "prereqs": ["∨.2"]
     , "next_level": ["∨.4"]
@@ -931,7 +906,7 @@
     , "hypotheses": [5]
     , "conclusion": 1
     , "_comment" : "n-ary disjunctions"
-    , "map_position": [24,6]
+    , "map_position": [16.5,6]
     , "bezier_vector": [1,0]
     , "prereqs": ["∨.3"]
     , "next_level": ["∨.5"]
@@ -944,13 +919,48 @@
       ]
     , "hypotheses": [0]
     , "conclusion": 1
-    , "map_position": [25.5,6]
+    , "map_position": [18,6]
     , "bezier_vector": [1,0]
     , "prereqs": ["∨.4"]
     , "next_level": ["⇒.7"]
     }
 
 
+  , "⇒.5":
+    { "variables": {"a": "Ω", "b": "Ω"}
+    , "unlocks": ["lemmas"]
+    , "nodes":
+      [ ["a",         [-1,0]]
+      , [["⇒",[0,0]], [-1,2.5]]
+      , ["b",         [ 1,0]]
+      , [["⇒",[1,2]], [ 0,5]]
+      ]
+    , "hypotheses": [3]
+    , "conclusion": 2
+    , "text_box" : ["Wires are clickable now.", "#"]
+    , "map_position": [19.5,5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["∨.5","∧.5", "+.7"]
+    , "next_level": ["⇒.6"]
+    }
+  , "⇒.6":
+    { "variables": {"a": "Ω", "b": "Ω"}
+    , "nodes":
+      [ ["a",         [-3,0]]
+      , ["a",         [-1,0]]
+      , ["b",         [ 1,0]]
+      , ["b",         [ 3,0]]
+      , [["⇒",[1,2]], [ 0,3]]
+      , [["=",[0,4]], [-1,6]]
+      , [["⇒",[5,3]], [ 0,9]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 6
+    , "map_position": [21,5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["⇒.5"]
+    , "next_level": ["⇒.7"]
+    }
   , "⇒.7": 
     { "variables": {"a": "Ω", "b": "Ω", "c": "Ω"}
     , "nodes":
@@ -966,9 +976,9 @@
       ]
     , "hypotheses": []
     , "conclusion": 8
-    , "map_position": [27,5]
+    , "map_position": [22.5,5]
     , "bezier_vector": [1,0]
-    , "prereqs": ["∨.5","∧.5"]
+    , "prereqs": ["⇒.6"]
     , "next_level": ["⇒.8"]
     }
   , "⇒.8":
@@ -984,13 +994,11 @@
       ]
     , "hypotheses": []
     , "conclusion": 6
-    , "map_position": [28.5,5]
+    , "map_position": [24,5]
     , "bezier_vector": [1,0]
     , "prereqs": ["⇒.7"]
     , "next_level": ["¬.3"]
     }
-
-
 
 
   , "<-asym":
@@ -1005,7 +1013,7 @@
       ]
     , "hypotheses": [2,3]
     , "conclusion": 4
-    , "map_position": [31.5,4]
+    , "map_position": [27,4]
     , "bezier_vector": [1,0]
     , "prereqs": ["⇒.8"]
     , "next_level": ["<.0"]
@@ -1026,7 +1034,7 @@
       ]
     , "hypotheses": [8]
     , "conclusion": 5
-    , "map_position": [31.5,6]
+    , "map_position": [27,6]
     , "bezier_vector": [1,0]
     , "prereqs": ["⇒.8"]
     , "next_level": ["<.1"]
@@ -1041,7 +1049,7 @@
     , "hypotheses": [1]
     , "conclusion": 2
     , "_comment": "Irreflexivity."
-    , "map_position": [33,4]
+    , "map_position": [28.5,4]
     , "bezier_vector": [1,0]
     , "prereqs": ["<-asym"]
     , "next_level": []
@@ -1059,11 +1067,13 @@
     , "hypotheses": [3,4]
     , "conclusion": 5
     , "_comment": "Transitivity."
-    , "map_position": [33,6]
+    , "map_position": [28.5,6]
     , "bezier_vector": [1,0]
     , "prereqs": ["<-asym", "<-cotrans"]
     , "next_level": []
     }
+
+
   , "≠-def":
     { "axiom": true
     , "variables": {"a": "ℝ", "b": "ℝ"}
@@ -1078,7 +1088,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 6
-    , "map_position": [34.5,5]
+    , "map_position": [30,5]
     , "bezier_vector": [1,0]
     , "prereqs": ["<.0", "<.1"]
     , "next_level": []
@@ -1092,7 +1102,7 @@
       ]
     , "hypotheses": [1]
     , "conclusion": 2
-    , "map_position": [36,4]
+    , "map_position": [31.5,4]
     , "bezier_vector": [1,0]
     , "prereqs": ["≠-def"]
     , "next_level": ["≠.1", "≠.2", "≠-tight"]
@@ -1107,7 +1117,7 @@
       ]
     , "hypotheses": [2]
     , "conclusion": 3
-    , "map_position": [36,5]
+    , "map_position": [31.5,5]
     , "bezier_vector": [1,0]
     , "prereqs": ["≠-def"]
     , "next_level": ["≠.2", "≠.0", "≠-tight"]
@@ -1127,7 +1137,7 @@
       ]
     , "hypotheses": [8]
     , "conclusion": 5
-    , "map_position": [36,6]
+    , "map_position": [31.5,6]
     , "bezier_vector": [1,0]
     , "prereqs": ["≠-def"]
     , "next_level": ["≠.0", "≠.1", "≠-tight"]
@@ -1145,7 +1155,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 5
-    , "map_position": [37.5,5]
+    , "map_position": [33,5]
     , "bezier_vector": [1,0]
     , "prereqs": ["≠.0", "≠.1", "≠.2", "¬.4"]
     , "next_level": ["≠.3"]
@@ -1161,9 +1171,30 @@
       ]
     , "hypotheses": [4]
     , "conclusion": 2
-    , "map_position": [39,5]
+    , "map_position": [34.5,5]
     , "bezier_vector": [1,0]
     , "prereqs": ["≠-tight"]
+    , "next_level": []
+    }
+
+
+  , "<+-axiom":
+    { "axiom": true
+    , "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ [["0",[]]   , [-2,0]]
+      , ["a"        , [ 0,0]]
+      , ["b"        , [ 2,0]]
+      , [["<",[0,1]], [-2,3]]
+      , [["<",[0,2]], [ 0,3]]
+      , [["+",[1,2]], [ 2,3]]
+      , [["<",[0,5]], [ 1,5.5]]
+    ]
+    , "hypotheses": [3,4]
+    , "conclusion": 6
+    , "map_position": [37.5,5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["≠-tight", "−.1"]
     , "next_level": []
     }
 
@@ -1173,8 +1204,8 @@
 
 
 
-    
-  , "¬-def":
+
+    , "¬-def":
     { "axiom": true
     , "variables": {"a": "Ω"}
     , "nodes":
@@ -1186,7 +1217,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 4
-    , "map_position": [28.5,10]
+    , "map_position": [24,10]
     , "bezier_vector": [1,0]
     , "prereqs": ["∨.5"]
     , "next_level": ["¬.0"]
@@ -1200,7 +1231,7 @@
       ]
     , "hypotheses": [0,2]
     , "conclusion": 1
-    , "map_position": [30,10]
+    , "map_position": [25.5,10]
     , "bezier_vector": [1,0]
     , "prereqs": ["¬-def"]
     , "next_level": ["¬.1"]
@@ -1214,7 +1245,7 @@
       ]
     , "hypotheses": [0]
     , "conclusion": 2
-    , "map_position": [31.5,10]
+    , "map_position": [27,10]
     , "bezier_vector": [1,0]
     , "prereqs": ["¬.0"]
     , "next_level": ["¬.2"]
@@ -1229,7 +1260,7 @@
       ]
     , "hypotheses": [3]
     , "conclusion": 1
-    , "map_position": [33,10]
+    , "map_position": [28.5,10]
     , "bezier_vector": [1,0]
     , "prereqs": ["¬.1"]
     , "next_level": ["¬.3"]
@@ -1248,7 +1279,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 7
-    , "map_position": [34.5,10]
+    , "map_position": [30,10]
     , "bezier_vector": [1,0]
     , "prereqs": ["¬.2", "⇒.8"]
     , "next_level": ["¬.4"]
@@ -1266,11 +1297,12 @@
       ]
     , "hypotheses": [5]
     , "conclusion": 6
-    , "map_position": [36,10]
+    , "map_position": [31.5,10]
     , "bezier_vector": [1,0]
     , "prereqs": ["¬.3"]
     , "next_level": []
     }
+
 
   }
 }
