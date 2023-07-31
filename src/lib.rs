@@ -2,8 +2,9 @@
 #![allow(clippy::new_without_default)]
 
 use game_data::{GameData, SaveData};
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{prelude::Closure, JsCast};
 
+mod book;
 mod file;
 mod game_data;
 mod level;
@@ -16,13 +17,25 @@ pub fn run() {
 
     let (send_msg, recv_msg) = async_channel::unbounded();
 
+    let document = web_sys::window().unwrap().document().unwrap();
+
+    document
+        .body()
+        .unwrap()
+        .add_event_listener_with_callback("keydown", {
+            let send_msg = send_msg.clone();
+            Closure::wrap(Box::new(move |e: web_sys::KeyboardEvent| {
+                if !e.repeat() {
+                    send_msg.send_blocking(Msg::KeyPress(e.key())).unwrap();
+                }
+            }) as Box<dyn Fn(web_sys::KeyboardEvent)>)
+            .into_js_value()
+            .unchecked_ref()
+        })
+        .unwrap();
+
     let vdom = dodrio::Vdom::new(
-        &web_sys::window()
-            .unwrap()
-            .document()
-            .unwrap()
-            .get_element_by_id("vdom")
-            .unwrap(),
+        &document.get_element_by_id("vdom").unwrap(),
         Model::new(send_msg),
     );
 
@@ -136,6 +149,8 @@ enum Msg {
     LoadedSave(String),
     LoadingSaveFailed(),
     LoadedLevels(String),
+
+    KeyPress(String),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -171,6 +186,44 @@ impl Model {
 
     fn update(&mut self, msg: Msg) -> bool {
         match msg {
+            Msg::KeyPress(key) => {
+                let location = web_sys::window().unwrap().location();
+
+                if let Some(page) = location
+                    .hash()
+                    .unwrap()
+                    .as_str()
+                    .strip_prefix('#')
+                    .and_then(|s| book::BookPage::try_from(s).ok())
+                {
+                    match key.as_str() {
+                        "Escape" => {
+                            location.set_hash("").unwrap();
+                        }
+                        "ArrowLeft" => {
+                            if let Some(page) = page.prev() {
+                                location
+                                    .set_hash(&format!("#{}", <&str>::from(page)))
+                                    .unwrap();
+                            }
+                        }
+                        "ArrowRight" => {
+                            if let Some(page) = page.next() {
+                                location
+                                    .set_hash(&format!("#{}", <&str>::from(page)))
+                                    .unwrap();
+                            }
+                        }
+                        _ => {}
+                    }
+                    false
+                } else if let Some(msg) = self.key_binding(&key) {
+                    self.update(msg)
+                } else {
+                    false
+                }
+            }
+
             Msg::Level(msg) => {
                 let GameState::Level { level_state, level, .. } = &mut self.game_state else {return false};
                 let rerender = level_state.update(msg);
@@ -279,6 +332,47 @@ impl Model {
                 };
                 true
             }
+        }
+    }
+
+    fn key_binding(&self, key: &str) -> Option<Msg> {
+        match &self.game_state {
+            GameState::Menu => None,
+            GameState::WorldMap { .. } => None,
+            GameState::Level {
+                theorem_select: Some(_),
+                ..
+            } => match key {
+                "Escape" => Some(Msg::SelectedTheorem(None)),
+                _ => None,
+            },
+            GameState::Level {
+                level,
+                next_level,
+                level_state,
+                theorem_select: None,
+                ..
+            } => match key {
+                "Escape" => {
+                    if level_state.in_mode() {
+                        Some(Msg::Level(level::Msg::Cancel))
+                    } else {
+                        Some(Msg::GotoMap { recenter: false })
+                    }
+                }
+                "Enter" => {
+                    if self.game_data.level(*level).axiom || level_state.complete() {
+                        if let Some(next_level) = next_level {
+                            Some(Msg::GotoLevel(*next_level))
+                        } else {
+                            Some(Msg::GotoMap { recenter: true })
+                        }
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            },
         }
     }
 }

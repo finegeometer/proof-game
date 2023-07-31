@@ -344,4 +344,8 @@ impl State {
 
         true
     }
+
+    pub fn in_mode(&self) -> bool {
+        self.mode.is_some()
+    }
 }

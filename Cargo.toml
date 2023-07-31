@@ -45,6 +45,7 @@ features = [
   'HtmlParagraphElement',
   'HtmlInputElement',
   'InputEvent',
+  'Location',
   'MouseEvent',
   'Node',
   'KeyboardEvent',
