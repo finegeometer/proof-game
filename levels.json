@@ -10,6 +10,7 @@
   , "√": "ℝ"
   , "¬": "Ω"
   , "<": "Ω"
+  , "≤": "Ω"
   , "≠": "Ω"
   }
 , "levels":
@@ -109,7 +110,7 @@
     , "conclusion": 3
     , "map_position": [9,0]
     , "bezier_vector": [1,0]
-    , "text_box": ["Axiom: We take this for granted.", "#"]
+    , "text_box": ["Axiom: This is not a level. We take it for granted.", "#"]
     , "prereqs": ["Intro.4"]
     , "next_level": ["+.0"]
     }
@@ -587,27 +588,6 @@
     , "map_position": [37.5,0]
     , "bezier_vector": [1,0]
     , "prereqs": ["×.3", "×.5"]
-    , "next_level": ["×-inv"]
-    }
-
-
-  , "×-inv":
-    { "axiom": true
-    , "variables": {"a": "ℝ"}
-    , "nodes":
-      [ [["0",[   ]], [-2  ,0]]
-      , ["a"        , [ 0  ,0]]
-      , [["≠",[0,1]], [-1  ,3]]
-      , [["⅟",[1  ]], [ 1  ,3]]
-      , [["×",[1,3]], [ 0  ,5.5]]
-      , [["1",[   ]], [ 2  ,5.5]]
-      , [["=",[4,5]], [ 1  ,8]]
-      ]
-    , "hypotheses": [2]
-    , "conclusion": 6
-    , "map_position": [40.5,0]
-    , "bezier_vector": [1,0]
-    , "prereqs": ["×.6", "≠.3"]
     , "next_level": []
     }
 
@@ -1240,8 +1220,8 @@
     { "variables": {"a": "Ω"}
     , "nodes":
       [ ["a",         [ 0,0]]
-      , [["¬",[0]  ], [ 0,3]]
-      , [["¬",[1]  ], [ 0,6]]
+      , [["¬",[0]  ], [ 0,2]]
+      , [["¬",[1]  ], [ 0,4]]
       ]
     , "hypotheses": [0]
     , "conclusion": 2
@@ -1300,6 +1280,135 @@
     , "map_position": [31.5,10]
     , "bezier_vector": [1,0]
     , "prereqs": ["¬.3"]
+    , "next_level": []
+    }
+
+
+  , "≤-def":
+    { "axiom": true
+    , "variables": {"a": "Ω", "b": "Ω"}
+    , "nodes":
+      [ ["a",         [-1,0]]
+      , ["b",         [ 1,0]]
+      , [["≤",[0,1]], [-1,3]]
+      , [["<",[1,0]], [ 1,3]]
+      , [["¬",[3]  ], [ 1,5]]
+      , [["=",[2,4]], [ 0,7]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 5
+    , "map_position": [36,10]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["≠.3", "¬.4"]
+    , "next_level": []
+    }
+
+
+
+
+
+
+
+
+  , "¬¬Elim":
+    { "axiom": true
+    , "variables": {"a": "Ω"}
+    , "nodes":
+      [ ["a",         [ 0,0]]
+      , [["¬",[0]  ], [ 0,2]]
+      , [["¬",[1]  ], [ 0,4]]
+      ]
+    , "hypotheses": [2]
+    , "conclusion": 0
+    , "map_position": [33,15]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["¬.4"]
+    , "next_level": ["Classical.0"]
+    }
+  , "Classical.0":
+    { "variables": {"a": "Ω", "b": "Ω"}
+    , "nodes":
+      [ ["a",         [ 1,0]]
+      , [["¬",[0]  ], [ 1,2]]
+      , [["¬",[1]  ], [ 1,4]]
+      , ["a",         [-1,4]]
+      , [["=",[3,2]], [ 0,7]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 4
+    , "map_position": [34.5,15]
+    , "bezier_vector": [0,0]
+    , "prereqs": ["¬¬Elim"]
+    , "next_level": ["Classical.1"]
+    }
+  , "Classical.1":
+    { "variables": {"a": "Ω", "b": "Ω"}
+    , "nodes":
+      [ ["a",         [-1.25,0]]
+      , ["b",         [ 1.25,0]]
+      , [["¬",[0]  ], [-2,3]]
+      , [["¬",[1]  ], [ 2,3]]
+      , [["∧",[0,1]], [ 0,3]]
+      , [["∨",[2,3]], [-1,6]]
+      , [["¬",[4]  ], [ 1,6]]
+      , [["=",[5,6]], [ 0,9]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 7
+    , "map_position": [36,15]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["Classical.0"]
+    , "next_level": ["Classical.2"]
+    }
+  , "Classical.2":
+    { "variables": {"a": "Ω"}
+    , "nodes":
+      [ ["a",         [ 1,0]]
+      , [["¬",[0]  ], [ 1,2]]
+      , ["a",         [-1,0]]
+      , [["∨",[2,1]], [ 0,5]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 3
+    , "map_position": [37.5,15]
+    , "bezier_vector": [0,0]
+    , "prereqs": ["Classical.1"]
+    , "next_level": ["Classical.3"]
+    , "text_box": ["The Law of Excluded Middle.", "#"]
+    }
+  , "Classical.3":
+    { "variables": {"a": "Ω", "b": "Ω"}
+    , "nodes":
+      [ ["a",         [-1,0]]
+      , ["b",         [ 1,0]]
+      , [["⇒",[0,1]], [ 1,3]]
+      , [["¬",[0]  ], [-1,2.5]]
+      , [["∨",[3,1]], [-1,5]]
+      , [["=",[4,2]], [ 0,8]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 5
+    , "map_position": [39,15]
+    , "bezier_vector": [0,0]
+    , "prereqs": ["Classical.2"]
+    , "next_level": ["Classical.4"]
+    }
+  , "Classical.4":
+    { "variables": {"a": "Ω", "b": "Ω"}
+    , "nodes":
+      [ ["a",         [-1,0]]
+      , ["b",         [ 1,0]]
+      , [["⇒",[0,1]], [-1,3]]
+      , [["¬",[2]  ], [-1,5]]
+      , [["¬",[1]  ], [ 1,2]]
+      , [["∧",[0,4]], [ 1,5]]
+      , [["=",[3,5]], [ 0,8]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 6
+    , "map_position": [40.5,15]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["Classical.3"]
     , "next_level": []
     }
 
