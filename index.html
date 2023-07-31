@@ -93,6 +93,15 @@
       background: #292
     }
 
+    .button.cyan {
+      background: #3aa;
+      border: 2px solid #066;
+    }
+
+    .button.cyan:hover {
+      background: #299
+    }
+
     .button.blue {
       background: #66c;
       border: 2px solid #008;
@@ -132,6 +141,10 @@
       border-radius: 4vmin;
       background: #ccc;
       border: 2px solid #888;
+    }
+
+    .trash-can:hover {
+      background: #bbb;
     }
 
 
@@ -380,8 +393,21 @@
 
   <div id="vdom"></div>
 
-  <div id="Conjunction" class="book background">
+  <div id="TableOfContents" class="book background">
     <a class="button disabled">◄</a>
+    <div class="book-content">
+      <a href="#" class="book-close">❌</a>
+      <h1>Table Of Contents</h1>
+      <a href="#Conjunction">Conjunction</a>
+      <a href="#Disjunction">Disjunction</a>
+      <a href="#Implication">Implication</a>
+      <a href="#Equality">Equality</a>
+    </div>
+    <a href="#Conjunction" class="button">►</a>
+  </div>
+
+  <div id="Conjunction" class="book background">
+    <a href="#TableOfContents" class="button">◄</a>
     <div class="book-content">
       <a href="#" class="book-close">❌</a>
       <h1>Conjunction</h1>

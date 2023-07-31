@@ -342,15 +342,28 @@ impl State {
             }
         }
 
-        // World Map
+        // World Map and Book
         col1 = col1.child(
             div(cx.bump)
-                .attributes([attr("id", "return-to-map"), attr("class", "button blue")])
-                .on(
-                    "click",
-                    handler(move |_| crate::Msg::GotoMap { recenter: false }),
-                )
-                .children([text("Return to Map")])
+                .attr("style", "display: flex; flex-direction: row;")
+                .children([
+                    div(cx.bump)
+                        .attributes([
+                            attr("id", "return-to-map"),
+                            attr("class", "button blue"),
+                            attr("style", "flex-grow: 1;"),
+                        ])
+                        .on(
+                            "click",
+                            handler(move |_| crate::Msg::GotoMap { recenter: false }),
+                        )
+                        .children([text("Return to Map")])
+                        .finish(),
+                    a(cx.bump)
+                        .attributes([attr("href", "#Conjunction"), attr("class", "button cyan")])
+                        .children([text("📖")])
+                        .finish(),
+                ])
                 .finish(),
         );
 

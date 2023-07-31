@@ -56,4 +56,10 @@ macro_rules! shift {
     };
 }
 
-generate!(Conjunction, Disjunction, Implication, Equality);
+generate!(
+    TableOfContents,
+    Conjunction,
+    Disjunction,
+    Implication,
+    Equality
+);
