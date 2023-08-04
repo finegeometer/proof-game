@@ -39,7 +39,7 @@
     , "conclusion": 2
     , "map_position": [1.5,0]
     , "bezier_vector": [1,0]
-    , "text_box": ["Drag equal nodes together.", "#"]
+    , "text_box": ["Drag equal nodes together."]
     , "prereqs": ["Intro.0"]
     , "next_level": ["Intro.2", "Intro.3"]
     }
@@ -110,7 +110,7 @@
     , "conclusion": 3
     , "map_position": [9,0]
     , "bezier_vector": [1,0]
-    , "text_box": ["Axiom: This is not a level. We take it for granted.", "#"]
+    , "text_box": ["Axiom: This is not a level. We take it for granted."]
     , "prereqs": ["Intro.4"]
     , "next_level": ["+.0"]
     }
@@ -127,8 +127,8 @@
     , "hypotheses": []
     , "conclusion": 4
     , "map_position": [10.5,0]
-    , "bezier_vector": [1,0]
-    , "text_box": ["New feature! Import the axiom to solve this one.", "#"]
+    , "bezier_vector": [2.5,0]
+    , "text_box": ["New feature! Import the axiom to solve this one.", "ThmApp"]
     , "prereqs": ["+-id"]
     , "next_level": ["+.1"]
     }
@@ -162,7 +162,7 @@
     , "conclusion": 4
     , "map_position": [13.5,-1.5]
     , "bezier_vector": [1,0]
-    , "text_box": ["Another axiom.", "#"]
+    , "text_box": ["Another axiom."]
     , "prereqs": ["+.1"]
     , "next_level": ["+.2", "+.3"]
     }
@@ -530,7 +530,7 @@
     , "conclusion": 22
     , "map_position": [36,-0.75]
     , "bezier_vector": [1,0]
-    , "text_box": ["F.O.I.L.", "#"]
+    , "text_box": ["F.O.I.L."]
     , "prereqs": ["×.2"]
     , "next_level": ["×.6"]
     }
@@ -612,6 +612,7 @@
     , "bezier_vector": [1,0]
     , "prereqs": []
     , "next_level": ["⇒.1"]
+    , "text_box": ["New feature! Implication.", "Implication"]
     }
   , "⇒.1":
     { "variables": {"a": "Ω", "b": "Ω", "c": "Ω", "d": "Ω", "e": "Ω"}
@@ -681,8 +682,8 @@
     , "hypotheses": [2,3]
     , "conclusion": 4
     , "map_position": [7.5,5]
-    , "bezier_vector": [1,0]
-    , "prereqs": ["⇒.3"]
+    , "bezier_vector": [2.5,0]
+    , "prereqs": ["⇒.3", "+.0"]
     , "next_level": ["⇒.4"]
     }
   , "⇒.4":
@@ -718,6 +719,7 @@
     , "bezier_vector": [1,0]
     , "prereqs": ["⇒.4"]
     , "next_level": ["∧.1"]
+    , "text_box": ["New feature! Conjunction.", "Conjunction"]
     }
   , "∧.1":
     { "variables": {"a": "Ω", "b": "Ω", "c": "Ω"}
@@ -820,6 +822,7 @@
     , "bezier_vector": [1,0]
     , "prereqs": ["⇒.4"]
     , "next_level": ["∨.1"]
+    , "text_box": ["New feature! Disjunction.", "Disjunction"]
     }
   , "∨.1":
     { "variables": {"a": "Ω"}
@@ -917,7 +920,7 @@
       ]
     , "hypotheses": [3]
     , "conclusion": 2
-    , "text_box" : ["Wires are clickable now.", "#"]
+    , "text_box" : ["New feature: Lemmas! Wires are clickable now.", "Lemmas"]
     , "map_position": [19.5,5]
     , "bezier_vector": [1,0]
     , "prereqs": ["∨.5","∧.5", "+.7"]
@@ -1324,6 +1327,7 @@
     , "bezier_vector": [1,0]
     , "prereqs": ["¬.4"]
     , "next_level": ["Classical.0"]
+    , "text_box": ["Surprisingly, this can't be proven from the other rules!", "Classical"]
     }
   , "Classical.0":
     { "variables": {"a": "Ω", "b": "Ω"}
@@ -1374,7 +1378,7 @@
     , "bezier_vector": [0,0]
     , "prereqs": ["Classical.1"]
     , "next_level": ["Classical.3"]
-    , "text_box": ["The Law of Excluded Middle.", "#"]
+    , "text_box": ["The Law of Excluded Middle."]
     }
   , "Classical.3":
     { "variables": {"a": "Ω", "b": "Ω"}

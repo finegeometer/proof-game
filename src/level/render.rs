@@ -212,28 +212,33 @@ impl State {
         });
 
         // Text Box
-        if let Some((text_box, link)) = &self.text_box {
-            col0 = col0.child(
-                div(cx.bump)
+        if let Some((text_box, page)) = &self.text_box {
+            col0 = col0.child({
+                let mut tmp = div(cx.bump)
                     .attributes([attr("class", "text-box")])
-                    .children([
-                        text(
-                            bumpalo::collections::String::from_str_in(text_box, cx.bump)
-                                .into_bump_str(),
-                        ),
-                        text(" ("),
-                        a(cx.bump)
-                            .attributes([attr(
-                                "href",
-                                bumpalo::collections::String::from_str_in(link, cx.bump)
-                                    .into_bump_str(),
-                            )])
-                            .children([text("More info")])
-                            .finish(),
-                        text(")"),
-                    ])
-                    .finish(),
-            );
+                    .child(text(
+                        bumpalo::collections::String::from_str_in(text_box, cx.bump)
+                            .into_bump_str(),
+                    ));
+
+                if let Some(page) = page {
+                    tmp = tmp
+                        .child(text(" ("))
+                        .child(
+                            a(cx.bump)
+                                .attributes([attr(
+                                    "href",
+                                    bumpalo::format!(in cx.bump, "#{}", <&str>::from(*page))
+                                        .into_bump_str(),
+                                )])
+                                .children([text("More info")])
+                                .finish(),
+                        )
+                        .child(text(")"));
+                }
+
+                tmp.finish()
+            });
         }
 
         // Case Tree
@@ -360,7 +365,10 @@ impl State {
                         .children([text("Return to Map")])
                         .finish(),
                     a(cx.bump)
-                        .attributes([attr("href", "#Conjunction"), attr("class", "button cyan")])
+                        .attributes([
+                            attr("href", "#TableOfContents"),
+                            attr("class", "button cyan"),
+                        ])
                         .children([text("📖")])
                         .finish(),
                 ])

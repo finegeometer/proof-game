@@ -16,7 +16,7 @@ use case_tree::{CaseId, CaseTree};
 pub struct State {
     pub case_tree: CaseTree,
     pan_zoom: PanZoom,
-    text_box: Option<(String, String)>,
+    text_box: Option<(String, Option<crate::book::BookPage>)>,
     drag: Option<DragState>,
     unlocks: Unlocks,
     axiom: bool,
@@ -80,7 +80,7 @@ impl State {
     pub fn new(
         spec: &LevelSpec,
         pan_zoom: PanZoom,
-        text_box: Option<(String, String)>,
+        text_box: Option<(String, Option<crate::book::BookPage>)>,
         unlocks: Unlocks,
         axiom: bool,
     ) -> Self {

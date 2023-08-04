@@ -25,9 +25,12 @@ pub fn run() {
         .add_event_listener_with_callback("keydown", {
             let send_msg = send_msg.clone();
             Closure::wrap(Box::new(move |e: web_sys::KeyboardEvent| {
-                if !e.repeat() {
-                    send_msg.send_blocking(Msg::KeyPress(e.key())).unwrap();
-                }
+                send_msg
+                    .send_blocking(Msg::KeyPress {
+                        key: e.key(),
+                        repeat: e.repeat(),
+                    })
+                    .unwrap();
             }) as Box<dyn Fn(web_sys::KeyboardEvent)>)
             .into_js_value()
             .unchecked_ref()
@@ -150,7 +153,7 @@ enum Msg {
     LoadingSaveFailed(),
     LoadedLevels(String),
 
-    KeyPress(String),
+    KeyPress { key: String, repeat: bool },
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -186,7 +189,7 @@ impl Model {
 
     fn update(&mut self, msg: Msg) -> bool {
         match msg {
-            Msg::KeyPress(key) => {
+            Msg::KeyPress { key, repeat } => {
                 let location = web_sys::window().unwrap().location();
 
                 if let Some(page) = location
@@ -196,18 +199,18 @@ impl Model {
                     .strip_prefix('#')
                     .and_then(|s| book::BookPage::try_from(s).ok())
                 {
-                    match key.as_str() {
-                        "Escape" => {
+                    match (key.as_str(), repeat) {
+                        ("Escape", false) => {
                             location.set_hash("").unwrap();
                         }
-                        "ArrowLeft" => {
+                        ("ArrowLeft", _) => {
                             if let Some(page) = page.prev() {
                                 location
                                     .set_hash(&format!("#{}", <&str>::from(page)))
                                     .unwrap();
                             }
                         }
-                        "ArrowRight" => {
+                        ("ArrowRight", _) => {
                             if let Some(page) = page.next() {
                                 location
                                     .set_hash(&format!("#{}", <&str>::from(page)))
@@ -217,7 +220,7 @@ impl Model {
                         _ => {}
                     }
                     false
-                } else if let Some(msg) = self.key_binding(&key) {
+                } else if let (Some(msg), false) = (self.key_binding(&key), repeat) {
                     self.update(msg)
                 } else {
                     false

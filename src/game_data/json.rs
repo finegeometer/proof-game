@@ -45,8 +45,9 @@ struct LevelJson<'a> {
     nodes: Vec<(ExpressionJson<'a, usize>, [f64; 2])>,
     hypotheses: Vec<usize>,
     conclusion: usize,
+    #[serde(default)]
     #[serde(borrow)]
-    text_box: Option<(&'a str, &'a str)>,
+    text_box: SmallVec<[&'a str; 2]>,
     map_position: [f64; 2],
     bezier_vector: [f64; 2],
     prereqs: Vec<&'a str>,
@@ -103,7 +104,19 @@ impl<'a> LevelJson<'a> {
             panzoom: crate::render::PanZoom {
                 svg_corners: ([x_min - 1., y_min - 1.], [x_max + 1., y_max + 3.]),
             },
-            text_box: text_box.map(|(msg, link)| (msg.to_owned(), link.to_owned())),
+            text_box: match text_box.as_slice() {
+                [] => None,
+                [text] => Some((text.to_string(), None)),
+                [text, page] => Some((
+                    text.to_string(),
+                    Some(
+                        (*page)
+                            .try_into()
+                            .map_err(|_| anyhow!("Unknown book page: {}.", page))?,
+                    ),
+                )),
+                _ => bail!("Cannot parse `text_box`; array is too long."),
+            },
             map_position,
             bezier_vector,
             prereqs: prereqs

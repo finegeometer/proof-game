@@ -2,7 +2,7 @@
 
 // Generate the type of pages, complete with conversion to and from strings, and functions that take you to the next or previous page.
 macro_rules! generate {
-    ($( $page: ident ),*) => {
+    ($( $page: ident, )*) => {
         #[derive(Clone, Copy)]
         pub enum BookPage { $( $page ),* }
         use BookPage::*;
@@ -58,8 +58,11 @@ macro_rules! shift {
 
 generate!(
     TableOfContents,
+    ThmApp,
+    Lemmas,
     Conjunction,
     Disjunction,
     Implication,
-    Equality
+    Equality,
+    Classical,
 );
