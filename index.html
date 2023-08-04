@@ -93,6 +93,15 @@
       background: #292
     }
 
+    .button.cyan {
+      background: #3aa;
+      border: 2px solid #066;
+    }
+
+    .button.cyan:hover {
+      background: #299
+    }
+
     .button.blue {
       background: #66c;
       border: 2px solid #008;
@@ -132,6 +141,10 @@
       border-radius: 4vmin;
       background: #ccc;
       border: 2px solid #888;
+    }
+
+    .trash-can:hover {
+      background: #bbb;
     }
 
 
@@ -334,6 +347,7 @@
       overflow: auto;
       padding-left: 5%;
       padding-right: 5%;
+      align-items: center;
     }
 
     .book-rules {
@@ -341,12 +355,16 @@
       flex-direction: row;
       gap: 10%;
       padding-bottom: 1em;
+      justify-content: center;
+      /* I haven't a clue why this is necessary. But if I don', one of the pictures doesn't render correctly. */
+      align-self: normal;
     }
 
     .book-rule {
       flex: 1;
       display: flex;
       flex-direction: column;
+      max-width: 50%;
     }
 
     .book-example {
@@ -366,6 +384,10 @@
       top: 0;
       right: 1.5em;
     }
+
+    ul {
+      text-align: start;
+    }
   </style>
 </head>
 
@@ -380,8 +402,83 @@
 
   <div id="vdom"></div>
 
-  <div id="book-conjunction" class="book background">
+  <div id="TableOfContents" class="book background">
     <a class="button disabled">◄</a>
+    <div class="book-content">
+      <a href="#" class="book-close">❌</a>
+      <h1>Table Of Contents</h1>
+      <ul style="text-align: justify;">
+        <li><a href="#ThmApp">Theorem Application</a></li>
+        <li><a href="#Lemmas">Lemmas</a></li>
+        <li>
+          Logic
+          <ul>
+            <li><a href="#Conjunction">Conjunction</a></li>
+            <li><a href="#Disjunction">Disjunction</a></li>
+            <li><a href="#Implication">Implication</a></li>
+            <li><a href="#Equality">Equality</a></li>
+          </ul>
+        </li>
+        <li><a href="#Classical">Classical Logic</a></li>
+      </ul>
+    </div>
+    <a href="#ThmApp" class="button">►</a>
+  </div>
+
+  <div id="ThmApp" class="book background">
+    <a href="#TableOfContents" class="button">◄</a>
+    <div class="book-content">
+      <a href="#" class="book-close">❌</a>
+      <h1>Theorem Application</h1>
+
+      TODO
+    </div>
+    <a href="#Lemmas" class="button">►</a>
+  </div>
+
+  <div id="Lemmas" class="book background">
+    <a href="#ThmApp" class="button">◄</a>
+    <div class="book-content">
+      <a href="#" class="book-close">❌</a>
+      <h1>Lemmas</h1>
+
+      <p>When proving a theorem, sometimes it helps to prove something else first. We call that a lemma.</p>
+
+      <p>Once this feature is unlocked, you can click a gray wire to say "Let's prove this first.".</p>
+      <div class="book-rules">
+        <div class="book-rule">
+          <div class="book-example">
+            <svg class="background" viewBox="-2 -1.5 4 3">
+              <path class="wire border" d="M -1 -2 L -1 2"></path>
+              <path class="wire       " d="M -1 -2 L -1 2"></path>
+              <path class="wire goal border" d="M  1 -2 L  1 2"></path>
+              <path class="wire goal       " d="M  1 -2 L  1 2"></path>
+            </svg>
+            <div class="book-padded-arrow"> → </div>
+            <div style="flex: 1; flex-direction: column; display: flex;">
+              <svg class="background" viewBox="-2 -1.5 4 3">
+                <path class="wire goal border" d="M -1 -2 L -1 2"></path>
+                <path class="wire goal       " d="M -1 -2 L -1 2"></path>
+                <path class="wire border" d="M  1 -2 L  1 2"></path>
+                <path class="wire       " d="M  1 -2 L  1 2"></path>
+              </svg>
+              <svg class="background" viewBox="-2 -1.5 4 3">
+                <path class="wire known border" d="M -1 -2 L -1 2"></path>
+                <path class="wire known       " d="M -1 -2 L -1 2"></path>
+                <path class="wire goal border" d="M  1 -2 L  1 2"></path>
+                <path class="wire goal       " d="M  1 -2 L  1 2"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p>Be careful; if you try to prove something false, you'll get stuck!</p>
+    </div>
+    <a href="#Conjunction" class="button">►</a>
+  </div>
+
+  <div id="Conjunction" class="book background">
+    <a href="#Lemmas" class="button">◄</a>
     <div class="book-content">
       <a href="#" class="book-close">❌</a>
       <h1>Conjunction</h1>
@@ -443,11 +540,11 @@
       <p>For the conjunction to hold, all of the individual propositions must be true. In the "zero propositions"
         case, that's trivial, so the conjunction is always true.</p>
     </div>
-    <a href="#book-disjunction" class="button">►</a>
+    <a href="#Disjunction" class="button">►</a>
   </div>
 
-  <div id="book-disjunction" class="book background">
-    <a href="#book-conjunction" class="button">◄</a>
+  <div id="Disjunction" class="book background">
+    <a href="#Conjunction" class="button">◄</a>
     <div class="book-content">
       <a href="#" class="book-close">❌</a>
       <h1>Disjunction</h1>
@@ -545,11 +642,11 @@
         of zero propositions, that means there's nothing left to do! This is the <i>principle of explosion</i>: if
         you can prove <var>False</var>, you can prove anything.</p>
     </div>
-    <a href="#book-implication" class="button">►</a>
+    <a href="#Implication" class="button">►</a>
   </div>
 
-  <div id="book-implication" class="book background">
-    <a href="#book-disjunction" class="button">◄</a>
+  <div id="Implication" class="book background">
+    <a href="#Disjunction" class="button">◄</a>
     <div class="book-content">
       <a href="#" class="book-close">❌</a>
       <h1>Implication</h1>
@@ -568,7 +665,7 @@
               <path class="wire             " d="M -1 -2 C -1 -1, -0.5 -1, 0 0"></path>
               <path class="wire             " d="M  1 -2 C  1 -1,  0.5 -1, 0 0"></path>
               <path class="wire goal        " d="M  0  0 C  0  1,  0    1, 0 2"></path>
-              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">∧</text>
+              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">⇒</text>
             </svg>
             <div class="book-padded-arrow"> → </div>
             <svg class="background" viewBox="-2 -2 4 4">
@@ -578,7 +675,7 @@
               <path class="wire known       " d="M -1 -2 C -1 -1, -0.5 -1, 0 0"></path>
               <path class="wire goal        " d="M  1 -2 C  1 -1,  0.5 -1, 0 0"></path>
               <path class="wire             " d="M  0  0 C  0  1,  0    1, 0 2"></path>
-              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">∧</text>
+              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">⇒</text>
             </svg>
           </div>
         </div>
@@ -592,7 +689,7 @@
               <path class="wire known       " d="M -1 -2 C -1 -1, -0.5 -1, 0 0"></path>
               <path class="wire             " d="M  1 -2 C  1 -1,  0.5 -1, 0 0"></path>
               <path class="wire known       " d="M  0  0 C  0  1,  0    1, 0 2"></path>
-              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">∧</text>
+              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">⇒</text>
             </svg>
             <div class="book-padded-arrow"> → </div>
             <svg class="background" viewBox="-2 -2 4 4">
@@ -602,17 +699,17 @@
               <path class="wire known       " d="M -1 -2 C -1 -1, -0.5 -1, 0 0"></path>
               <path class="wire known       " d="M  1 -2 C  1 -1,  0.5 -1, 0 0"></path>
               <path class="wire known       " d="M  0  0 C  0  1,  0    1, 0 2"></path>
-              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">∧</text>
+              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">⇒</text>
             </svg>
           </div>
         </div>
       </div>
     </div>
-    <a href="#book-equality" class="button">►</a>
+    <a href="#Equality" class="button">►</a>
   </div>
 
-  <div id="book-equality" class="book background">
-    <a href="#book-implication" class="button">◄</a>
+  <div id="Equality" class="book background">
+    <a href="#Implication" class="button">◄</a>
     <div class="book-content">
       <a href="#" class="book-close">❌</a>
       <h1>Equality</h1>
@@ -620,58 +717,96 @@
         says that <var>a</var> and <var>b</var> represent the same thing. </p>
       <div class="book-rules">
         <div class="book-rule">
-          <p>You can prove <var>a</var> = <var>a</var>.</p>
+          <p>You can prove that anything equals itself.</p>
           <div class="book-example">
             <svg class="background" viewBox="-2 -2 4 4">
-              <path class="wire       border" d="M  0 -2 C  0 -1, -0.5 -1, 0 0"></path>
-              <path class="wire       border" d="M  0 -2 C  0 -1,  0.5 -1, 0 0"></path>
-              <path class="wire       border" d="M  0  0 C  0  1,  0    1, 0 2"></path>
-              <path class="wire             " d="M  0 -2 C  0 -1, -0.5 -1, 0 0"></path>
-              <path class="wire             " d="M  0 -2 C  0 -1,  0.5 -1, 0 0"></path>
-              <path class="wire             " d="M  0  0 C  0  1,  0    1, 0 2"></path>
-              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">∧</text>
+              <path class="wire number border" d="M  0 -2 C  0 -1, -0.5 -1, 0 0"></path>
+              <path class="wire number border" d="M  0 -2 C  0 -1,  0.5 -1, 0 0"></path>
+              <path class="wire        border" d="M  0  0 C  0  1,  0    1, 0 2"></path>
+              <path class="wire number       " d="M  0 -2 C  0 -1, -0.5 -1, 0 0"></path>
+              <path class="wire number       " d="M  0 -2 C  0 -1,  0.5 -1, 0 0"></path>
+              <path class="wire              " d="M  0  0 C  0  1,  0    1, 0 2"></path>
+              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">=</text>
             </svg>
             <div class="book-padded-arrow"> → </div>
             <svg class="background" viewBox="-2 -2 4 4">
-              <path class="wire       border" d="M  0 -2 C  0 -1, -0.5 -1, 0 0"></path>
-              <path class="wire       border" d="M  0 -2 C  0 -1,  0.5 -1, 0 0"></path>
-              <path class="wire known border" d="M  0  0 C  0  1,  0    1, 0 2"></path>
-              <path class="wire             " d="M  0 -2 C  0 -1, -0.5 -1, 0 0"></path>
-              <path class="wire             " d="M  0 -2 C  0 -1,  0.5 -1, 0 0"></path>
-              <path class="wire known       " d="M  0  0 C  0  1,  0    1, 0 2"></path>
-              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">∧</text>
+              <path class="wire number border" d="M  0 -2 C  0 -1, -0.5 -1, 0 0"></path>
+              <path class="wire number border" d="M  0 -2 C  0 -1,  0.5 -1, 0 0"></path>
+              <path class="wire known  border" d="M  0  0 C  0  1,  0    1, 0 2"></path>
+              <path class="wire number       " d="M  0 -2 C  0 -1, -0.5 -1, 0 0"></path>
+              <path class="wire number       " d="M  0 -2 C  0 -1,  0.5 -1, 0 0"></path>
+              <path class="wire known        " d="M  0  0 C  0  1,  0    1, 0 2"></path>
+              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">=</text>
             </svg>
           </div>
         </div>
         <div class="book-rule">
-          <p>If <var>a</var> = <var>b</var>, they are interchangeable. Anything that's true about <var>a</var> is true
-            about <var>b</var>, and <i>vice versa</i>.</p>
+          <p>If two things are equal, they are interchangeable. Anything that's true about one is true
+            about the other.</p>
           <div class="book-example">
             <svg class="background" viewBox="-2 -2 4 4">
-              <path class="wire       border" d="M -1 -2 C -1 -1, -0.5 -1, 0 0"></path>
-              <path class="wire       border" d="M  1 -2 C  1 -1,  0.5 -1, 0 0"></path>
-              <path class="wire known border" d="M  0  0 C  0  1,  0    1, 0 2"></path>
-              <path class="wire             " d="M -1 -2 C -1 -1, -0.5 -1, 0 0"></path>
-              <path class="wire             " d="M  1 -2 C  1 -1,  0.5 -1, 0 0"></path>
-              <path class="wire known       " d="M  0  0 C  0  1,  0    1, 0 2"></path>
-              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">∧</text>
+              <path class="wire number border" d="M -1 -2 C -1 -1, -0.5 -1, 0 0"></path>
+              <path class="wire number border" d="M  1 -2 C  1 -1,  0.5 -1, 0 0"></path>
+              <path class="wire known  border" d="M  0  0 C  0  1,  0    1, 0 2"></path>
+              <path class="wire number       " d="M -1 -2 C -1 -1, -0.5 -1, 0 0"></path>
+              <path class="wire number       " d="M  1 -2 C  1 -1,  0.5 -1, 0 0"></path>
+              <path class="wire known        " d="M  0  0 C  0  1,  0    1, 0 2"></path>
+              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">=</text>
             </svg>
             <div class="book-padded-arrow"> → </div>
             <svg class="background" viewBox="-2 -2 4 4">
-              <path class="wire       border" d="M  0 -2 C  0 -1, -0.5 -1, 0 0"></path>
-              <path class="wire       border" d="M  0 -2 C  0 -1,  0.5 -1, 0 0"></path>
-              <path class="wire known border" d="M  0  0 C  0  1,  0    1, 0 2"></path>
-              <path class="wire             " d="M  0 -2 C  0 -1, -0.5 -1, 0 0"></path>
-              <path class="wire             " d="M  0 -2 C  0 -1,  0.5 -1, 0 0"></path>
-              <path class="wire known       " d="M  0  0 C  0  1,  0    1, 0 2"></path>
-              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">∧</text>
+              <path class="wire number border" d="M  0 -2 C  0 -1, -0.5 -1, 0 0"></path>
+              <path class="wire number border" d="M  0 -2 C  0 -1,  0.5 -1, 0 0"></path>
+              <path class="wire known  border" d="M  0  0 C  0  1,  0    1, 0 2"></path>
+              <path class="wire number       " d="M  0 -2 C  0 -1, -0.5 -1, 0 0"></path>
+              <path class="wire number       " d="M  0 -2 C  0 -1,  0.5 -1, 0 0"></path>
+              <path class="wire known        " d="M  0  0 C  0  1,  0    1, 0 2"></path>
+              <circle class="node" r="0.5" cx="0" cy="0"></circle> <text class="node-text">=</text>
             </svg>
           </div>
         </div>
       </div>
     </div>
+    <a href="#Classical" class="button">►</a>
+  </div>
+
+  <div id="Classical" class="book background">
+    <a href="#Equality" class="button">◄</a>
+    <div class="book-content">
+      <a href="#" class="book-close">❌</a>
+      <h1>Classical Logic</h1>
+
+      TODO
+    </div>
     <a class="button disabled">►</a>
   </div>
+
+
+
+  <div id="UnicodeSupport" class="book background">
+    <div class="book-content">
+      <a href="#" class="book-close">❌</a>
+      <h1>Unicode Support</h1>
+      Do all of these characters render properly?
+
+      <ul>
+        <li>Minus Sign: −</li>
+        <li>Multiplication Sign: ×</li>
+        <li>Division Symbol: ÷</li>
+        <li>"One Divided By" Symbol: ⅟</li>
+        <li>Square Root: √</li>
+        <li>Less Than Or Equal: ≤</li>
+        <li>Not Equal: ≠</li>
+        <li>Negation symbol: ¬</li>
+        <li>Trash can: 🗑</li>
+        <li>Book: 📖</li>
+      </ul>
+
+      If so, you're good!
+    </div>
+  </div>
+
+
 </body>
 
 </html>
