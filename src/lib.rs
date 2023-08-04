@@ -4,6 +4,8 @@
 use game_data::{GameData, SaveData};
 use wasm_bindgen::{prelude::Closure, JsCast};
 
+use crate::render::handler;
+
 mod book;
 mod file;
 mod game_data;
@@ -192,32 +194,27 @@ impl Model {
             Msg::KeyPress { key, repeat } => {
                 let location = web_sys::window().unwrap().location();
 
-                if let Some(page) = location
-                    .hash()
-                    .unwrap()
-                    .as_str()
-                    .strip_prefix('#')
-                    .and_then(|s| book::BookPage::try_from(s).ok())
-                {
-                    match (key.as_str(), repeat) {
-                        ("Escape", false) => {
-                            location.set_hash("").unwrap();
-                        }
-                        ("ArrowLeft", _) => {
-                            if let Some(page) = page.prev() {
-                                location
-                                    .set_hash(&format!("#{}", <&str>::from(page)))
-                                    .unwrap();
+                if let Some(page) = location.hash().unwrap().as_str().strip_prefix('#') {
+                    if key == "Escape" && !repeat {
+                        location.set_hash("").unwrap();
+                    } else if let Ok(page) = book::BookPage::try_from(page) {
+                        match (key.as_str(), repeat) {
+                            ("ArrowLeft", _) => {
+                                if let Some(page) = page.prev() {
+                                    location
+                                        .set_hash(&format!("#{}", <&str>::from(page)))
+                                        .unwrap();
+                                }
                             }
-                        }
-                        ("ArrowRight", _) => {
-                            if let Some(page) = page.next() {
-                                location
-                                    .set_hash(&format!("#{}", <&str>::from(page)))
-                                    .unwrap();
+                            ("ArrowRight", _) => {
+                                if let Some(page) = page.next() {
+                                    location
+                                        .set_hash(&format!("#{}", <&str>::from(page)))
+                                        .unwrap();
+                                }
                             }
+                            _ => {}
                         }
-                        _ => {}
                     }
                     false
                 } else if let (Some(msg), false) = (self.key_binding(&key), repeat) {
@@ -474,16 +471,28 @@ impl<'a> dodrio::Render<'a> for Model {
                 builder = builder.child(
                     div(cx.bump)
                         .attributes([attr("class", "col wide")])
-                        .children([div(cx.bump)
-                            .attributes([attr("class", "button green")])
-                            .listeners([file::fetch_listener(
-                                cx.bump,
-                                "levels.json",
-                                Msg::LoadedLevels,
-                                || panic!("Failed to load levels."),
-                            )])
-                            .children([text("Start!")])
-                            .finish()])
+                        .children([
+                            div(cx.bump)
+                                .attributes([attr("class", "button green")])
+                                .listeners([file::fetch_listener(
+                                    cx.bump,
+                                    "levels.json",
+                                    Msg::LoadedLevels,
+                                    || panic!("Failed to load levels."),
+                                )])
+                                .children([text("Start!")])
+                                .finish(),
+                            div(cx.bump)
+                                .attributes([attr("style", "flex: 1;")])
+                                .finish(),
+                            a(cx.bump)
+                                .attributes([
+                                    attr("href", "#UnicodeSupport"),
+                                    attr("class", "button blue"),
+                                ])
+                                .children([text("Test Unicode Support.")])
+                                .finish(),
+                        ])
                         .finish(),
                 );
             }

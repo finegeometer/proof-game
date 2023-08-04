@@ -347,6 +347,7 @@
       overflow: auto;
       padding-left: 5%;
       padding-right: 5%;
+      align-items: center;
     }
 
     .book-rules {
@@ -355,6 +356,8 @@
       gap: 10%;
       padding-bottom: 1em;
       justify-content: center;
+      /* I haven't a clue why this is necessary. But if I don', one of the pictures doesn't render correctly. */
+      align-self: normal;
     }
 
     .book-rule {
@@ -381,6 +384,10 @@
       top: 0;
       right: 1.5em;
     }
+
+    ul {
+      text-align: start;
+    }
   </style>
 </head>
 
@@ -400,7 +407,7 @@
     <div class="book-content">
       <a href="#" class="book-close">❌</a>
       <h1>Table Of Contents</h1>
-      <ul style="text-align: justify; align-self: center;">
+      <ul style="text-align: justify;">
         <li><a href="#ThmApp">Theorem Application</a></li>
         <li><a href="#Lemmas">Lemmas</a></li>
         <li>
@@ -773,6 +780,33 @@
     </div>
     <a class="button disabled">►</a>
   </div>
+
+
+
+  <div id="UnicodeSupport" class="book background">
+    <div class="book-content">
+      <a href="#" class="book-close">❌</a>
+      <h1>Unicode Support</h1>
+      Do all of these characters render properly?
+
+      <ul>
+        <li>Minus Sign: −</li>
+        <li>Multiplication Sign: ×</li>
+        <li>Division Symbol: ÷</li>
+        <li>"One Divided By" Symbol: ⅟</li>
+        <li>Square Root: √</li>
+        <li>Less Than Or Equal: ≤</li>
+        <li>Not Equal: ≠</li>
+        <li>Negation symbol: ¬</li>
+        <li>Trash can: 🗑</li>
+        <li>Book: 📖</li>
+      </ul>
+
+      If so, you're good!
+    </div>
+  </div>
+
+
 </body>
 
 </html>
