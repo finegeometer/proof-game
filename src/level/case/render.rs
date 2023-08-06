@@ -1,6 +1,8 @@
 use crate::{
+    architecture::Architecture,
     level::{self, expression::Type},
     render::*,
+    Model,
 };
 use dodrio::{builder::*, bumpalo};
 use wasm_bindgen::JsCast;
@@ -36,27 +38,20 @@ pub(super) fn render_node<'a>(
         ),
     ]);
     if let Some(node) = events {
-        circle = circle
-            .on(
-                "mousedown",
-                handler(move |e| {
-                    let (x, y) =
-                        to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                    crate::Msg::Level(level::Msg::MouseDown(x, y, level::DragObject::Node(node)))
-                }),
-            )
-            .on(
-                "mouseup",
-                handler(move |e| {
-                    let (x, y) =
-                        to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                    crate::Msg::Level(level::Msg::MouseUp(
-                        x,
-                        y,
-                        Some(level::DropObject::Node(node)),
-                    ))
-                }),
-            );
+        circle = circle.listeners(bumpalo::vec![in cx.bump;
+            Model::listener(cx.bump, "mousedown", move |e| {
+                let (x, y) = to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+                crate::Msg::Level(level::Msg::MouseDown(x, y, level::DragObject::Node(node)))
+            }),
+            Model::listener(cx.bump, "mouseup", move |e| {
+                let (x, y) = to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+                crate::Msg::Level(level::Msg::MouseUp(
+                    x,
+                    y,
+                    Some(level::DropObject::Node(node)),
+                ))
+            })
+        ]);
     }
 
     g(cx.bump)
@@ -155,8 +150,10 @@ pub(super) fn render_wire<'a>(
             let (x, y) = to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
             crate::Msg::Level(level::Msg::MouseDown(x, y, level::DragObject::Wire(wire)))
         };
-        out0 = out0.on("mousedown", handler(closure));
-        out1 = out1.on("mousedown", handler(closure));
+        out0 = out0
+            .listeners(bumpalo::vec![in cx.bump; Model::listener(cx.bump, "mousedown", closure)]);
+        out1 = out1
+            .listeners(bumpalo::vec![in cx.bump; Model::listener(cx.bump, "mousedown", closure)]);
     }
 
     [out0.finish(), out1.finish()]

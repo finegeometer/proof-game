@@ -2,12 +2,14 @@
 
 use wasm_bindgen::prelude::*;
 
+use crate::{Model, architecture::Architecture};
+
 pub(crate) fn save_listener<'a>(
     bump: &'a dodrio::bumpalo::Bump,
     save: impl 'static + Fn(&mut crate::Model) -> String,
     filename: &'static str,
 ) -> dodrio::Listener<'a> {
-    dodrio::builder::on(bump, "click", move |root, vdom, _| {
+    Model::listener_raw(bump, "click", move |_, model, vdom, _| {
         let a: web_sys::HtmlAnchorElement = web_sys::window()
             .unwrap()
             .document()
@@ -16,17 +18,17 @@ pub(crate) fn save_listener<'a>(
             .unwrap()
             .dyn_into()
             .unwrap();
-
-        let data = save(root.unwrap_mut());
+    
+        let data = save(model);
         let blob = web_sys::Blob::new_with_str_sequence(&js_sys::Array::from_iter(
             std::iter::once(JsValue::from_str(&data)),
         ))
         .unwrap();
-
+    
         a.set_href(&web_sys::Url::create_object_url_with_blob(&blob).unwrap());
         a.set_download(filename);
         a.click();
-
+    
         vdom.schedule_render();
     })
 }
@@ -36,11 +38,10 @@ pub(crate) fn load_listener<'a>(
     msg: impl 'static + Clone + FnOnce(String) -> crate::Msg,
     fail: impl 'static + Clone + FnOnce() -> crate::Msg,
 ) -> dodrio::Listener<'a> {
-    dodrio::builder::on(bump, "change", move |root, _, event| {
+    Model::listener_raw(bump, "change", move |event, _, _, send_msg| {
         let msg = msg.clone();
         let fail = fail.clone();
-
-        let send_msg = root.unwrap_mut::<super::Model>().send_msg.clone();
+        let send_msg = send_msg.clone();
 
         // Immediately Invoked Function Expression
         let Some(promise) = move || -> Option<js_sys::Promise> {
@@ -80,11 +81,10 @@ pub(crate) fn fetch_listener<'a>(
     msg: impl 'static + Clone + FnOnce(String) -> crate::Msg,
     fail: impl 'static + Clone + FnOnce() -> crate::Msg,
 ) -> dodrio::Listener<'a> {
-    dodrio::builder::on(bump, "click", move |root, _, _| {
+    Model::listener_raw(bump, "click", move |_, _, _, send_msg| {
         let msg = msg.clone();
         let fail = fail.clone();
-
-        let send_msg = root.unwrap_mut::<super::Model>().send_msg.clone();
+        let send_msg = send_msg.clone();
 
         #[rustfmt::skip]
         wasm_bindgen_futures::spawn_local(async move {

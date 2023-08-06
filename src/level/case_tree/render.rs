@@ -1,6 +1,8 @@
 use super::*;
+use crate::architecture::Architecture;
 use crate::render::text_;
-use crate::render::{bezier, g, handler};
+use crate::render::{bezier, g};
+use crate::Model;
 use dodrio::builder::*;
 use dodrio::bumpalo;
 
@@ -38,11 +40,10 @@ impl CaseTree {
                 ]);
 
                 if node != self.current.0 {
-                    circle = circle.on(
-                        "click",
-                        handler(move |_| {
+                    circle = circle.listeners(
+                        bumpalo::vec![in cx.bump; Model::listener(cx.bump, "click", move |_| {
                             crate::Msg::Level(crate::level::Msg::GotoCase(CaseId(node)))
-                        }),
+                        })],
                     )
                 }
 
@@ -161,22 +162,18 @@ impl CaseTree {
                                         attr("cy", y),
                                         attr("class", "node hoverable revert"),
                                     ])
-                                    .on(
-                                        "mouseover",
-                                        handler(move |_| {
+                                    .listeners([
+                                        Model::listener(cx.bump, "mouseover", move |_| {
                                             crate::Msg::Level(crate::level::Msg::RevertPreview(
                                                 CaseId(id),
                                             ))
                                         }),
-                                    )
-                                    .on(
-                                        "click",
-                                        handler(move |_| {
+                                        Model::listener(cx.bump, "click", move |_| {
                                             crate::Msg::Level(crate::level::Msg::RevertTo(CaseId(
                                                 id,
                                             )))
                                         }),
-                                    )
+                                    ])
                                     .finish(),
                                 text_(cx.bump)
                                     .attributes([

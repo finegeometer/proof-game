@@ -4,8 +4,7 @@
 use game_data::{GameData, SaveData};
 use wasm_bindgen::{prelude::Closure, JsCast};
 
-use crate::render::handler;
-
+mod architecture;
 mod book;
 mod file;
 mod game_data;
@@ -15,66 +14,30 @@ mod world_map;
 
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn run() {
-    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-
-    let (send_msg, recv_msg) = async_channel::unbounded();
-
-    let document = web_sys::window().unwrap().document().unwrap();
-
-    document
-        .body()
-        .unwrap()
-        .add_event_listener_with_callback("keydown", {
-            let send_msg = send_msg.clone();
-            Closure::wrap(Box::new(move |e: web_sys::KeyboardEvent| {
-                send_msg
-                    .send_blocking(Msg::KeyPress {
-                        key: e.key(),
-                        repeat: e.repeat(),
-                    })
-                    .unwrap();
-            }) as Box<dyn Fn(web_sys::KeyboardEvent)>)
-            .into_js_value()
-            .unchecked_ref()
-        })
-        .unwrap();
-
-    let vdom = dodrio::Vdom::new(
-        &document.get_element_by_id("vdom").unwrap(),
-        Model::new(send_msg),
-    );
-
-    wasm_bindgen_futures::spawn_local(async move {
-        let vdom = vdom.weak();
-
-        loop {
-            let recv_msg = recv_msg.clone();
-
-            let msg = recv_msg.recv().await.unwrap();
-
-            let rerender = vdom
-                .with_component(move |root| {
-                    let mut rerender = false;
-                    let model = root.unwrap_mut::<Model>();
-                    rerender |= model.update(msg);
-                    while let Ok(msg) = recv_msg.try_recv() {
-                        rerender |= model.update(msg);
-                    }
-                    rerender
-                })
-                .await
-                .unwrap();
-
-            if rerender {
-                vdom.render().await.unwrap();
-            }
-        }
+    architecture::main::<Model>(|document, send_msg| {
+        let send_msg = send_msg.clone();
+        document
+            .body()
+            .unwrap()
+            .add_event_listener_with_callback(
+                "keydown",
+                Closure::wrap(Box::new(move |e: web_sys::KeyboardEvent| {
+                    send_msg
+                        .send_blocking(Msg::KeyPress {
+                            key: e.key(),
+                            repeat: e.repeat(),
+                        })
+                        .unwrap();
+                }) as Box<dyn Fn(web_sys::KeyboardEvent)>)
+                .into_js_value()
+                .unchecked_ref(),
+            )
+            .unwrap();
     })
 }
 
 struct Model {
     // static
-    send_msg: async_channel::Sender<Msg>,
     save_listener: js_sys::Function,
 
     // semi-static
@@ -165,8 +128,10 @@ pub enum UnlockState {
     Lemmas,
 }
 
-impl Model {
-    fn new(send_msg: async_channel::Sender<Msg>) -> Self {
+impl architecture::Architecture for Model {
+    type Msg = Msg;
+
+    fn new() -> Self {
         let save_listener: wasm_bindgen::closure::Closure<dyn FnMut(web_sys::Event)> =
             wasm_bindgen::closure::Closure::wrap(Box::new(|e| {
                 let e: web_sys::BeforeUnloadEvent = e.dyn_into().unwrap();
@@ -176,7 +141,6 @@ impl Model {
         let save_listener: js_sys::Function = save_listener.into_js_value().unchecked_into();
 
         Self {
-            send_msg,
             save_listener,
 
             game_data: Default::default(),
@@ -189,7 +153,7 @@ impl Model {
         }
     }
 
-    fn update(&mut self, msg: Msg) -> bool {
+    fn update(&mut self, msg: Self::Msg, rerender: &mut bool) {
         match msg {
             Msg::KeyPress { key, repeat } => {
                 let location = web_sys::window().unwrap().location();
@@ -216,43 +180,42 @@ impl Model {
                             _ => {}
                         }
                     }
-                    false
                 } else if let (Some(msg), false) = (self.key_binding(&key), repeat) {
-                    self.update(msg)
-                } else {
-                    false
+                    self.update(msg, rerender)
                 }
             }
-
             Msg::Level(msg) => {
-                let GameState::Level { level_state, level, .. } = &mut self.game_state else {return false};
-                let rerender = level_state.update(msg);
-                if level_state.complete() {
-                    if self.save_data.mark_completed(*level) {
-                        web_sys::window()
-                            .unwrap()
-                            .set_onbeforeunload(Some(&self.save_listener));
+                if let GameState::Level {
+                    level_state, level, ..
+                } = &mut self.game_state
+                {
+                    level_state.update(msg, rerender);
+                    if level_state.complete() {
+                        if self.save_data.mark_completed(*level) {
+                            web_sys::window()
+                                .unwrap()
+                                .set_onbeforeunload(Some(&self.save_listener));
+                        }
+                        self.save_data
+                            .set_unlocked(self.game_data.level(*level).unlocks)
                     }
-                    self.save_data
-                        .set_unlocked(self.game_data.level(*level).unlocks)
                 }
-                rerender
             }
             Msg::WorldMap(msg) => match &mut self.game_state {
                 GameState::WorldMap { map_state } => {
-                    map_state.update(msg, &mut self.global_state.map_panzoom)
+                    map_state.update(msg, &mut self.global_state.map_panzoom, rerender);
                 }
                 GameState::Level {
                     theorem_select: Some((map_state, _)),
                     theorem_select_panzoom,
                     ..
-                } => map_state.update(msg, theorem_select_panzoom),
-                _ => false,
+                } => {
+                    map_state.update(msg, theorem_select_panzoom, rerender);
+                }
+                _ => {}
             },
-
             Msg::GotoLevel(level) => {
                 self.game_state = GameState::level(&self.game_data, level, &self.save_data);
-                #[allow(clippy::collapsible_if)]
                 if self.game_data.level(level).axiom {
                     if self.save_data.mark_completed(level) {
                         web_sys::window()
@@ -262,7 +225,7 @@ impl Model {
                     self.save_data
                         .set_unlocked(self.game_data.level(level).unlocks)
                 }
-                true
+                *rerender = true;
             }
             Msg::GotoMap { recenter } => match self.game_state {
                 GameState::Level {
@@ -275,53 +238,59 @@ impl Model {
                             10.,
                         );
                     }
-                    true
+                    *rerender = true;
                 }
-                GameState::WorldMap { .. } | GameState::Menu => false,
+                GameState::WorldMap { .. } | GameState::Menu => {}
             },
-
             Msg::SelectTheorem => {
-                let GameState::Level { theorem_select, .. } = &mut self.game_state else { return false };
-                if theorem_select.is_some() {
-                    return false;
+                if let GameState::Level { theorem_select, .. } = &mut self.game_state {
+                    if theorem_select.is_none() {
+                        *theorem_select = Some((world_map::State::new(), None));
+                        *rerender = true;
+                    }
                 }
-
-                *theorem_select = Some((world_map::State::new(), None));
-                true
             }
             Msg::PreviewTheorem(level) => {
-                let GameState::Level { theorem_select: Some((_,preview)), .. } = &mut self.game_state else { return false };
-                if *preview == Some(level) {
-                    return false;
+                if let GameState::Level {
+                    theorem_select: Some((_, preview)),
+                    ..
+                } = &mut self.game_state
+                {
+                    if *preview != Some(level) {
+                        *preview = Some(level);
+                        *rerender = true;
+                    }
                 }
-                *preview = Some(level);
-                true
             }
             Msg::SelectedTheorem(level) => {
-                let GameState::Level { level_state, theorem_select, .. } = &mut self.game_state else { return false };
-                *theorem_select = None;
-                if let Some(level) = level {
-                    level_state.update(level::Msg::SelectedTheorem(
-                        self.game_data.level(level).spec.clone(),
-                    ));
+                if let GameState::Level {
+                    level_state,
+                    theorem_select,
+                    ..
+                } = &mut self.game_state
+                {
+                    *theorem_select = None;
+                    if let Some(level) = level {
+                        level_state.update(
+                            level::Msg::SelectedTheorem(self.game_data.level(level).spec.clone()),
+                            rerender,
+                        );
+                    }
+                    *rerender = true;
                 }
-                true
             }
-
             Msg::LoadedSave(save_file) => match SaveData::load(&self.game_data, &save_file) {
                 Ok(save_data) => {
                     self.save_data = save_data;
                     web_sys::window().unwrap().set_onbeforeunload(None);
-                    true
+                    *rerender = true;
                 }
                 Err(err) => {
                     web_sys::console::warn_1(&format!("Failed to parse save file: {err}").into());
-                    false
                 }
             },
             Msg::LoadingSaveFailed() => {
                 web_sys::console::warn_1(&"Failed to load save file.".into());
-                false
             }
             Msg::LoadedLevels(json) => {
                 self.game_data = serde_json::from_str(&json).unwrap();
@@ -330,55 +299,12 @@ impl Model {
                 self.global_state = GlobalState {
                     map_panzoom: render::PanZoom::center([0.; 2], 10.),
                 };
-                true
+                *rerender = true;
             }
         }
     }
 
-    fn key_binding(&self, key: &str) -> Option<Msg> {
-        match &self.game_state {
-            GameState::Menu => None,
-            GameState::WorldMap { .. } => None,
-            GameState::Level {
-                theorem_select: Some(_),
-                ..
-            } => match key {
-                "Escape" => Some(Msg::SelectedTheorem(None)),
-                _ => None,
-            },
-            GameState::Level {
-                level,
-                next_level,
-                level_state,
-                theorem_select: None,
-                ..
-            } => match key {
-                "Escape" => {
-                    if level_state.in_mode() {
-                        Some(Msg::Level(level::Msg::Cancel))
-                    } else {
-                        Some(Msg::GotoMap { recenter: false })
-                    }
-                }
-                "Enter" => {
-                    if self.game_data.level(*level).axiom || level_state.complete() {
-                        if let Some(next_level) = next_level {
-                            Some(Msg::GotoLevel(*next_level))
-                        } else {
-                            Some(Msg::GotoMap { recenter: true })
-                        }
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            },
-        }
-    }
-}
-
-impl<'a> dodrio::Render<'a> for Model {
-    fn render(&self, cx: &mut dodrio::RenderContext<'a>) -> dodrio::Node<'a> {
+    fn view<'a>(&self, cx: &mut dodrio::RenderContext<'a>) -> dodrio::Node<'a> {
         use dodrio::builder::*;
 
         let mut builder = div(cx.bump).attributes([attr("id", "top")]).listeners([on(
@@ -458,10 +384,9 @@ impl<'a> dodrio::Render<'a> for Model {
                 col1 = col1.child(
                     div(cx.bump)
                         .attributes([attr("class", "button yellow")])
-                        .on(
-                            "click",
-                            render::handler(move |_| Msg::SelectedTheorem(None)),
-                        )
+                        .listeners([Model::listener(cx.bump, "click", move |_| {
+                            Msg::SelectedTheorem(None)
+                        })])
                         .children([text("Cancel Application")])
                         .finish(),
                 );
@@ -499,6 +424,49 @@ impl<'a> dodrio::Render<'a> for Model {
         };
 
         builder.finish()
+    }
+}
+
+impl Model {
+    fn key_binding(&self, key: &str) -> Option<Msg> {
+        match &self.game_state {
+            GameState::Menu => None,
+            GameState::WorldMap { .. } => None,
+            GameState::Level {
+                theorem_select: Some(_),
+                ..
+            } => match key {
+                "Escape" => Some(Msg::SelectedTheorem(None)),
+                _ => None,
+            },
+            GameState::Level {
+                level,
+                next_level,
+                level_state,
+                theorem_select: None,
+                ..
+            } => match key {
+                "Escape" => {
+                    if level_state.in_mode() {
+                        Some(Msg::Level(level::Msg::Cancel))
+                    } else {
+                        Some(Msg::GotoMap { recenter: false })
+                    }
+                }
+                "Enter" => {
+                    if self.game_data.level(*level).axiom || level_state.complete() {
+                        if let Some(next_level) = next_level {
+                            Some(Msg::GotoLevel(*next_level))
+                        } else {
+                            Some(Msg::GotoMap { recenter: true })
+                        }
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            },
+        }
     }
 }
 

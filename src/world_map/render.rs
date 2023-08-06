@@ -1,5 +1,5 @@
 use super::*;
-use crate::{game_data::GameData, render::*};
+use crate::{architecture::Architecture, game_data::GameData, render::*, Model};
 use dodrio::{builder::*, bumpalo};
 use wasm_bindgen::JsCast;
 
@@ -21,43 +21,24 @@ impl State {
                 panzoom.viewbox(cx.bump),
             ])
             .listeners([
-                on(
-                    cx.bump,
-                    "mousedown",
-                    handler(move |e| {
-                        let (x, y) =
-                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "map");
-                        crate::Msg::WorldMap(Msg::MouseDown(x, y))
-                    }),
-                ),
-                on(
-                    cx.bump,
-                    "mouseup",
-                    handler(move |e| {
-                        let (x, y) =
-                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "map");
-                        crate::Msg::WorldMap(Msg::MouseUp(x, y))
-                    }),
-                ),
-                on(
-                    cx.bump,
-                    "mousemove",
-                    handler(move |e| {
-                        let (x, y) =
-                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "map");
-                        crate::Msg::WorldMap(Msg::MouseMove(x, y))
-                    }),
-                ),
-                on(
-                    cx.bump,
-                    "wheel",
-                    handler(move |e| {
-                        let e = e.dyn_into::<web_sys::WheelEvent>().unwrap();
-                        let wheel = e.delta_y();
-                        let (x, y) = to_svg_coords(e.into(), "map");
-                        crate::Msg::WorldMap(Msg::MouseWheel(x, y, wheel))
-                    }),
-                ),
+                Model::listener(cx.bump, "mousedown", move |e| {
+                    let (x, y) = to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "map");
+                    crate::Msg::WorldMap(Msg::MouseDown(x, y))
+                }),
+                Model::listener(cx.bump, "mouseup", move |e| {
+                    let (x, y) = to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "map");
+                    crate::Msg::WorldMap(Msg::MouseUp(x, y))
+                }),
+                Model::listener(cx.bump, "mousemove", move |e| {
+                    let (x, y) = to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "map");
+                    crate::Msg::WorldMap(Msg::MouseMove(x, y))
+                }),
+                Model::listener(cx.bump, "wheel", move |e| {
+                    let e = e.dyn_into::<web_sys::WheelEvent>().unwrap();
+                    let wheel = e.delta_y();
+                    let (x, y) = to_svg_coords(e.into(), "map");
+                    crate::Msg::WorldMap(Msg::MouseWheel(x, y, wheel))
+                }),
             ]);
 
         let mut d = bumpalo::collections::String::new_in(cx.bump);
@@ -111,7 +92,6 @@ impl State {
                         if Some(Some(level)) == is_theorem_select {
                             " hoverable known goal"
                         } else {
-                            
                             " hoverable known"
                         }
                     } else if is_theorem_select.is_none() && prereqs_complete {
@@ -126,19 +106,18 @@ impl State {
             #[allow(clippy::collapsible_else_if)]
             if is_theorem_select.is_some() {
                 if save_data.completed(level) {
-                    circle = circle
-                        .on(
-                            "click",
-                            handler(move |_| crate::Msg::SelectedTheorem(Some(level))),
-                        )
-                        .on(
-                            "mouseover",
-                            handler(move |_| crate::Msg::PreviewTheorem(level)),
-                        );
+                    circle = circle.listeners(bumpalo::vec![in cx.bump;
+                    Model::listener(cx.bump,
+                        "click",
+                        move |_| crate::Msg::SelectedTheorem(Some(level))),
+                    Model::listener(cx.bump,
+                        "mouseover",
+                        move |_| crate::Msg::PreviewTheorem(level),
+                    )])
                 }
             } else {
                 if prereqs_complete {
-                    circle = circle.on("click", handler(move |_| crate::Msg::GotoLevel(level)));
+                    circle = circle.listeners(bumpalo::vec![in cx.bump; Model::listener(cx.bump, "click", move |_| crate::Msg::GotoLevel(level))]);
                 }
             }
 

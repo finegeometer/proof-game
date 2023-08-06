@@ -100,13 +100,13 @@ impl State {
         !self.axiom && !self.case_tree.case(self.case_tree.current).1
     }
 
-    pub fn update(&mut self, msg: Msg) -> bool {
+    pub fn update(&mut self, msg: Msg, rerender: &mut bool) {
         match msg {
             Msg::MouseDown(x, y, object) => {
-                let rerender = self.mouse_move(x, y);
+                self.mouse_move(x, y, rerender);
 
                 if self.drag.is_some() {
-                    return rerender;
+                    return;
                 }
 
                 self.drag = Some(DragState {
@@ -114,13 +114,13 @@ impl State {
                     confirmed_drag: Err((x, y)),
                     object,
                 });
-                true
+                *rerender = true;
             }
-            Msg::MouseMove(x, y) => self.mouse_move(x, y),
+            Msg::MouseMove(x, y) => self.mouse_move(x, y, rerender),
             Msg::MouseUp(x, y, dropped_on) => {
-                let mut rerender = self.mouse_move(x, y);
+                self.mouse_move(x, y, rerender);
 
-                let Some(DragState { confirmed_drag, object, .. }) = self.drag else {return rerender};
+                let Some(DragState { confirmed_drag, object, .. }) = self.drag else {return};
 
                 if confirmed_drag.is_ok() {
                     // This is a drag.
@@ -138,7 +138,7 @@ impl State {
                                             ValidityReason::new("I just checked equivalence."),
                                         );
                                     }
-                                    rerender = true;
+                                    *rerender = true;
                                 }
                                 Some(DropObject::TrashCan) => {
                                     self.case_tree.current_case_mut().set_deleted(n1);
@@ -162,7 +162,7 @@ impl State {
                                         .into_iter(),
                                     spec,
                                 });
-                                rerender = true;
+                                *rerender = true;
                             }
                             Some(Mode::AssignTheoremVars {
                                 spec,
@@ -184,7 +184,7 @@ impl State {
                                             current: Default::default(),
                                             remaining,
                                         });
-                                        rerender = true;
+                                        *rerender = true;
                                     }
                                     DragObject::Node(_)
                                     | DragObject::Wire(_)
@@ -207,7 +207,7 @@ impl State {
                                     let case = self.case_tree.case(self.case_tree.current).0;
                                     if case.node_has_interaction(node) {
                                         self.case_tree.interact_node(node);
-                                        rerender = true;
+                                        *rerender = true;
                                     }
                                 }
                                 DragObject::Wire(wire) => {
@@ -216,7 +216,7 @@ impl State {
                                         && case.wire_has_interaction(wire)
                                     {
                                         self.case_tree.interact_wire(wire);
-                                        rerender = true;
+                                        *rerender = true;
                                     }
                                 }
                                 DragObject::Background => {}
@@ -226,10 +226,9 @@ impl State {
                 }
 
                 self.drag = None;
-                rerender
             }
             Msg::MouseWheel(x, y, wheel) => {
-                self.mouse_move(x, y);
+                self.mouse_move(x, y, rerender);
 
                 self.pan_zoom.zoom(x, y, (wheel * 0.001).exp());
 
@@ -245,31 +244,31 @@ impl State {
                     *confirmed_drag = Ok(());
                 }
 
-                true
+                *rerender = true
             }
             Msg::GotoCase(id) => {
                 self.case_tree.current = id;
                 self.mode = None;
-                true
+                *rerender = true
             }
 
             // Theorem application
             Msg::SelectedTheorem(spec) => {
                 self.mode = Some(Mode::ChooseTheoremLocation(spec));
-                true
+                *rerender = true
             }
             Msg::RevertPreview(preview) => {
                 self.mode = Some(Mode::SelectUndo { preview });
-                true
+                *rerender = true
             }
             Msg::RevertTo(case) => {
                 self.mode = None;
                 self.case_tree.revert_to(case);
-                true
+                *rerender = true
             }
             Msg::Cancel => {
                 self.mode = None;
-                true
+                *rerender = true
             }
         }
     }
@@ -301,16 +300,16 @@ impl State {
         self.case_tree.all_complete()
     }
 
-    fn mouse_move(&mut self, x: f64, y: f64) -> bool {
+    fn mouse_move(&mut self, x: f64, y: f64, rerender: &mut bool) {
         self.last_recorded_mouse_position = [x, y];
 
-        let rerender = self.mode.is_some();
+        *rerender |= self.mode.is_some();
 
         let Some(DragState {
             coord,
             confirmed_drag,
             object,
-        }) = &mut self.drag else {return rerender};
+        }) = &mut self.drag else {return};
 
         let dx = x - coord.0;
         let dy = y - coord.1;
@@ -325,14 +324,14 @@ impl State {
         }
 
         if confirmed_drag.is_err() {
-            return rerender;
+            return;
         }
 
         match object {
             DragObject::Node(node) => {
                 self.case_tree.set_node_position(*node, [x, y]);
             }
-            DragObject::Wire(_) => return rerender,
+            DragObject::Wire(_) => return,
             DragObject::Background => {
                 self.pan_zoom.pan(dx, dy);
 
@@ -342,7 +341,7 @@ impl State {
             }
         }
 
-        true
+        *rerender = true;
     }
 
     pub fn in_mode(&self) -> bool {

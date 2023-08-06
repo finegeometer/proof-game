@@ -43,19 +43,6 @@ pub fn to_svg_coords(e: web_sys::MouseEvent, id: &str) -> (f64, f64) {
     (out.x() as f64, out.y() as f64)
 }
 
-pub(crate) fn handler(
-    msg: impl 'static + Fn(web_sys::Event) -> crate::Msg,
-) -> impl 'static + Fn(&mut dyn dodrio::RootRender, dodrio::VdomWeak, web_sys::Event) {
-    move |root, _, e| {
-        e.stop_propagation();
-        e.prevent_default();
-        root.unwrap_mut::<super::Model>()
-            .send_msg
-            .send_blocking(msg(e))
-            .unwrap();
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 pub struct PanZoom {
     pub svg_corners: ([f64; 2], [f64; 2]),

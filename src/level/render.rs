@@ -1,8 +1,9 @@
 use super::*;
+use crate::architecture::Architecture;
 use crate::game_data::Unlocks;
 use crate::render::g;
-use crate::render::handler;
 use crate::render::to_svg_coords;
+use crate::Model;
 use dodrio::builder::*;
 use dodrio::bumpalo;
 
@@ -39,43 +40,27 @@ impl State {
                 self.pan_zoom.viewbox(cx.bump),
             ])
             .listeners([
-                on(
-                    cx.bump,
-                    "mousedown",
-                    handler(move |e| {
-                        let (x, y) =
-                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                        crate::Msg::Level(Msg::MouseDown(x, y, DragObject::Background))
-                    }),
-                ),
-                on(
-                    cx.bump,
-                    "mouseup",
-                    handler(move |e| {
-                        let (x, y) =
-                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                        crate::Msg::Level(Msg::MouseUp(x, y, None))
-                    }),
-                ),
-                on(
-                    cx.bump,
-                    "mousemove",
-                    handler(move |e| {
-                        let (x, y) =
-                            to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
-                        crate::Msg::Level(Msg::MouseMove(x, y))
-                    }),
-                ),
-                on(
-                    cx.bump,
-                    "wheel",
-                    handler(move |e| {
-                        let e = e.dyn_into::<web_sys::WheelEvent>().unwrap();
-                        let wheel = e.delta_y();
-                        let (x, y) = to_svg_coords(e.into(), "game");
-                        crate::Msg::Level(Msg::MouseWheel(x, y, wheel))
-                    }),
-                ),
+                Model::listener(cx.bump, "mousedown", move |e| {
+                    let (x, y) =
+                        to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+                    crate::Msg::Level(Msg::MouseDown(x, y, DragObject::Background))
+                }),
+                Model::listener(cx.bump, "mouseup", move |e| {
+                    let (x, y) =
+                        to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+                    crate::Msg::Level(Msg::MouseUp(x, y, None))
+                }),
+                Model::listener(cx.bump, "mousemove", move |e| {
+                    let (x, y) =
+                        to_svg_coords(e.dyn_into::<web_sys::MouseEvent>().unwrap(), "game");
+                    crate::Msg::Level(Msg::MouseMove(x, y))
+                }),
+                Model::listener(cx.bump, "wheel", move |e| {
+                    let e = e.dyn_into::<web_sys::WheelEvent>().unwrap();
+                    let wheel = e.delta_y();
+                    let (x, y) = to_svg_coords(e.into(), "game");
+                    crate::Msg::Level(Msg::MouseWheel(x, y, wheel))
+                }),
             ]);
 
         let [wires0, nodes0] = case.render(
@@ -197,13 +182,9 @@ impl State {
                 tmp = tmp.child({
                     div(cx.bump)
                         .attributes([attr("class", "trash-can")])
-                        .listeners([on(
-                            cx.bump,
-                            "mouseup",
-                            handler(|_| {
-                                crate::Msg::Level(Msg::MouseUp(0., 0., Some(DropObject::TrashCan)))
-                            }),
-                        )])
+                        .listeners([Model::listener(cx.bump, "mouseup", |_| {
+                            crate::Msg::Level(Msg::MouseUp(0., 0., Some(DropObject::TrashCan)))
+                        })])
                         .child(text("🗑"))
                         .finish()
                 });
@@ -253,16 +234,17 @@ impl State {
                 col1 = col1.child(
                     div(cx.bump)
                         .attributes([attr("class", "button red")])
-                        .on(
-                            "mouseover",
-                            handler({
+                        .listeners([
+                            Model::listener(cx.bump, "mouseover", {
                                 let current = self.case_tree.current;
                                 move |_| {
                                     crate::Msg::Level(crate::level::Msg::RevertPreview(current))
                                 }
                             }),
-                        )
-                        .on("click", handler(move |_| crate::Msg::Level(Msg::Cancel)))
+                            Model::listener(cx.bump, "click", move |_| {
+                                crate::Msg::Level(Msg::Cancel)
+                            }),
+                        ])
                         .children([text("Cancel undo.")])
                         .finish(),
                 )
@@ -271,10 +253,9 @@ impl State {
                 col1 = col1.child(
                     div(cx.bump)
                         .attributes([attr("class", "button red")])
-                        .on(
-                            "click",
-                            handler(move |_| crate::Msg::Level(Msg::RevertPreview(current))),
-                        )
+                        .listeners([Model::listener(cx.bump, "click", move |_| {
+                            crate::Msg::Level(Msg::RevertPreview(current))
+                        })])
                         .children([text("Undo")])
                         .finish(),
                 );
@@ -292,10 +273,10 @@ impl State {
         if self.axiom || self.case_tree.all_complete() {
             #[rustfmt::skip]
             let (listener, s) = if let Some(next_level) = next_level {(
-                on(cx.bump, "click", handler(move |_| crate::Msg::GotoLevel(next_level))),
+                Model::listener(cx.bump, "click", move |_| crate::Msg::GotoLevel(next_level)),
                 "Next Level!",
             )} else {(
-                on(cx.bump, "click", handler(move |_| crate::Msg::GotoMap { recenter: true })),
+                Model::listener(cx.bump, "click", move |_| crate::Msg::GotoMap { recenter: true }),
                 "Select a Level!",
             )};
             col1 = col1.child(
@@ -312,10 +293,9 @@ impl State {
             col1 = col1.child(
                 div(cx.bump)
                     .attributes([attr("class", "button red")])
-                    .on(
-                        "click",
-                        handler(move |_| crate::Msg::GotoLevel(current_level)),
-                    )
+                    .listeners([Model::listener(cx.bump, "click", move |_| {
+                        crate::Msg::GotoLevel(current_level)
+                    })])
                     .children([text("Reset")])
                     .finish(),
             );
@@ -331,7 +311,9 @@ impl State {
                     col1 = col1.child(
                         div(cx.bump)
                             .attributes([attr("class", "button yellow")])
-                            .on("click", handler(move |_| crate::Msg::Level(Msg::Cancel)))
+                            .listeners([Model::listener(cx.bump, "click", move |_| {
+                                crate::Msg::Level(Msg::Cancel)
+                            })])
                             .children([text("Cancel Application")])
                             .finish(),
                     );
@@ -339,7 +321,9 @@ impl State {
                     col1 = col1.child(
                         div(cx.bump)
                             .attributes([attr("class", "button yellow")])
-                            .on("click", handler(move |_| crate::Msg::SelectTheorem))
+                            .listeners([Model::listener(cx.bump, "click", move |_| {
+                                crate::Msg::SelectTheorem
+                            })])
                             .children([text("Apply Theorem")])
                             .finish(),
                     );
@@ -358,10 +342,9 @@ impl State {
                             attr("class", "button blue"),
                             attr("style", "flex-grow: 1;"),
                         ])
-                        .on(
-                            "click",
-                            handler(move |_| crate::Msg::GotoMap { recenter: false }),
-                        )
+                        .listeners([Model::listener(cx.bump, "click", move |_| {
+                            crate::Msg::GotoMap { recenter: false }
+                        })])
                         .children([text("Return to Map")])
                         .finish(),
                     a(cx.bump)
