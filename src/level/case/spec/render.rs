@@ -11,15 +11,24 @@ impl LevelSpec {
         &self,
         cx: &mut dodrio::RenderContext<'a>,
         offset: [f64; 2],
-        mut var_position: impl FnMut(&crate::level::expression::Var) -> Option<[f64; 2]>,
+        var_position: impl Fn(&crate::level::expression::Var) -> Option<[f64; 2]>,
     ) -> [dodrio::Node<'a>; 2] {
-        let mut correct_position = |expression: &Expression<usize>, position: &[f64; 2]| {
+        let correct_position = |expression: &Expression<usize>, position: &[f64; 2]| {
             if let Expression::Variable(v) = expression {
                 if let Some(pos) = var_position(v) {
                     return pos;
                 }
             }
             [position[0] + offset[0], position[1] + offset[1]]
+        };
+
+        let should_label = |expression: &Expression<usize>| {
+            if let Expression::Variable(v) = expression {
+                if var_position(v).is_some() {
+                    return false;
+                }
+            }
+            true
         };
 
         [
@@ -92,8 +101,12 @@ impl LevelSpec {
                     builder = builder.child(render_node(
                         cx,
                         correct_position(expression, position),
-                        bumpalo::collections::String::from_str_in(expression.text(), cx.bump)
-                            .into_bump_str(),
+                        if should_label(expression) {
+                            bumpalo::collections::String::from_str_in(expression.text(), cx.bump)
+                                .into_bump_str()
+                        } else {
+                            ""
+                        },
                         None,
                         false,
                         expression.ty(),

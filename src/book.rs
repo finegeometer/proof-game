@@ -65,4 +65,5 @@ generate!(
     Implication,
     Equality,
     Classical,
+    DivZero,
 );

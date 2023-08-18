@@ -22,12 +22,14 @@ pub fn run() {
             .add_event_listener_with_callback(
                 "keydown",
                 Closure::wrap(Box::new(move |e: web_sys::KeyboardEvent| {
-                    send_msg
-                        .send_blocking(Msg::KeyPress {
-                            key: e.key(),
-                            repeat: e.repeat(),
-                        })
-                        .unwrap();
+                    if !(e.meta_key() || e.ctrl_key() || e.shift_key() || e.alt_key()) {
+                        send_msg
+                            .send_blocking(Msg::KeyPress {
+                                key: e.key(),
+                                repeat: e.repeat(),
+                            })
+                            .unwrap();
+                    }
                 }) as Box<dyn Fn(web_sys::KeyboardEvent)>)
                 .into_js_value()
                 .unchecked_ref(),

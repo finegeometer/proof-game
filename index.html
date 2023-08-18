@@ -191,6 +191,10 @@
       fill: #89a;
     }
 
+    .node.number.hoverable:hover {
+      fill: #78c;
+    }
+
     .node-text {
       text-anchor: middle;
       dominant-baseline: middle;
@@ -420,6 +424,7 @@
           </ul>
         </li>
         <li><a href="#Classical">Classical Logic</a></li>
+        <li><a href="#DivZero">Division By Zero</a></li>
       </ul>
     </div>
     <a href="#ThmApp" class="button">►</a>
@@ -778,6 +783,33 @@
 
       TODO
     </div>
+    <a href="#DivZero" class="button">►</a>
+  </div>
+
+  <div id="DivZero" class="book background">
+    <a href="#Classical" class="button">◄</a>
+    <div class="book-content">
+      <a href="#" class="book-close">❌</a>
+      <h1>Division by Zero</h1>
+      <p>It's well known that you can't divide by zero. 1/0 isn't a number.</p>
+      <p>Unfortunately, I couldn't get that to work in-game. There's nothing stopping you from doing this:</p>
+      <div class="book-example">
+        <svg class="background" viewBox="-2 -2 4 4">
+          <path class="wire number border" d="M 0 -1 L 0 1"></path>
+          <path class="wire number       " d="M 0 -1 L 0 1"></path>
+          <path class="wire number border" d="M 0 1 L 0 2"></path>
+          <path class="wire number       " d="M 0 1 L 0 2"></path>
+          <circle class="node" r="0.5" cx="0" cy="-1"></circle> <text class="node-text">0</text>
+          <circle class="node" r="0.5" cx="0" cy="1"></circle> <text class="node-text">⅟</text>
+        </svg>
+      </div>
+      <p>So I allow 1/0 to be a number, but say nothing about which one. All the rules about division stop working if
+        you divide by zero".</p>
+
+      <p>This makes no difference... in classical logic. But it allows you to prove (<var>a</var> = <var>b</var>) ∨
+        (<var>a</var> ≠ <var>b</var>) even without the law of excluded middle. For this reason, the division levels
+        aren't unlocked until after the classical logic levels.</p>
+    </div>
     <a class="button disabled">►</a>
   </div>
 
@@ -794,6 +826,7 @@
         <li>Multiplication Sign: ×</li>
         <li>Division Symbol: ÷</li>
         <li>"One Divided By" Symbol: ⅟</li>
+        <li>One Half: ½</li>
         <li>Square Root: √</li>
         <li>Less Than Or Equal: ≤</li>
         <li>Not Equal: ≠</li>
