@@ -7,7 +7,14 @@
   , "1": "ℝ"
   , "⅟": "ℝ"
   , "÷": "ℝ"
+  , "^": "ℝ"
   , "√": "ℝ"
+  , "-1": "ℝ"
+  , "2": "ℝ"
+  , "3": "ℝ"
+  , "4": "ℝ"
+  , "½": "ℝ"
+  , "⅓": "ℝ"
   , "¬": "Ω"
   , "<": "Ω"
   , "≤": "Ω"
@@ -378,7 +385,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 3
-    , "map_position": [30,-1]
+    , "map_position": [31.5,-1]
     , "bezier_vector": [1,0]
     , "prereqs": ["−.1"]
     , "next_level": ["×-comm", "×-assoc", "×.0"]
@@ -395,7 +402,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 4
-    , "map_position": [30,0]
+    , "map_position": [31.5,0]
     , "bezier_vector": [1,0]
     , "prereqs": ["−.1"]
     , "next_level": ["×-assoc", "×-id", "×.0", "×.1"]
@@ -415,7 +422,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 7
-    , "map_position": [30,1]
+    , "map_position": [31.5,1]
     , "bezier_vector": [1,0]
     , "prereqs": ["−.1"]
     , "next_level": ["×-id", "×-comm", "×.1"]
@@ -430,7 +437,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 3
-    , "map_position": [31.5,-0.5]
+    , "map_position": [33,-0.5]
     , "bezier_vector": [1,0]
     , "prereqs": ["×-id", "×-comm"]
     , "next_level": ["×.1", "×-distrib-+"]
@@ -452,7 +459,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 10
-    , "map_position": [31.5,0.5]
+    , "map_position": [33,0.5]
     , "bezier_vector": [1,0]
     , "prereqs": ["×-assoc", "×-comm"]
     , "next_level": ["×.0", "×-distrib-+"]
@@ -473,7 +480,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 8
-    , "map_position": [33,0]
+    , "map_position": [34.5,0]
     , "bezier_vector": [1,0]
     , "prereqs": ["×.0", "×.1"]
     , "next_level": ["×.2", "×.4"]
@@ -493,7 +500,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 8
-    , "map_position": [34.5,-0.75]
+    , "map_position": [36,-0.75]
     , "bezier_vector": [1,0]
     , "prereqs": ["×-distrib-+"]
     , "next_level": ["×.3"]
@@ -528,7 +535,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 22
-    , "map_position": [36,-0.75]
+    , "map_position": [37.5,-0.75]
     , "bezier_vector": [1,0]
     , "text_box": ["F.O.I.L."]
     , "prereqs": ["×.2"]
@@ -544,7 +551,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 3
-    , "map_position": [34.5,0.75]
+    , "map_position": [36,0.75]
     , "bezier_vector": [1,0]
     , "prereqs": ["×-distrib-+"]
     , "next_level": ["×.5"]
@@ -562,7 +569,7 @@
       ]
     , "hypotheses": []
     , "conclusion": 6
-    , "map_position": [36,0.75]
+    , "map_position": [37.5,0.75]
     , "bezier_vector": [1,0]
     , "prereqs": ["×.4"]
     , "next_level": ["×.6"]
@@ -585,9 +592,72 @@
       ]
     , "hypotheses": []
     , "conclusion": 10
-    , "map_position": [37.5,0]
+    , "map_position": [39,0]
     , "bezier_vector": [1,0]
     , "prereqs": ["×.3", "×.5"]
+    , "next_level": []
+    }
+
+
+  , "-1-def":
+    { "axiom" : true
+    , "variables": {}
+    , "nodes":
+      [ [["1",[   ]], [-1,0]]
+      , [["-",[0  ]], [-1,3]]
+      , [["-1",[  ]], [ 1,3]]
+      , [["=",[1,2]], [ 0,5.5]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 3
+    , "map_position": [43.5,0]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["×.6"]
+    , "next_level": ["Numerics.0"]
+    }
+  , "Numerics.0":
+    { "variables": {"a": "ℝ"}
+    , "nodes":
+      [ [["-1",[  ]], [-2,0]]
+      , ["a"        , [ 0,0]]
+      , [["×",[0,1]], [-1,3]]
+      , [["-",[1  ]], [ 1,3]]
+      , [["=",[2,3]], [ 0,5.5]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 4
+    , "map_position": [45,0]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["-1-def"]
+    , "next_level": ["Numerics.1"]
+    }
+  , "Numerics.1":
+    { "variables": {"a": "ℝ"}
+    , "nodes":
+      [ [["-1",[  ]], [-1,0]]
+      , [["×",[0,0]], [-1,3]]
+      , [["1",[   ]], [ 1,3]]
+      , [["=",[1,2]], [ 0,5.5]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 3
+    , "map_position": [46.5,0]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["Numerics.0"]
+    , "next_level": ["Numerics.2"]
+    }
+  , "Numerics.2":
+    { "variables": {"a": "ℝ"}
+    , "nodes":
+      [ [["-1",[  ]], [-1,0]]
+      , [["0",[   ]], [ 1,0]]
+      , [["<",[0,1]], [ 0,3]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 2
+    , "map_position": [48,0]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["Numerics.1", "0<1"]
     , "next_level": []
     }
 
@@ -598,7 +668,7 @@
 
 
 
-    , "⇒.0":
+  , "⇒.0":
     { "variables": {"a": "Ω", "b": "Ω"}
     , "nodes":
       [ ["a",         [-1,0]]
@@ -1163,7 +1233,25 @@
 
   , "<+-axiom":
     { "axiom": true
-    , "variables": {"a": "ℝ", "b": "ℝ"}
+    , "variables": {"a": "ℝ", "b": "ℝ", "c": "ℝ"}
+    , "nodes":
+      [ ["a"        , [-2,0]]
+      , ["b"        , [ 0,0]]
+      , ["c"        , [ 2,0]]
+      , [["<",[0,1]], [-2,3]]
+      , [["+",[0,2]], [ 0,3]]
+      , [["+",[1,2]], [ 2,3]]
+      , [["<",[4,5]], [ 1,5.5]]
+    ]
+    , "hypotheses": [3]
+    , "conclusion": 6
+    , "map_position": [37.5,5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["≠-tight", "−.1"]
+    , "next_level": ["<+.0"]
+    }
+  , "<+.0":
+    { "variables": {"a": "ℝ", "b": "ℝ"}
     , "nodes":
       [ [["0",[]]   , [-2,0]]
       , ["a"        , [ 0,0]]
@@ -1175,9 +1263,247 @@
     ]
     , "hypotheses": [3,4]
     , "conclusion": 6
-    , "map_position": [37.5,5]
+    , "map_position": [39,5]
     , "bezier_vector": [1,0]
-    , "prereqs": ["≠-tight", "−.1"]
+    , "prereqs": ["<+-axiom"]
+    , "next_level": ["<+.1"]
+    }
+  , "<+.1":
+    { "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ ["a"        , [-1,0]]
+      , ["b"        , [ 1,0]]
+      , [["<",[0,1]], [ 0,2.5]]
+      , [["-",[0  ]], [-1.25,3]]
+      , [["-",[1  ]], [ 1.25,3]]
+      , [["<",[4,3]], [ 0,5.5]]
+    ]
+    , "hypotheses": [2]
+    , "conclusion": 5
+    , "map_position": [40.5,4.5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["<+.0"]
+    , "next_level": ["<+.2", "<+.3"]
+    }
+  , "<+.2":
+    { "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ ["a"        , [ 1,0]]
+      , ["b"        , [-1,0]]
+      , [["<",[0,1]], [ 1,3]]
+      , [["−",[1,0]], [-1,3]]
+      , [["0",[   ]], [-3,3]]
+      , [["<",[4,3]], [-2,5.5]]
+      , [["=",[5,2]], [-1,8]]
+    ]
+    , "hypotheses": []
+    , "conclusion": 6
+    , "map_position": [40.5,5.5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["<+.0"]
+    , "next_level": ["<+.1", "<+.3"]
+    }
+  , "<+.3":
+    { "variables": {"a": "ℝ", "b": "ℝ", "c": "ℝ"}
+    , "nodes":
+      [ ["a"        , [-2,0]]
+      , ["b"        , [ 0,0]]
+      , ["c"        , [ 2,0]]
+      , [["≤",[0,1]], [-2,3]]
+      , [["+",[0,2]], [ 0,3]]
+      , [["+",[1,2]], [ 2,3]]
+      , [["≤",[4,5]], [ 1,5.5]]
+    ]
+    , "hypotheses": [3]
+    , "conclusion": 6
+    , "map_position": [42,5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["<+.1", "<+.2", "≤.1"]
+    , "next_level": []
+    }
+
+
+  , "0<1":
+    { "axiom": true
+    , "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ [["0",[]]   , [-1,0]]
+      , [["1",[]]   , [ 1,0]]
+      , [["<",[0,1]], [ 0,3]]
+    ]
+    , "hypotheses": []
+    , "conclusion": 2
+    , "map_position": [45,4.5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["<+.3"]
+    , "next_level": []
+    }
+  , "<×-axiom":
+    { "axiom": true
+    , "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ [["0",[]]   , [-2,0]]
+      , ["a"        , [ 0,0]]
+      , ["b"        , [ 2,0]]
+      , [["<",[0,1]], [-2,3]]
+      , [["<",[0,2]], [ 0,3]]
+      , [["×",[1,2]], [ 2,3]]
+      , [["<",[0,5]], [ 1,5.5]]
+    ]
+    , "hypotheses": [3,4]
+    , "conclusion": 6
+    , "map_position": [45,5.5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["<+.3", "×.6"]
+    , "next_level": ["<×.0"]
+    }
+  , "<×.0":
+    { "variables": {"a": "ℝ", "b": "ℝ", "c": "ℝ"}
+    , "nodes":
+      [ ["a"        , [-2,0]]
+      , ["b"        , [ 0,0]]
+      , ["c"        , [ 2,0]]
+      , [["<",[0,1]], [-2,3]]
+      , [["×",[0,2]], [ 0,3]]
+      , [["×",[1,2]], [ 2,3]]
+      , [["<",[4,5]], [ 1,5.5]]
+      , [["0",[   ]], [ 5,0]]
+      , ["c"        , [ 7,0]]
+      , [["<",[7,8]], [ 6,3]]
+    ]
+    , "hypotheses": [3,9]
+    , "conclusion": 6
+    , "map_position": [46.5,5.5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["<×-axiom"]
+    , "next_level": ["<×.1"]
+    }
+  , "<×.1":
+    { "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ [["0",[]]   , [-2,0]]
+      , ["a"        , [ 0,0]]
+      , ["b"        , [ 2,0]]
+      , [["≤",[0,1]], [-2,3]]
+      , [["≤",[0,2]], [ 0,3]]
+      , [["×",[1,2]], [ 2,3]]
+      , [["≤",[0,5]], [ 1,5.5]]
+    ]
+    , "hypotheses": [3,4]
+    , "conclusion": 6
+    , "map_position": [48,5.5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["<×.0", "trichotomy"]
+    , "next_level": ["<×.2"]
+    }
+  , "<×.2":
+    { "variables": {"a": "ℝ"}
+    , "nodes":
+      [ ["a"        , [ 0,0]]
+      , [["×",[0,0]], [ 0,3]]
+      , [["0",[   ]], [-2,3]]
+      , [["≤",[2,1]], [-1,5.5]]
+    ]
+    , "hypotheses": []
+    , "conclusion": 3
+    , "map_position": [49.5,5.5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["<×.1"]
+    , "next_level": ["⅟.0"]
+    }
+
+
+  , "⅟.0":
+    { "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ ["a"        , [-2,0]]
+      , ["b"        , [ 0,0]]
+      , [["0",[   ]], [ 2,0]]
+      , [["×",[0,1]], [-1,3]]
+      , [["≠",[1,2]], [ 1,3]]
+      , [["1",[   ]], [-3,3]]
+      , [["=",[5,3]], [-2,5.5]]
+      ]
+    , "hypotheses": [6]
+    , "conclusion": 4
+    , "map_position": [54,5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["<×.2", "0<1"]
+    , "next_level": ["×-inv"]
+    }
+  , "×-inv":
+    { "axiom": true
+    , "variables": {"a": "ℝ"}
+    , "nodes":
+      [ [["0",[   ]], [ 2  ,0]]
+      , ["a"        , [ 0  ,0]]
+      , [["≠",[1,0]], [ 1  ,2.5]]
+      , [["⅟",[1  ]], [-1  ,3]]
+      , [["×",[1,3]], [ 0.5,4.5]]
+      , [["1",[   ]], [ 2.5,4.5]]
+      , [["=",[4,5]], [ 1.5,7]]
+      ]
+    , "hypotheses": [2]
+    , "conclusion": 6
+    , "map_position": [55.5,5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["⅟.0"]
+    , "next_level": ["⅟.1"]
+    }
+  , "⅟.1":
+    { "variables": {"a": "ℝ", "b": "ℝ", "c": "ℝ"}
+    , "nodes":
+      [ ["a",         [-1.5,0]]
+      , ["b",         [ 0  ,0]]
+      , ["c",         [ 1.5,0]]
+      , [["=",[0,1]], [-1.5,3]]
+      , [["×",[0,2]], [ 0  ,3]]
+      , [["×",[1,2]], [ 1.5,3]]
+      , [["=",[4,5]], [ 0.75,5.5]]
+      , [["0",[   ]], [ 3,0]]
+      , [["≠",[2,7]], [ 3,3]]
+      ]
+    , "hypotheses": [6,8]
+    , "conclusion": 3
+    , "map_position": [57,4.5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["×-inv"]
+    , "next_level": ["IntegralDomain"]
+    }
+  , "IntegralDomain":
+    { "variables": {"a": "ℝ", "b": "ℝ", "c": "ℝ"}
+    , "nodes":
+      [ ["a"        , [-2,0]]
+      , ["b"        , [ 0,0]]
+      , [["0",[   ]], [ 2,0]]
+      , [["×",[0,1]], [-2,3]]
+      , [["=",[0,2]], [ 0,3]]
+      , [["=",[1,2]], [ 2,3]]
+      , [["=",[3,2]], [-1,5.5]]
+      , [["∨",[4,5]], [ 1,5.5]]
+    ]
+    , "hypotheses": [6]
+    , "conclusion": 7
+    , "map_position": [58.5,4.5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["⅟.1"]
+    , "next_level": []
+    }
+  , "⅟.2":
+    { "variables": {"a": "ℝ"}
+    , "nodes":
+      [ [["0",[   ]], [-1,0]]
+      , ["a"        , [ 1,0]]
+      , [["<",[0,1]], [ 0,2.5]]
+      , [["0",[   ]], [-1.25,3]]
+      , [["⅟",[1  ]], [ 1.25,3]]
+      , [["<",[3,4]], [ 0,5.5]]
+    ]
+    , "hypotheses": [2]
+    , "conclusion": 5
+    , "map_position": [57,5.5]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["×-inv"]
     , "next_level": []
     }
 
@@ -1289,7 +1615,7 @@
 
   , "≤-def":
     { "axiom": true
-    , "variables": {"a": "Ω", "b": "Ω"}
+    , "variables": {"a": "ℝ", "b": "ℝ"}
     , "nodes":
       [ ["a",         [-1,0]]
       , ["b",         [ 1,0]]
@@ -1303,6 +1629,133 @@
     , "map_position": [36,10]
     , "bezier_vector": [1,0]
     , "prereqs": ["≠.3", "¬.4"]
+    , "next_level": ["≤.1"]
+    }
+  , "≤.0":
+    { "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ ["a",         [-1,0]]
+      , ["b",         [ 1,0]]
+      , [["<",[0,1]], [-1,3]]
+      , [["≤",[1,0]], [ 1,3]]
+      , [["∨",[   ]], [ 3,0]]
+      ]
+    , "hypotheses": [2,3]
+    , "conclusion": 4
+    , "map_position": [37.5,10]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["≤-def"]
+    , "next_level": ["≤-refl"]
+    }
+  , "≤-refl":
+    { "variables": {"a": "ℝ"}
+    , "nodes":
+      [ ["a",         [ 0,0]]
+      , [["≤",[0,0]], [ 0,3]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 1
+    , "map_position": [39,9]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["≤.0"]
+    , "next_level": ["≤-sym","≤-trans","≤.1"]
+    }
+  , "≤-sym":
+    { "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ ["a",         [-1,0]]
+      , ["b",         [ 1,0]]
+      , [["≤",[0,1]], [-1.5,3]]
+      , [["≤",[1,0]], [ 0,3]]
+      , [["=",[0,1]], [ 1.5,3]]
+      ]
+    , "hypotheses": [2,3]
+    , "conclusion": 4
+    , "map_position": [39,10]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["≤.0"]
+    , "next_level": ["≤-trans","≤-refl","≤.1"]
+    }
+  , "≤-trans":
+    { "variables": {"a": "ℝ", "b": "ℝ", "c": "ℝ"}
+    , "nodes":
+      [ ["a",         [-1.5,0]]
+      , ["b",         [ 0  ,0]]
+      , ["c",         [ 1.5,0]]
+      , [["≤",[0,1]], [-1.5,3]]
+      , [["≤",[0,2]], [ 0  ,3]]
+      , [["≤",[1,2]], [ 1.5,3]]
+      ]
+    , "hypotheses": [3,5]
+    , "conclusion": 4
+    , "map_position": [39,11]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["≤.0"]
+    , "next_level": ["≤-refl","≤-sym","≤.1"]
+    }
+  , "≤.1":
+    { "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ ["a",         [-1,0]]
+      , ["b",         [ 1,0]]
+      , [["<",[0,1]], [-1,3]]
+      , [["≤",[0,1]], [ 1,3]]
+      ]
+    , "hypotheses": [2]
+    , "conclusion": 3
+    , "map_position": [40.5,10]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["≤-refl","≤-sym","≤-trans"]
+    , "next_level": ["≤.2"]
+    }
+  , "≤.2":
+    { "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ ["a",         [-1,0]]
+      , ["b",         [ 1,0]]
+      , [["<",[0,1]], [-1,3]]
+      , [["≤",[1,0]], [ 1,3]]
+      , [["∨",[2,3]], [ 0,5.5]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 4
+    , "map_position": [42,10]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["≤.1","Classical.4"]
+    , "next_level": ["≤.3"]
+    }
+  , "≤.3":
+    { "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ ["a",         [-1,0]]
+      , ["b",         [ 1,0]]
+      , [["≤",[0,1]], [-1.5,3]]
+      , [["<",[0,1]], [ 0,3]]
+      , [["=",[0,1]], [ 1.5,3]]
+      , [["∨",[3,4]], [ 0.75,5.5]]
+      ]
+    , "hypotheses": [2]
+    , "conclusion": 5
+    , "map_position": [43.5,10]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["≤.2"]
+    , "next_level": ["trichotomy"]
+    }
+  , "trichotomy":
+    { "variables": {"a": "ℝ", "b": "ℝ"}
+    , "nodes":
+      [ ["a",         [-1  ,0]]
+      , ["b",         [ 1  ,0]]
+      , [["<",[0,1]], [-1.5,3]]
+      , [["<",[1,0]], [ 0  ,3]]
+      , [["=",[0,1]], [ 1.5,3]]
+      , [["∨",[2,3,4]], [ 0,5.5]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 5
+    , "map_position": [45,10]
+    , "bezier_vector": [1,0]
+    , "prereqs": ["≤.3"]
     , "next_level": []
     }
 
