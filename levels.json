@@ -117,7 +117,7 @@
     , "conclusion": 3
     , "map_position": [9,0]
     , "bezier_vector": [1,0]
-    , "text_box": ["Axiom: This is not a level. We take it for granted."]
+    , "text_box": ["Axiom: You don't need to solve this."]
     , "prereqs": ["Intro.4"]
     , "next_level": ["+.0"]
     }

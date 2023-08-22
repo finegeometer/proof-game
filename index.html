@@ -435,8 +435,144 @@
     <div class="book-content">
       <a href="#" class="book-close">❌</a>
       <h1>Theorem Application</h1>
+      Proofs build on each other. Every level completed is a fact you can use in the next one.
 
-      TODO
+      <div class="book-rules">
+        <div class="book-rule">
+          <p>Suppose you know this, from an earlier level.</p>
+          <div class="book-example">
+            <svg class="background" viewBox="-4 -4 8 8">
+              <path class="wire border"
+                d="M -1 -1 C -1 0, -2 0, -1.5 1 M -1 -1 C -1 0, 0.5 0, 0 1 M -1 -1 C -1 0, 1 0, 1.5 1">
+              </path>
+              <path class="wire       "
+                d="M -1 -1 C -1 0, -2 0, -1.5 1 M -1 -1 C -1 0, 0.5 0, 0 1 M -1 -1 C -1 0, 1 0, 1.5 1">
+              </path>
+              <path class="wire border"
+                d="M 1 -1 C 1 0, -1 0, -1.5 1 M 1 -1 C 1 0, -0.5 0, 0 1 M 1 -1 C 1 0, 2 0, 1.5 1"></path>
+              <path class="wire       "
+                d="M 1 -1 C 1 0, -1 0, -1.5 1 M 1 -1 C 1 0, -0.5 0, 0 1 M 1 -1 C 1 0, 2 0, 1.5 1"></path>
+              <path class="wire known border" d="M -1.5 1 L -1.5 2"></path>
+              <path class="wire known       " d="M -1.5 1 L -1.5 2"></path>
+              <path class="wire known border" d="M  0   1 L  0   2"></path>
+              <path class="wire known       " d="M  0   1 L  0   2"></path>
+              <path class="wire goal  border" d="M  1.5 1 L  1.5 2"></path>
+              <path class="wire goal        " d="M  1.5 1 L  1.5 2"></path>
+
+              <circle class="node" r="0.5" cx="-1" cy="-1.5"></circle> <text class="node-text" x="-1" y="-1.5">a</text>
+              <circle class="node" r="0.5" cx=" 1" cy="-1.5"></circle> <text class="node-text" x=" 1" y="-1.5">b</text>
+              <circle class="node" r="0.5" cx="-1.5" cy="1"></circle> <text class="node-text" x="-1.5" y="1">⇒</text>
+              <circle class="node" r="0.5" cx=" 0  " cy="1"></circle> <text class="node-text" x=" 0  " y="1">⇒</text>
+              <circle class="node" r="0.5" cx=" 1.5" cy="1"></circle> <text class="node-text" x=" 1.5" y="1">=</text>
+            </svg>
+          </div>
+        </div>
+        <div class="book-rule">
+          <p>Then you can apply it anywhere in the current level.</p>
+          <div class="book-example">
+            <svg class="background" viewBox="-2 -2 4 4">
+              <path class="wire border" d="M -1 -2 L -1 -1"></path>
+              <path class="wire       " d="M -1 -2 L -1 -1"></path>
+              <path class="wire border" d="M 1 -2 L 1 -1"></path>
+              <path class="wire       " d="M 1 -2 L 1 -1"></path>
+            </svg>
+            <div class="book-padded-arrow"> → </div>
+            <div style="flex: 1; flex-direction: column; display: flex;">
+              <svg class="background" viewBox="-2 -2 4 4">
+                <path class="wire border"
+                  d="M -1 -2 C -1 -1, -2 -0.5, -1.5 0.5 M -1 -2 C -1 -1, 0.5 -0.5, 0 0.5 M -1 -2 C -1 -1, 1 -0.5, 1.5 0.5">
+                </path>
+                <path class="wire       "
+                  d="M -1 -2 C -1 -1, -2 -0.5, -1.5 0.5 M -1 -2 C -1 -1, 0.5 -0.5, 0 0.5 M -1 -2 C -1 -1, 1 -0.5, 1.5 0.5">
+                </path>
+                <path class="wire border"
+                  d="M 1 -2 C 1 -1, -1 -0.5, -1.5 0.5 M 1 -2 C 1 -1, -0.5 -0.5, 0 0.5 M 1 -2 C 1 -1, 2 -0.5, 1.5 0.5">
+                </path>
+                <path class="wire       "
+                  d="M 1 -2 C 1 -1, -1 -0.5, -1.5 0.5 M 1 -2 C 1 -1, -0.5 -0.5, 0 0.5 M 1 -2 C 1 -1, 2 -0.5, 1.5 0.5">
+                </path>
+                <path class="wire goal border" d="M -1.5 0.5 L -1.5 2"></path>
+                <path class="wire goal       " d="M -1.5 0.5 L -1.5 2"></path>
+                <path class="wire      border" d="M  0   0.5 L  0   2"></path>
+                <path class="wire            " d="M  0   0.5 L  0   2"></path>
+                <path class="wire      border" d="M  1.5 0.5 L  1.5 2"></path>
+                <path class="wire            " d="M  1.5 0.5 L  1.5 2"></path>
+
+                <circle class="node" r="0.5" cx="-1.5" cy="0.5"></circle> <text class="node-text" x="-1.5"
+                  y="0.5">⇒</text>
+                <circle class="node" r="0.5" cx=" 0  " cy="0.5"></circle> <text class="node-text" x=" 0  "
+                  y="0.5">⇒</text>
+                <circle class="node" r="0.5" cx=" 1.5" cy="0.5"></circle> <text class="node-text" x=" 1.5"
+                  y="0.5">=</text>
+              </svg>
+              <svg class="background" viewBox="-2 -2 4 4">
+                <path class="wire border"
+                  d="M -1 -2 C -1 -1, -2 -0.5, -1.5 0.5 M -1 -2 C -1 -1, 0.5 -0.5, 0 0.5 M -1 -2 C -1 -1, 1 -0.5, 1.5 0.5">
+                </path>
+                <path class="wire       "
+                  d="M -1 -2 C -1 -1, -2 -0.5, -1.5 0.5 M -1 -2 C -1 -1, 0.5 -0.5, 0 0.5 M -1 -2 C -1 -1, 1 -0.5, 1.5 0.5">
+                </path>
+                <path class="wire border"
+                  d="M 1 -2 C 1 -1, -1 -0.5, -1.5 0.5 M 1 -2 C 1 -1, -0.5 -0.5, 0 0.5 M 1 -2 C 1 -1, 2 -0.5, 1.5 0.5">
+                </path>
+                <path class="wire       "
+                  d="M 1 -2 C 1 -1, -1 -0.5, -1.5 0.5 M 1 -2 C 1 -1, -0.5 -0.5, 0 0.5 M 1 -2 C 1 -1, 2 -0.5, 1.5 0.5">
+                </path>
+                <path class="wire      border" d="M -1.5 0.5 L -1.5 2"></path>
+                <path class="wire            " d="M -1.5 0.5 L -1.5 2"></path>
+                <path class="wire goal border" d="M  0   0.5 L  0   2"></path>
+                <path class="wire goal       " d="M  0   0.5 L  0   2"></path>
+                <path class="wire      border" d="M  1.5 0.5 L  1.5 2"></path>
+                <path class="wire            " d="M  1.5 0.5 L  1.5 2"></path>
+
+                <circle class="node" r="0.5" cx="-1.5" cy="0.5"></circle> <text class="node-text" x="-1.5"
+                  y="0.5">⇒</text>
+                <circle class="node" r="0.5" cx=" 0  " cy="0.5"></circle> <text class="node-text" x=" 0  "
+                  y="0.5">⇒</text>
+                <circle class="node" r="0.5" cx=" 1.5" cy="0.5"></circle> <text class="node-text" x=" 1.5"
+                  y="0.5">=</text>
+              </svg>
+              <svg class="background" viewBox="-2 -2 4 4">
+                <path class="wire border"
+                  d="M -1 -2 C -1 -1, -2 -0.5, -1.5 0.5 M -1 -2 C -1 -1, 0.5 -0.5, 0 0.5 M -1 -2 C -1 -1, 1 -0.5, 1.5 0.5">
+                </path>
+                <path class="wire       "
+                  d="M -1 -2 C -1 -1, -2 -0.5, -1.5 0.5 M -1 -2 C -1 -1, 0.5 -0.5, 0 0.5 M -1 -2 C -1 -1, 1 -0.5, 1.5 0.5">
+                </path>
+                <path class="wire border"
+                  d="M 1 -2 C 1 -1, -1 -0.5, -1.5 0.5 M 1 -2 C 1 -1, -0.5 -0.5, 0 0.5 M 1 -2 C 1 -1, 2 -0.5, 1.5 0.5">
+                </path>
+                <path class="wire       "
+                  d="M 1 -2 C 1 -1, -1 -0.5, -1.5 0.5 M 1 -2 C 1 -1, -0.5 -0.5, 0 0.5 M 1 -2 C 1 -1, 2 -0.5, 1.5 0.5">
+                </path>
+                <path class="wire       border" d="M -1.5 0.5 L -1.5 2"></path>
+                <path class="wire             " d="M -1.5 0.5 L -1.5 2"></path>
+                <path class="wire       border" d="M  0   0.5 L  0   2"></path>
+                <path class="wire             " d="M  0   0.5 L  0   2"></path>
+                <path class="wire known border" d="M  1.5 0.5 L  1.5 2"></path>
+                <path class="wire known       " d="M  1.5 0.5 L  1.5 2"></path>
+
+                <circle class="node" r="0.5" cx="-1.5" cy="0.5"></circle> <text class="node-text" x="-1.5"
+                  y="0.5">⇒</text>
+                <circle class="node" r="0.5" cx=" 0  " cy="0.5"></circle> <text class="node-text" x=" 0  "
+                  y="0.5">⇒</text>
+                <circle class="node" r="0.5" cx=" 1.5" cy="0.5"></circle> <text class="node-text" x=" 1.5"
+                  y="0.5">=</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p>Each hypothesis of the applied level becomes something you need to prove. But once you do, you get to use the
+        conclusion.</p>
+
+      <p>Occasionally, there are levels with blue outlines. These do not need to be solved; they give you
+        facts for free. They're there so they can be used in later levels.</p>
+
+      <p>For instance, the above example comes from such a level. It's the main way to prove that two gray wires are
+        equal to each other. Other blue-circled levels include the basic rules of algebra. In general, if you can't
+        prove it in-game, it'll be provided for you.</p>
     </div>
     <a href="#Lemmas" class="button">►</a>
   </div>
