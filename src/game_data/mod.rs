@@ -82,6 +82,10 @@ impl SaveData {
         self.completed[level]
     }
 
+    pub fn all_completed(&self) -> bool {
+        self.completed.iter().all(|x| *x)
+    }
+
     /// Returns whether the save data has changed.
     pub fn mark_completed(&mut self, level: usize) -> bool {
         !std::mem::replace(&mut self.completed[level], true)

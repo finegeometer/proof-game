@@ -54,7 +54,7 @@ impl CaseTree {
                 )
             }
             // Empty Branch
-            Some(&[]) => (g(cx.bump).finish(), std::mem::replace(x, *x + 2.), true),
+            Some(&[]) => (g(cx.bump).finish(), std::mem::replace(x, *x + 2.), false),
             // Branch
             Some(children) => {
                 let mut xs: SmallVec<[(f64, bool); 2]> = SmallVec::with_capacity(children.len());

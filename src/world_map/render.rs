@@ -15,7 +15,14 @@ impl State {
         let mut builder = svg(cx.bump)
             .attributes([
                 attr("id", "map"),
-                attr("class", "background"),
+                attr(
+                    "class",
+                    if save_data.all_completed() {
+                        "background complete"
+                    } else {
+                        "background"
+                    },
+                ),
                 attr("preserveAspectRatio", "xMidYMid meet"),
                 attr("font-size", "0.75"),
                 panzoom.viewbox(cx.bump),
