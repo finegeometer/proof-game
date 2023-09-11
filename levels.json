@@ -35,21 +35,6 @@
     , "map_position": [0,0]
     , "bezier_vector": [1,0]
     , "prereqs": []
-    , "next_level": ["Intro.1"]
-    }
-  , "Intro.1":
-    { "variables": {"a": "ℝ"}
-    , "nodes":
-      [ ["a",         [-1,0]]
-      , ["a",         [ 1,0]]
-      , [["=",[0,1]], [ 0,3]]
-      ]
-    , "hypotheses": []
-    , "conclusion": 2
-    , "map_position": [1.5,0]
-    , "bezier_vector": [1,0]
-    , "text_box": ["Drag equal nodes together."]
-    , "prereqs": ["Intro.0"]
     , "next_level": ["Intro.2", "Intro.3"]
     }
   , "Intro.2":
@@ -63,10 +48,10 @@
     , "hypotheses": [2]
     , "conclusion": 3
     , "_comment" : "Symmetry of equality."
-    , "map_position": [3,-0.5]
+    , "map_position": [1.5,-0.5]
     , "bezier_vector": [1,0]
-    , "prereqs": ["Intro.1"]
-    , "next_level": ["Intro.3", "Intro.4"]
+    , "prereqs": ["Intro.0"]
+    , "next_level": ["Intro.3", "Intro.1"]
     }
   , "Intro.3":
     { "variables": {"a": "ℝ", "b": "ℝ", "c": "ℝ"}
@@ -81,10 +66,25 @@
     , "hypotheses": [3,4]
     , "conclusion": 5
     , "_comment" : "Transitivity of equality."
-    , "map_position": [3,0.5]
+    , "map_position": [1.5,0.5]
     , "bezier_vector": [1,0]
-    , "prereqs": ["Intro.1"]
-    , "next_level": ["Intro.2", "Intro.4"]
+    , "prereqs": ["Intro.0"]
+    , "next_level": ["Intro.2", "Intro.1"]
+    }
+  , "Intro.1":
+    { "variables": {"a": "ℝ"}
+    , "nodes":
+      [ ["a",         [-1,0]]
+      , ["a",         [ 1,0]]
+      , [["=",[0,1]], [ 0,3]]
+      ]
+    , "hypotheses": []
+    , "conclusion": 2
+    , "map_position": [3,0]
+    , "bezier_vector": [1,0]
+    , "text_box": ["Drag equal nodes together."]
+    , "prereqs": ["Intro.2", "Intro.3"]
+    , "next_level": ["Intro.4"]
     }
   , "Intro.4":
     { "variables": {"a": "ℝ", "b": "ℝ", "c": "ℝ"}
@@ -101,7 +101,7 @@
     , "conclusion": 6
     , "map_position": [4.5,0]
     , "bezier_vector": [1,0]
-    , "prereqs": ["Intro.2", "Intro.3"]
+    , "prereqs": ["Intro.1"]
     , "next_level": ["+-id"]
     }
 
